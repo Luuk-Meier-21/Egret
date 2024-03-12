@@ -1,4 +1,10 @@
-import { readDir, readTextFile, writeTextFile } from "@tauri-apps/api/fs";
+import {
+  createDir,
+  exists,
+  readDir,
+  readTextFile,
+  writeTextFile,
+} from "@tauri-apps/api/fs";
 import { FILE } from "../config/files";
 import {
   Document,
@@ -19,6 +25,7 @@ export const createDocument = (name: string, content?: DocumentContent) => ({
       content: [],
     },
   ],
+  keywords: [],
 });
 
 export const saveDocument = async (document: Document): Promise<boolean> => {
@@ -34,13 +41,24 @@ export const saveDocument = async (document: Document): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error(error);
-    return Promise.reject();
+    return Promise.reject(false);
   }
 };
 
 export const fetchDocumentsReferences = async (): Promise<
   DocumentReference[]
 > => {
+  const hadDocumentsDir = await exists(FILE.path, {
+    dir: FILE.source,
+  });
+
+  if (!hadDocumentsDir) {
+    await createDir(FILE.path, {
+      dir: FILE.source,
+      recursive: true,
+    });
+  }
+
   const entries = await readDir(FILE.path, {
     dir: FILE.source,
   });
