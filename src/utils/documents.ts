@@ -5,17 +5,14 @@ import {
   DocumentContent,
   DocumentReference,
 } from "../types/documents";
+import { v4 as uuidv4 } from "uuid";
 
 export const formatDocumentName = (name: string, id: string) =>
   `${name}.${id}.json`;
 
-export const createDocument = (
-  name: string,
-  id: string,
-  content?: DocumentContent,
-) => ({
+export const createDocument = (name: string, content?: DocumentContent) => ({
   name: name,
-  id: id,
+  id: uuidv4(),
   content: content ?? [
     {
       type: "paragraph",
@@ -92,5 +89,5 @@ export const fetchDocumentById = async (
   );
 
   const content: DocumentContent = JSON.parse(contents);
-  return createDocument(documentRef.name, documentRef.id, content);
+  return createDocument(documentRef.name, content);
 };

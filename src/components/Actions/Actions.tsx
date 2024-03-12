@@ -1,7 +1,6 @@
 import { ReactNode, useContext, useRef } from "react";
 import { useHotkeyOverride, useHotkeys } from "../../utils/hotkeys";
 import { PromptContext } from "../Prompt/PromptProvider";
-import { v4 as uuidv4 } from "uuid";
 import { createDocument, saveDocument } from "../../utils/documents";
 import { useNavigate } from "react-router";
 import { Link } from "react-router-dom";
@@ -25,8 +24,7 @@ function Actions({ children }: ActionsProps) {
       return;
     }
 
-    const id: string = uuidv4();
-    const document: Document = createDocument(name, id);
+    const document: Document = createDocument(name);
     const succes = await saveDocument(document);
 
     if (!succes) {
@@ -35,7 +33,7 @@ function Actions({ children }: ActionsProps) {
     }
 
     setTimeout(() => {
-      navigate(`/documents/${id}`);
+      navigate(`/documents/${document.id}`);
     }, 100);
   };
 
