@@ -6,7 +6,7 @@ interface PromptProviderProps {
 }
 
 export const PromptContext = createContext<
-  (question: string) => Promise<string | null>
+  (question: string) => Promise<string>
 >(async () => "default");
 
 function PromptProvider({ children }: PromptProviderProps) {
@@ -14,14 +14,16 @@ function PromptProvider({ children }: PromptProviderProps) {
   const [question, setQuestion] = useState("default");
 
   const ref = useRef<HTMLInputElement>(null);
-  const resolve = useRef<(value: string | null) => void>();
+  const resolve = useRef<(value: string) => void>();
+  const reject = useRef<() => void>();
 
-  const promptUser = (question: string): Promise<string | null> => {
+  const promptUser = (question: string): Promise<string> => {
     setQuestion(question);
     setOpen(true);
 
-    return new Promise((res) => {
+    return new Promise((res, rej) => {
       resolve.current = res;
+      reject.current = rej;
     });
   };
 
@@ -33,12 +35,11 @@ function PromptProvider({ children }: PromptProviderProps) {
 
     resolve.current && resolve.current(value);
     setOpen(false);
-    dialog!.close();
   };
 
   const cancel = (dialog: HTMLDialogElement | null) => {
-    resolve.current && resolve.current(null);
-    dialog!.close();
+    reject.current && reject.current();
+    setOpen(false);
   };
 
   return (
@@ -46,7 +47,6 @@ function PromptProvider({ children }: PromptProviderProps) {
       {open && (
         <Prompt
           open={open}
-          ref={ref}
           promptLabel={question}
           onSubmit={submit}
           onCancel={cancel}

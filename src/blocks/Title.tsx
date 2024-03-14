@@ -10,7 +10,7 @@ export const insertTitle = (editor: typeof schema.BlockNoteEditor) => ({
       type: "title",
     });
   },
-  aliases: ["heading", "title"],
+  aliases: ["title"],
   group: "Other",
   icon: <RiAlertFill />,
 });

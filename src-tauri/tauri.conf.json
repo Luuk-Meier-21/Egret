@@ -25,7 +25,7 @@
         "save": false
       },
       "fs": {
-        "scope": ["$APPDATA/**/*"],
+        "scope": ["$APPDATA/**/*", "$APPDATA/.bin/**/*"],
         "all": true,
         "readFile": false,
         "writeFile": false,

@@ -5,7 +5,7 @@ import { createDocument, saveDocument } from "../../utils/documents";
 import { useNavigate } from "react-router";
 import { Link } from "react-router-dom";
 import { Document } from "../../types/documents";
-import { createKeyword, saveKeyword } from "../../utils/keywords";
+import { action, useRegisterAction } from "../../services/actions";
 
 interface ActionsProps {
   children: ReactNode | ReactNode[];
@@ -19,20 +19,25 @@ function Actions({ children }: ActionsProps) {
   const navigate = useNavigate();
 
   const newDocument = async () => {
-    const name = await prompt("What will the document be called?");
-    if (name === null) {
-      console.error("Returned from prompt");
-      return;
+    try {
+      const name = await prompt("What will the document be called?");
+      const document: Document = createDocument(name);
+      const succes = await saveDocument(document);
+
+      // TODO: share succes state
+      setTimeout(() => {
+        navigate(`/documents/${document.id}`);
+      }, 100);
+    } catch (error) {
+      console.error("Failed to create document: ", error);
     }
-
-    const document: Document = createDocument(name);
-    const succes = await saveDocument(document);
-
-    // TODO: share succes state
-    setTimeout(() => {
-      navigate(`/documents/${document.id}`);
-    }, 100);
   };
+
+  useRegisterAction(
+    action("new", "cmd+2", () => {
+      console.log("Action called from registry");
+    }),
+  );
 
   // const newKeyword = async () => {
   //   try {
@@ -61,10 +66,6 @@ function Actions({ children }: ActionsProps) {
   useHotkeys("control+space", () => {
     focusFirstAction();
   });
-
-  // useHotkeys("cmd+k", () => {
-  //   newKeyword();
-  // });
 
   return (
     <div data-component-name="Actions" className="flex flex-col">

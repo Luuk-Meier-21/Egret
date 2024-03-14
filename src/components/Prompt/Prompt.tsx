@@ -1,5 +1,6 @@
 import { ForwardedRef, forwardRef, useEffect, useRef, useState } from "react";
 import { useHotkeys } from "../../utils/hotkeys";
+import { event } from "@tauri-apps/api";
 
 interface PromptProps {
   open: boolean;
@@ -25,12 +26,17 @@ const Prompt = forwardRef(function Prompt(
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [value, setValue] = useState<string | null>(null);
 
-  useHotkeys("escape", () => {
+  const dispatchCancel = () =>
     dialogRef?.current?.dispatchEvent(new Event("cancel", { bubbles: true }));
+  const dispatchSubmit = () =>
+    dialogRef?.current?.dispatchEvent(new Event("submit", { bubbles: true }));
+
+  useHotkeys("escape", () => {
+    dispatchCancel();
   });
 
   useHotkeys("enter", () => {
-    dialogRef?.current?.dispatchEvent(new Event("submit", { bubbles: true }));
+    dispatchSubmit();
   });
 
   useEffect(() => {
@@ -54,6 +60,14 @@ const Prompt = forwardRef(function Prompt(
           ref={ref}
           autoFocus
           type="text"
+          spellCheck="false"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              dispatchCancel();
+            } else if (event.key === "Enter") {
+              dispatchSubmit();
+            }
+          }}
           onChange={(event) => setValue(event?.target.value || null)}
         />
         <button type="submit">{submitLabel ? submitLabel : "Confirm"}</button>

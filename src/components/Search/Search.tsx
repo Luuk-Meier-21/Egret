@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 
 interface SearchProps<T> {
   list: ReadonlyArray<T>;
-  keys: FuseOptionKey<T>[];
-  onResult?: (results: T[]) => void;
+  keys: (keyof T)[];
+  onResult?: (results: T[], query: string) => void;
   onConfirm?: () => void;
 }
 
@@ -40,16 +40,17 @@ function Search<T>({
     const search = (query: string, key: FuseOptionKey<T> | null) => {
       const options: IFuseOptions<T> = {
         includeScore: true,
+        // @ts-ignore
         keys: key ? [key] : keys,
         threshold: key ? 0.2 : 0.5,
       };
 
       const fuse = new Fuse(list, options);
       const result = fuse.search(query);
-      console.log(result);
 
       const documents: T[] = result.map((result) => result.item) || [];
-      onResult(query.length > 1 ? documents : (list as T[]));
+      const searchResults = query.length > 1 ? documents : (list as T[]);
+      onResult(searchResults, query);
     };
 
     search(query || "", key);
@@ -63,11 +64,10 @@ function Search<T>({
       data-component-name="Search"
       aria-labelledby="zoeken"
       id="search-box"
-      className="py-3 ring-1 ring-red-300 focus:bg-red-300 focus:outline-none"
+      className="gap-2 ring-1 ring-black"
     >
       <h2 id="zoeken">Zoeken in documenten</h2>
       <button
-        className="ring-1 ring-red-200 focus:bg-red-200 focus:outline-none"
         onClick={() => {
           setQuery(null);
           setKey(null);
@@ -79,7 +79,6 @@ function Search<T>({
       <input
         id="search-query"
         ref={ref}
-        className="ring-1 ring-red-200 focus:bg-red-200 focus:outline-none"
         type="text"
         onKeyDown={(event) => {
           if (event.code !== "Enter") {

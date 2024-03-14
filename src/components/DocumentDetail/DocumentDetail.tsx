@@ -1,20 +1,18 @@
-import { useLoaderData, useNavigate } from "react-router";
+import { useLoaderData } from "react-router";
 import {
   BlockNoteView,
   SuggestionMenuController,
   getDefaultReactSlashMenuItems,
   useCreateBlockNote,
 } from "@blocknote/react";
-import {
-  BlockIdentifier,
-  filterSuggestionItems,
-  insertOrUpdateBlock,
-} from "@blocknote/core";
+import { filterSuggestionItems } from "@blocknote/core";
 import { insertTitle } from "../../blocks/Title";
 import { insertAlert } from "../../blocks/Alert";
 import { schema } from "../../blocks/schema";
 import { Document } from "../../types/documents";
 import { useEditorAutosave, useEditorHotkeys } from "../../utils/editor";
+import { deleteDocumentById } from "../../utils/documents";
+import { action, useRegisterAction } from "../../services/actions";
 
 interface DocumentDetailProps {}
 
@@ -27,8 +25,18 @@ function DocumentDetail({}: DocumentDetailProps) {
     initialContent: initialDocument.content,
   });
 
+  const deleteDocument = async () => {
+    await deleteDocumentById(initialDocument.id);
+  };
+
   useEditorHotkeys(editor);
   useEditorAutosave(editor, initialDocument);
+
+  useRegisterAction(
+    action("Save", "cmd+9", () => {
+      console.log("Action called from registry");
+    }),
+  );
 
   return (
     <div data-component-name="DocumentDetail" role="application">
@@ -47,6 +55,7 @@ function DocumentDetail({}: DocumentDetailProps) {
       <h1 aria-live="polite" role="alert">
         {initialDocument.name}
       </h1>
+      <button onClick={() => deleteDocument()}>Delete</button>
       <BlockNoteView
         className="max-w-[46em] text-black ring-1 ring-black [&_a]:underline"
         editor={editor}

@@ -5,6 +5,11 @@ export const FILE = {
   source: BaseDirectory.AppData,
 } as const;
 
+export const FILE_BIN = {
+  path: ".bin/documents",
+  source: BaseDirectory.AppData,
+} as const;
+
 export const KEYWORD_FILE = {
   filename: "keywords.json",
   source: BaseDirectory.AppData,

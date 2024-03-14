@@ -1,6 +1,6 @@
 import { insertOrUpdateBlock } from "@blocknote/core";
 import { createReactBlockSpec } from "@blocknote/react";
-import { schema } from "../../App";
+import { schema } from "../../blocks/schema";
 
 export const insertTemplateName = (editor: typeof schema.BlockNoteEditor) => ({
   title: "TemplateName",

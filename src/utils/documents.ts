@@ -1,20 +1,26 @@
 import {
+  copyFile,
   createDir,
   exists,
   readDir,
   readTextFile,
+  removeFile,
   writeTextFile,
 } from "@tauri-apps/api/fs";
-import { FILE } from "../config/files";
+import { FILE, FILE_BIN } from "../config/files";
 import {
   Document,
   DocumentContent,
   DocumentReference,
 } from "../types/documents";
 import { v4 as uuidv4 } from "uuid";
+import { requireDir } from "./filesystem";
 
 export const formatDocumentName = (name: string, id: string) =>
   `${name}.${id}.json`;
+
+export const formatDocumentPath = (name: string, id: string): string =>
+  `${FILE.path}/${formatDocumentName(name, id)}`;
 
 export const parseDocument = (
   name: string,
@@ -55,16 +61,9 @@ export const saveDocument = async (document: Document): Promise<boolean> => {
 export const fetchDocumentsReferences = async (): Promise<
   DocumentReference[]
 > => {
-  const hadDocumentsDir = await exists(FILE.path, {
+  await requireDir(FILE.path, {
     dir: FILE.source,
   });
-
-  if (!hadDocumentsDir) {
-    await createDir(FILE.path, {
-      dir: FILE.source,
-      recursive: true,
-    });
-  }
 
   const entries = await readDir(FILE.path, {
     dir: FILE.source,
@@ -107,7 +106,7 @@ export const fetchDocumentById = async (
   }
 
   const contents = await readTextFile(
-    `${FILE.path}/${formatDocumentName(documentRef.name, documentRef.id)}`,
+    formatDocumentPath(documentRef.name, documentRef.id),
     {
       dir: FILE.source,
     },
@@ -115,4 +114,30 @@ export const fetchDocumentById = async (
 
   const content: DocumentContent = JSON.parse(contents);
   return parseDocument(documentRef.name, documentRef.id, content);
+};
+
+export const deleteDocumentById = async (
+  id: string,
+  fromDocuments?: DocumentReference[],
+) => {
+  await requireDir(FILE_BIN.path, {
+    dir: FILE_BIN.source,
+  });
+
+  const documents = fromDocuments ?? (await fetchDocumentsReferences());
+  const documentRef = documents.find((document) =>
+    document.fileName?.includes(id),
+  );
+
+  if (documentRef === undefined) {
+    return null;
+  }
+  const currentPath = formatDocumentPath(documentRef.name, documentRef.id);
+  const binPath = `${FILE_BIN.path}/${formatDocumentName(documentRef.name, documentRef.id)}`;
+  await copyFile(currentPath, binPath, {
+    dir: FILE.source,
+  });
+  await removeFile(currentPath, {
+    dir: FILE.source,
+  });
 };
