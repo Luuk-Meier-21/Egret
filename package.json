@@ -8,18 +8,27 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "gen": "npx generate-react-cli"
+    "gen": "npx generate-react-cli",
+    "prisma": "npx prisma",
+    "migrate": "drizzle-kit generate:sqlite",
+    "drizzle": "drizzle-kit"
   },
   "dependencies": {
     "@blocknote/core": "^0.12.0",
     "@blocknote/react": "^0.12.0",
+    "@libsql/client": "^0.5.6",
+    "@prisma/client": "^5.11.0",
     "@tauri-apps/api": "^1.5.2",
+    "buffer": "^6.0.3",
+    "drizzle-kit": "^0.20.14",
+    "drizzle-orm": "0.29.3",
     "fuse.js": "^7.0.0",
     "hotkeys-js": "^3.13.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router": "^6.22.3",
     "react-router-dom": "^6.22.3",
+    "tauri-plugin-sql-api": "github:tauri-apps/tauri-plugin-sql#v1",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
@@ -33,6 +42,7 @@
     "postcss": "^8.4.35",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.11",
+    "prisma": "^5.11.0",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.0.2",
     "vite": "^5.0.0"
