@@ -34,19 +34,19 @@ function Actions({ children }: ActionsProps) {
     }, 100);
   };
 
-  const newKeyword = async () => {
-    try {
-      const label = await prompt("What will the keyword label be?");
-      if (label === null) {
-        console.error("Null label not allowed");
-        return;
-      }
-      const succes = await saveKeyword(createKeyword(label));
-      // TODO: share succes state
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  // const newKeyword = async () => {
+  //   try {
+  //     const label = await prompt("What will the keyword label be?");
+  //     if (label === null) {
+  //       console.error("Null label not allowed");
+  //       return;
+  //     }
+  //     const succes = await saveKeyword(createKeyword(label));
+  //     // TODO: share succes state
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
 
   const focusFirstAction = () => {
     console.log(actionsRef?.current);
@@ -62,9 +62,9 @@ function Actions({ children }: ActionsProps) {
     focusFirstAction();
   });
 
-  useHotkeys("cmd+k", () => {
-    newKeyword();
-  });
+  // useHotkeys("cmd+k", () => {
+  //   newKeyword();
+  // });
 
   return (
     <div data-component-name="Actions" className="flex flex-col">
@@ -81,11 +81,6 @@ function Actions({ children }: ActionsProps) {
         <li>
           <button className="text-left" onClick={newDocument}>
             New Document "command, n"
-          </button>
-        </li>
-        <li>
-          <button className="text-left" onClick={newKeyword}>
-            New keyword
           </button>
         </li>
       </ul>

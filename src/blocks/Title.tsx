@@ -26,8 +26,9 @@ export const Title = createReactBlockSpec(
     render: (props) => {
       return (
         <h2
-          aria-details="Title"
-          aria-roledescription="Test"
+          role="heading"
+          aria-level={1}
+          aria-relevant="additions text"
           className="text-2xl font-bold"
           ref={props.contentRef}
         />

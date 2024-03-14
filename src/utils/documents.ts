@@ -16,9 +16,13 @@ import { v4 as uuidv4 } from "uuid";
 export const formatDocumentName = (name: string, id: string) =>
   `${name}.${id}.json`;
 
-export const createDocument = (name: string, content?: DocumentContent) => ({
+export const parseDocument = (
+  name: string,
+  id: string,
+  content?: DocumentContent,
+) => ({
   name: name,
-  id: uuidv4(),
+  id: id,
   content: content ?? [
     {
       type: "paragraph",
@@ -27,6 +31,9 @@ export const createDocument = (name: string, content?: DocumentContent) => ({
   ],
   keywords: [],
 });
+
+export const createDocument = (name: string, content?: DocumentContent) =>
+  parseDocument(name, uuidv4(), content);
 
 export const saveDocument = async (document: Document): Promise<boolean> => {
   try {
@@ -107,5 +114,5 @@ export const fetchDocumentById = async (
   );
 
   const content: DocumentContent = JSON.parse(contents);
-  return createDocument(documentRef.name, content);
+  return parseDocument(documentRef.name, documentRef.id, content);
 };
