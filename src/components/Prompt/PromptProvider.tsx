@@ -12,12 +12,12 @@ export const PromptContext = createContext<(question: string) => string>(
 function PromptProvider({ children }: PromptProviderProps) {
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState("default");
+  const [type, setType] = useState<string | null>("none");
 
-  const ref = useRef<HTMLInputElement>(null);
-  const resolve = useRef<(value: string) => void>();
-  const reject = useRef<() => void>();
+  const resolve = useRef<(...args: any[]) => any>();
+  const reject = useRef<(...args: any[]) => any>();
 
-  const promptUser = (question: string): Promise<string> => {
+  const prompt = (question: string): Promise<string> => {
     setQuestion(question);
     setOpen(true);
 
@@ -35,11 +35,13 @@ function PromptProvider({ children }: PromptProviderProps) {
 
     resolve.current && resolve.current(value);
     setOpen(false);
+    setType("none");
   };
 
   const cancel = (dialog: HTMLDialogElement | null) => {
     reject.current && reject.current();
     setOpen(false);
+    setType("none");
   };
 
   return (
@@ -52,9 +54,7 @@ function PromptProvider({ children }: PromptProviderProps) {
           onCancel={cancel}
         />
       )}
-      <PromptContext.Provider value={promptUser}>
-        {children}
-      </PromptContext.Provider>
+      <PromptContext.Provider value={prompt}>{children}</PromptContext.Provider>
     </>
   );
 }
