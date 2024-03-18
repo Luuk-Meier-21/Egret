@@ -13,7 +13,7 @@ import {
   DocumentContent,
   DocumentReference,
 } from "../types/documents";
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4, validate } from "uuid";
 import { requireDir } from "./filesystem";
 
 export const formatDocumentName = (name: string, id: string) =>
@@ -42,6 +42,10 @@ export const createDocument = (name: string, content?: DocumentContent) =>
   parseDocument(name, uuidv4(), content);
 
 export const saveDocument = async (document: Document): Promise<boolean> => {
+  if (!validate(document.id)) {
+    return Promise.reject(false);
+  }
+
   try {
     await writeTextFile(
       `${FILE.path}/${formatDocumentName(document.name, document.id)}`,
@@ -78,6 +82,10 @@ export const fetchDocumentsReferences = async (): Promise<
       const segments = value.name.split(".");
       const name = segments[0];
       const id = segments[1];
+
+      if (!validate(id)) {
+        return null;
+      }
 
       return {
         filePath: value.path,

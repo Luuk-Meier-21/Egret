@@ -59,13 +59,20 @@ export async function saveKeyword(keywordToSave: Keyword): Promise<void> {
   });
 }
 
+export function keywordHasRelation(
+  keyword: Keyword,
+  document: Document | DocumentReference,
+): boolean {
+  return !!keyword.documentRelations.find(
+    (relation) => relation === document.id,
+  );
+}
+
 export async function referenceKeywordToDocument(
   keyword: Keyword,
   document: Document | DocumentReference,
 ) {
-  const hasRelation = keyword.documentRelations.find(
-    (relation) => relation === document.id,
-  );
+  const hasRelation = keywordHasRelation(keyword, document);
 
   if (!hasRelation) {
     keyword.documentRelations.push(document.id);
@@ -75,16 +82,14 @@ export async function referenceKeywordToDocument(
     );
   }
 
-  saveKeyword(keyword);
+  await keyword;
 }
 
 export async function dereferenceKeywordFromDocument(
   keyword: Keyword,
   document: Document | DocumentReference,
 ) {
-  const hasRelation = keyword.documentRelations.find(
-    (relation) => relation === document.id,
-  );
+  const hasRelation = keywordHasRelation(keyword, document);
 
   if (hasRelation) {
     keyword.documentRelations = keyword.documentRelations.filter(
@@ -96,5 +101,30 @@ export async function dereferenceKeywordFromDocument(
     );
   }
 
-  saveKeyword(keyword);
+  await keyword;
+}
+
+export function includeKeywordsInDocument<
+  DT extends DocumentReference | Document,
+>(document: DT, keywords: Keyword[]): DT & { keywords: Keyword[] } {
+  const documentWithKeywords = { ...document, keywords: [] } as DT & {
+    keywords: Keyword[];
+  };
+
+  keywords.forEach((keyword) => {
+    const hasRelation = keywordHasRelation(keyword, document);
+    if (hasRelation) {
+      documentWithKeywords.keywords.push(keyword);
+    }
+  });
+
+  return documentWithKeywords;
+}
+
+export function includeKeywordsInDocuments<
+  DT extends DocumentReference | Document,
+>(documents: DT[], keywords: Keyword[]): (DT & { keywords: Keyword[] })[] {
+  return documents.map((document) =>
+    includeKeywordsInDocument(document, keywords),
+  );
 }

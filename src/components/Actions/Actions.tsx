@@ -23,6 +23,14 @@ function Actions({ children }: ActionsProps) {
   const prompt = useContext(PromptContext);
   const navigate = useNavigate();
 
+  const { elementWithShortcut: BackHomeButton } = useRegisterAction(
+    "Back to home",
+    "cmd+1",
+    async () => {
+      navigate("/");
+    },
+  );
+
   const { elementWithShortcut: NewDocumentButton } = useRegisterAction(
     "New document",
     "cmd+n",
@@ -62,8 +70,8 @@ function Actions({ children }: ActionsProps) {
   });
 
   return (
-    <div data-component-name="Actions" className="flex flex-col">
-      <Link to="/">Back to all documents.</Link>
+    <div data-component-name="Actions" className="it flex flex-col">
+      <BackHomeButton />
 
       <main ref={mainRef} className="ring-1 ring-black">
         {children}

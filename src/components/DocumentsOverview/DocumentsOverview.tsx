@@ -1,22 +1,35 @@
 import { useLoaderData } from "react-router";
 import { Link } from "react-router-dom";
-import { DocumentReference } from "../../types/documents";
+import {
+  DocumentReference,
+  DocumentReferenceWithKeywords,
+} from "../../types/documents";
 import Search from "../Search/Search";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Keyword } from "../../types/keywords";
+import {
+  includeKeywordsInDocument,
+  includeKeywordsInDocuments,
+} from "../../utils/keywords";
 
 interface DocumentsOverviewProps {}
 
 function DocumentsOverview({}: DocumentsOverviewProps) {
   const documentsRef = useRef<HTMLUListElement>(null);
-  const documentReferences = useLoaderData() as DocumentReference[];
-  const [filteredDocuments, setFilteredDocuments] =
-    useState(documentReferences);
+  const [documentReferences, keywords] = useLoaderData() as [
+    DocumentReference[],
+    Keyword[],
+  ];
+
+  const [filteredDocuments, setFilteredDocuments] = useState<
+    DocumentReferenceWithKeywords[]
+  >(includeKeywordsInDocuments(documentReferences, keywords));
 
   return (
     <div data-component-name="DocumentsOverview">
       <Search
-        list={documentReferences}
-        keys={["name"]}
+        list={includeKeywordsInDocuments(documentReferences, keywords)}
+        keys={["name", "keywords.label"]}
         onConfirm={() => {
           documentsRef.current?.querySelector("a")?.focus();
         }}
@@ -40,6 +53,14 @@ function DocumentsOverview({}: DocumentsOverviewProps) {
                   to={`/documents/${document.id}`}
                 >
                   {document.name}
+                  {document.keywords.length > 0 && (
+                    <span>
+                      , Keywords:{" "}
+                      {document.keywords
+                        .map((keywords) => keywords.label)
+                        .join(", ")}
+                    </span>
+                  )}
                 </Link>
               </li>
             ))}

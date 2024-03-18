@@ -15,17 +15,47 @@ import { deleteDocumentById } from "../../utils/documents";
 import { useRegisterAction } from "../../services/actions";
 import { toggleBlock } from "../../utils/block";
 import { shell } from "@tauri-apps/api";
+import {
+  createKeyword,
+  dereferenceKeywordFromDocument,
+  fetchKeywords,
+  keywordHasRelation,
+  referenceKeywordToDocument,
+  saveKeyword,
+} from "../../utils/keywords";
+import { useEffect, useState } from "react";
+import { Keyword } from "../../types/keywords";
 
 interface DocumentDetailProps {}
 
 function DocumentDetail({}: DocumentDetailProps) {
   // const navigate = useNavigate();
 
-  const initialDocument = useLoaderData() as Document;
+  const [initialDocument, initialKeywords] = useLoaderData() as [
+    Document,
+    Keyword[],
+  ];
   const editor = useCreateBlockNote({
     schema,
     initialContent: initialDocument.content,
   });
+
+  const [keywords, setKeywords] = useState<Keyword[]>(initialKeywords);
+  const [openSettings, setOpenSettings] = useState(false);
+
+  const setKeywordRelation = async (keyword: Keyword) => {
+    const hasRelation = keywordHasRelation(keyword, initialDocument);
+
+    hasRelation
+      ? await dereferenceKeywordFromDocument(keyword, initialDocument)
+      : await referenceKeywordToDocument(keyword, initialDocument);
+
+    await saveKeyword(keyword);
+
+    const keywords = await fetchKeywords();
+
+    setKeywords(keywords);
+  };
 
   useEditorAutosave(editor, initialDocument);
 
@@ -44,6 +74,18 @@ function DocumentDetail({}: DocumentDetailProps) {
     shell.open(url);
   });
 
+  const { elementWithShortcut: EditSettings } = useRegisterAction(
+    "Edit Keyword",
+    "cmd+k",
+    () => {
+      if (keywords.length <= 0) {
+        console.error("No keywords to edit");
+      }
+
+      setOpenSettings(!openSettings);
+    },
+  );
+
   useRegisterAction("Relate keyword", "cmd+r", async () => {
     console.log("jhi");
   });
@@ -54,27 +96,36 @@ function DocumentDetail({}: DocumentDetailProps) {
 
   return (
     <div data-component-name="DocumentDetail" role="application">
-      {/* <select
-        name="keywords"
-        onChange={(event) => console.log(event.target.value)}
-        className="flex w-full overflow-hidden"http://localhost:1420/
-        id="keywords"
-      >
-        {globalKeywords.map((keyword) => (
-          <option key={keyword.id} id={keyword.id}>
-            {keyword.label}
-          </option>
-        ))}
-      </select> */}
       <h1 aria-live="polite" role="alert">
         {initialDocument.name}
       </h1>
+
+      <section>
+        <EditSettings aria-expanded={openSettings} />
+        {openSettings && (
+          <ul>
+            {keywords.map((keyword) => (
+              <li key={keyword.id}>
+                <input
+                  id={keyword.id}
+                  type="checkbox"
+                  checked={keywordHasRelation(keyword, initialDocument)}
+                  onChange={(event) => setKeywordRelation(keyword)}
+                />
+                <label htmlFor={keyword.id}>{keyword.label}</label>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <BlockNoteView
         className="max-w-[46em] text-black ring-1 ring-black [&_a]:underline"
         editor={editor}
         autoFocus
         slashMenu={false}
+        autoCorrect="false"
+        spellCheck="false"
         sideMenu={false}
         formattingToolbar={false}
         hyperlinkToolbar={false}

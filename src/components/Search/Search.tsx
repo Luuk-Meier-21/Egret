@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 interface SearchProps<T> {
   list: ReadonlyArray<T>;
-  keys: (keyof T)[];
+  keys: FuseOptionKey<T>;
   onResult?: (results: T[], query: string) => void;
   onConfirm?: () => void;
 }

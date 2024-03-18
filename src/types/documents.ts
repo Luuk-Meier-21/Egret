@@ -1,4 +1,5 @@
 import { IBlock } from "./block";
+import { Keyword } from "./keywords";
 
 /**
  * reference to a document file location
@@ -9,6 +10,10 @@ export interface DocumentReference {
   name: string;
   id: string;
 }
+
+export type DocumentReferenceWithKeywords = DocumentReference & {
+  keywords: Keyword[];
+};
 
 export type DocumentContent = IBlock[];
 

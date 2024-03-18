@@ -6,6 +6,7 @@ import { fetchDocumentById, fetchDocumentsReferences } from "./utils/documents";
 import { isWithoutTauri } from "./utils/tauri";
 import PromptProvider from "./components/Prompt/PromptProvider";
 import Actions from "./components/Actions/Actions";
+import { fetchKeywords } from "./utils/keywords";
 
 function App() {
   if (isWithoutTauri) {
@@ -28,13 +29,19 @@ function App() {
         {
           path: "/",
           element: <DocumentsOverview />,
-          loader: ({}) => fetchDocumentsReferences(),
+          loader: async ({}) => [
+            await fetchDocumentsReferences(),
+            await fetchKeywords(),
+          ],
         },
         {
           path: "documents/:id",
           element: <DocumentDetail />,
-          loader: ({ params }) => {
-            return params.id ? fetchDocumentById(params.id) : null;
+          loader: async ({ params }) => {
+            return [
+              params.id ? await fetchDocumentById(params.id) : null,
+              await fetchKeywords(),
+            ];
           },
         },
         // {

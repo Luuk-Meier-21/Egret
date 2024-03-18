@@ -1,7 +1,12 @@
 // Typing registries
 // https://stackoverflow.com/questions/47098643/implementing-a-type-safe-service-registry-in-typescript
 
-import { ReactNode, createContext, useEffect } from "react";
+import {
+  ComponentPropsWithoutRef,
+  ReactNode,
+  createContext,
+  useEffect,
+} from "react";
 import { ObjectRegistry } from "../utils/object";
 import { useHotkeyOverride, useHotkeys } from "../utils/hotkeys";
 
@@ -50,12 +55,15 @@ export function useRegisterAction(
   callback: ActionCallback,
 ): {
   callback: ActionCallback;
-  element: React.FC;
-  elementWithShortcut: React.FC;
+  element: React.FC<ComponentPropsWithoutRef<"button">>;
+  elementWithShortcut: React.FC<ComponentPropsWithoutRef<"button">>;
 } {
   const newAction = action(label, shortcut, callback);
-  const element = () => renderAction(newAction);
-  const elementWithShortcut = () => renderActionWithShortcut(newAction);
+
+  const element = (props: ComponentPropsWithoutRef<"button">) =>
+    renderAction({ ...newAction, ...props });
+  const elementWithShortcut = (props: ComponentPropsWithoutRef<"button">) =>
+    renderActionWithShortcut({ ...newAction, ...props });
 
   useHotkeys(shortcut, callback);
 
@@ -70,17 +78,34 @@ export function useRegisterAction(
   return { callback, element, elementWithShortcut };
 }
 
-export function renderAction({ label, callback }: ActionConfiguration) {
-  return <button onClick={callback}>{label}</button>;
+export function renderAction({
+  label,
+  callback,
+  ...props
+}: ActionConfiguration & ComponentPropsWithoutRef<"button">) {
+  return (
+    <button
+      className=" w-full text-left underline"
+      onClick={callback}
+      {...props}
+    >
+      {label}
+    </button>
+  );
 }
 
 export function renderActionWithShortcut({
   label,
   shortcut,
   callback,
-}: ActionConfiguration) {
+  ...props
+}: ActionConfiguration & ComponentPropsWithoutRef<"button">) {
   return (
-    <button onClick={callback}>
+    <button
+      className=" w-full text-left underline"
+      onClick={callback}
+      {...props}
+    >
       {label} <em>({shortcut.split("+").join(", ")})</em>
     </button>
   );
