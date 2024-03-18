@@ -3,8 +3,6 @@ import { Link } from "react-router-dom";
 import { DocumentReference } from "../../types/documents";
 import Search from "../Search/Search";
 import { useRef, useState } from "react";
-import { useHotkeys } from "../../utils/hotkeys";
-import { action, useRegisterAction } from "../../services/actions";
 
 interface DocumentsOverviewProps {}
 
@@ -13,12 +11,6 @@ function DocumentsOverview({}: DocumentsOverviewProps) {
   const documentReferences = useLoaderData() as DocumentReference[];
   const [filteredDocuments, setFilteredDocuments] =
     useState(documentReferences);
-
-  useRegisterAction(
-    action("Test", "cmd+3", () => {
-      console.log("Action called from registry");
-    }),
-  );
 
   return (
     <div data-component-name="DocumentsOverview">

@@ -1,29 +1,33 @@
-import { exists, readTextFile, writeTextFile } from "@tauri-apps/api/fs";
-import { Keyword } from "../classes/keyword";
+import { readTextFile, writeTextFile } from "@tauri-apps/api/fs";
 import { v4 as uuidv4 } from "uuid";
 import { KEYWORD_FILE } from "../config/files";
 import { slugify } from "./url";
+import { requireDir, requireFile } from "./filesystem";
+import { Keyword } from "../types/keywords";
 import { Document, DocumentReference } from "../types/documents";
 
-export function createKeyword(label: string): Keyword {
+export function parseKeyword(
+  label: string,
+  slug: string,
+  id: string,
+  documentRelations?: string[],
+): Keyword {
   return {
     label,
-    id: uuidv4(),
-    slug: slugify(label),
-    documents: [],
+    slug,
+    id,
+    documentRelations: documentRelations ?? [],
   };
 }
 
+export function createKeyword(label: string): Keyword {
+  return parseKeyword(label, slugify(label), uuidv4());
+}
+
 export async function fetchKeywords(): Promise<Keyword[]> {
-  const hasFile = await exists(KEYWORD_FILE.filename, {
+  await requireFile(KEYWORD_FILE.filename, [], {
     dir: KEYWORD_FILE.source,
   });
-
-  if (!hasFile) {
-    await writeTextFile(KEYWORD_FILE.filename, JSON.stringify([]), {
-      dir: KEYWORD_FILE.source,
-    });
-  }
 
   const text = await readTextFile(KEYWORD_FILE.filename, {
     dir: KEYWORD_FILE.source,
@@ -32,21 +36,23 @@ export async function fetchKeywords(): Promise<Keyword[]> {
   return JSON.parse(text) as Keyword[];
 }
 
-export async function saveKeyword(newKeyword: Keyword): Promise<void> {
+export async function saveKeyword(keywordToSave: Keyword): Promise<void> {
   const keywords = await fetchKeywords();
-  const prevSavedKeyword = keywords.find(
+  const keywordIndex = keywords.findIndex(
     (keyword) =>
-      keyword.id === newKeyword.id || keyword.slug === newKeyword.slug,
+      keyword.id === keywordToSave.id || keyword.slug === keywordToSave.slug,
   );
 
-  if (prevSavedKeyword) {
-    // Copy over documents to previously saved keyword.
-    prevSavedKeyword.documents = newKeyword.documents;
+  if (keywordIndex < 0) {
+    // Not saved
+    keywords.push(keywordToSave);
   } else {
-    keywords.push(newKeyword);
-  }
+    // Saved, copy over relations
+    const prevSavedKeyword = keywords[keywordIndex];
 
-  console.log(keywords);
+    prevSavedKeyword.documentRelations = keywordToSave.documentRelations;
+    keywords[keywordIndex] = prevSavedKeyword;
+  }
 
   await writeTextFile(KEYWORD_FILE.filename, JSON.stringify(keywords), {
     dir: KEYWORD_FILE.source,
@@ -57,24 +63,38 @@ export async function referenceKeywordToDocument(
   keyword: Keyword,
   document: Document | DocumentReference,
 ) {
-  if (!keyword.documents.includes(keyword.id)) {
-    keyword.documents.push(keyword.id);
-  }
-  if (!document.keywords.includes(document.id)) {
-    document.keywords.push(keyword.id);
+  const hasRelation = keyword.documentRelations.find(
+    (relation) => relation === document.id,
+  );
+
+  if (!hasRelation) {
+    keyword.documentRelations.push(document.id);
+  } else {
+    console.info(
+      `Document: (${document.name}) already has a relation to keyword: (${keyword.label})`,
+    );
   }
 
-  console.log(keyword, document);
+  saveKeyword(keyword);
 }
 
 export async function dereferenceKeywordFromDocument(
   keyword: Keyword,
   document: Document | DocumentReference,
 ) {
-  if (!keyword.documents.includes(keyword.id)) {
-    keyword.documents.push(keyword.id);
+  const hasRelation = keyword.documentRelations.find(
+    (relation) => relation === document.id,
+  );
+
+  if (hasRelation) {
+    keyword.documentRelations = keyword.documentRelations.filter(
+      (relation) => relation !== document.id,
+    );
+  } else {
+    console.info(
+      `Document: (${document.name}) does not have a to keyword: (${keyword.label})`,
+    );
   }
-  if (!document.keywords.includes(document.id)) {
-    document.keywords.push(keyword.id);
-  }
+
+  saveKeyword(keyword);
 }

@@ -5,9 +5,14 @@ interface PromptProviderProps {
   children: ReactNode | ReactNode[];
 }
 
-export const PromptContext = createContext<
-  (question: string) => Promise<string>
->(async () => "default");
+interface PromptContextValues {
+  prompt: (question: string) => Promise<string>;
+}
+
+const defaultPromptContext = {} as PromptContextValues;
+
+export const PromptContext =
+  createContext<PromptContextValues>(defaultPromptContext);
 
 function PromptProvider({ children }: PromptProviderProps) {
   const [open, setOpen] = useState(false);

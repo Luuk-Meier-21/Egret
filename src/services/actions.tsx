@@ -1,0 +1,120 @@
+// Typing registries
+// https://stackoverflow.com/questions/47098643/implementing-a-type-safe-service-registry-in-typescript
+
+import { ReactNode, createContext, useEffect } from "react";
+import { ObjectRegistry } from "../utils/object";
+import { useHotkeyOverride, useHotkeys } from "../utils/hotkeys";
+
+export type ActionCallback = () => void;
+
+export interface ActionConfiguration {
+  label: string;
+  shortcut: string;
+  callback: ActionCallback;
+}
+
+class ActionsRegistry {
+  actions = ObjectRegistry.init();
+
+  constructor() {
+    console.log("Actions registry");
+    console.log(this.actions);
+  }
+
+  define(action: ActionConfiguration) {
+    this.actions.register(action.shortcut, action);
+  }
+
+  delete(action: ActionConfiguration) {
+    // @ts-expect-error
+    this.actions.remove(action.shortcut);
+  }
+
+  map<T>(callback: (action: ActionConfiguration) => T) {
+    return this.actions.keys().map((key) => {
+      const action = this.actions.get(key);
+      return callback(action);
+    });
+  }
+}
+
+export const actionsRegistry = new ActionsRegistry();
+
+/**
+ * a hook for handling actions in caller component scope
+ * @param action the action to be added / removed in the scope of the caller component
+ */
+export function useRegisterAction(
+  label: string,
+  shortcut: string,
+  callback: ActionCallback,
+): {
+  callback: ActionCallback;
+  element: React.FC;
+  elementWithShortcut: React.FC;
+} {
+  const newAction = action(label, shortcut, callback);
+  const element = () => renderAction(newAction);
+  const elementWithShortcut = () => renderActionWithShortcut(newAction);
+
+  useHotkeys(shortcut, callback);
+
+  useEffect(() => {
+    actionsRegistry.define(newAction);
+
+    return () => {
+      actionsRegistry.delete(newAction);
+    };
+  }, []);
+
+  return { callback, element, elementWithShortcut };
+}
+
+export function renderAction({ label, callback }: ActionConfiguration) {
+  return <button onClick={callback}>{label}</button>;
+}
+
+export function renderActionWithShortcut({
+  label,
+  shortcut,
+  callback,
+}: ActionConfiguration) {
+  return (
+    <button onClick={callback}>
+      {label} <em>({shortcut.split("+").join(", ")})</em>
+    </button>
+  );
+}
+
+/**
+ * @deprecated
+ * a hook for handling actions in caller component scope
+ * @param action the action to be added / removed in the scope of the caller component
+ */
+export function useRegisterActionsGrouped(actions: ActionConfiguration[]) {
+  useHotkeyOverride();
+
+  useEffect(() => {
+    for (let action of actions) {
+      actionsRegistry.define(action);
+    }
+
+    return () => {
+      for (let action of actions) {
+        actionsRegistry.delete(action);
+      }
+    };
+  }, []);
+}
+
+export function action(
+  label: string,
+  shortcut: string,
+  callback: ActionCallback,
+): ActionConfiguration {
+  return {
+    label,
+    shortcut,
+    callback,
+  };
+}

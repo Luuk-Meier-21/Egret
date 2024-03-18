@@ -1,31 +1,9 @@
 import { useEffect, useRef } from "react";
 import { IBlockEditor } from "../types/block";
 import { Document } from "../types/documents";
-import { toggleBlock } from "./block";
 import { fetchDocumentById, saveDocument } from "./documents";
 import { useHotkeyOverride, useHotkeys } from "./hotkeys";
 import { TauriEvent, listen } from "@tauri-apps/api/event";
-import { Command } from "@tauri-apps/api/shell";
-import { open } from "@tauri-apps/api/dialog";
-import { shell } from "@tauri-apps/api";
-
-export function useEditorHotkeys(editor: IBlockEditor) {
-  useHotkeyOverride();
-  useHotkeys("cmd+b", () => {
-    const selectedBlock = editor.getTextCursorPosition().block;
-    toggleBlock(editor, selectedBlock, {
-      type: "title",
-    });
-  });
-
-  useHotkeys("cmd+u", () => {
-    const url = editor.getSelectedLinkUrl();
-    if (url === undefined) {
-      return;
-    }
-    shell.open(url);
-  });
-}
 
 const UNSAVED_CHANGES_MAX = 15;
 

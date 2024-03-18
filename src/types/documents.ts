@@ -8,7 +8,6 @@ export interface DocumentReference {
   fileName: string;
   name: string;
   id: string;
-  keywords?: string[];
 }
 
 export type DocumentContent = IBlock[];

@@ -1,5 +1,7 @@
 import { BaseDirectory } from "@tauri-apps/api/fs";
 
+// Using constanst for now, this could become dynamic if tests point to the importance of that.
+
 export const FILE = {
   path: "documents",
   source: BaseDirectory.AppData,

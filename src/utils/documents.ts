@@ -96,7 +96,6 @@ export const fetchDocumentById = async (
   fromDocuments?: DocumentReference[],
 ): Promise<Document | null> => {
   const documents = fromDocuments ?? (await fetchDocumentsReferences());
-
   const documentRef = documents.find((document) =>
     document.fileName?.includes(id),
   );
@@ -111,8 +110,8 @@ export const fetchDocumentById = async (
       dir: FILE.source,
     },
   );
-
   const content: DocumentContent = JSON.parse(contents);
+
   return parseDocument(documentRef.name, documentRef.id, content);
 };
 
@@ -132,8 +131,10 @@ export const deleteDocumentById = async (
   if (documentRef === undefined) {
     return null;
   }
+
   const currentPath = formatDocumentPath(documentRef.name, documentRef.id);
   const binPath = `${FILE_BIN.path}/${formatDocumentName(documentRef.name, documentRef.id)}`;
+
   await copyFile(currentPath, binPath, {
     dir: FILE.source,
   });
