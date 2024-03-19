@@ -10,7 +10,7 @@ export const insertTitle = (editor: typeof schema.BlockNoteEditor) => ({
       type: "title",
     });
   },
-  aliases: ["heading", "title"],
+  aliases: ["title"],
   group: "Other",
   icon: <RiAlertFill />,
 });
@@ -26,9 +26,10 @@ export const Title = createReactBlockSpec(
     render: (props) => {
       return (
         <h2
-          aria-details="Title"
-          aria-roledescription="Test"
-          className="text-2xl font-bold"
+          role="heading"
+          aria-level={1}
+          aria-relevant="additions text"
+          className="text-xl font-bold"
           ref={props.contentRef}
         />
       );

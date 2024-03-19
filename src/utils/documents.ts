@@ -1,31 +1,72 @@
-import { readDir, readTextFile, writeTextFile } from "@tauri-apps/api/fs";
-import { FILE } from "../config/files";
+import {
+  copyFile,
+  readDir,
+  readTextFile,
+  removeFile,
+  writeTextFile,
+} from "@tauri-apps/api/fs";
+import { FILE, FILE_BIN } from "../config/files";
 import {
   Document,
-  DocumentContent,
+  DocumentTextContent,
+  DocumentMetaContent,
   DocumentReference,
+  DocumentContent,
 } from "../types/documents";
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4, validate } from "uuid";
+import { requireDir } from "./filesystem";
 
 export const formatDocumentName = (name: string, id: string) =>
   `${name}.${id}.json`;
 
-export const createDocument = (name: string, content?: DocumentContent) => ({
+export const formatDocumentPath = (name: string, id: string): string =>
+  `${FILE.path}/${formatDocumentName(name, id)}`;
+
+export const parseDocument = (
+  name: string,
+  id: string,
+  meta?: Partial<DocumentMetaContent>,
+  text?: DocumentTextContent,
+): Document => ({
   name: name,
-  id: uuidv4(),
-  content: content ?? [
-    {
-      type: "paragraph",
-      content: [],
-    },
-  ],
+  id: id,
+  content: {
+    meta: meta ?? {},
+    text: text ?? [
+      {
+        type: "paragraph",
+        content: [],
+      },
+    ],
+  },
 });
 
+export const encodeDocumentContent = (document: Document): string => {
+  const content: DocumentContent = {
+    meta: document.content.meta,
+    text: document.content.text,
+  };
+
+  return JSON.stringify(content);
+};
+
+export const decodeDocumentContent = (jsonString: string): DocumentContent =>
+  JSON.parse(jsonString);
+
+export const createDocument = (
+  name: string,
+  content?: DocumentContent,
+): Document => parseDocument(name, uuidv4(), content?.meta, content?.text);
+
 export const saveDocument = async (document: Document): Promise<boolean> => {
+  if (!validate(document.id)) {
+    return Promise.reject(false);
+  }
+
   try {
     await writeTextFile(
       `${FILE.path}/${formatDocumentName(document.name, document.id)}`,
-      JSON.stringify(document.content),
+      encodeDocumentContent(document),
       {
         dir: FILE.source,
       },
@@ -33,14 +74,18 @@ export const saveDocument = async (document: Document): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    console.error(error);
-    return Promise.reject();
+    handleError(error);
+    return Promise.reject(false);
   }
 };
 
 export const fetchDocumentsReferences = async (): Promise<
   DocumentReference[]
 > => {
+  await requireDir(FILE.path, {
+    dir: FILE.source,
+  });
+
   const entries = await readDir(FILE.path, {
     dir: FILE.source,
   });
@@ -54,6 +99,10 @@ export const fetchDocumentsReferences = async (): Promise<
       const segments = value.name.split(".");
       const name = segments[0];
       const id = segments[1];
+
+      if (!validate(id)) {
+        return null;
+      }
 
       return {
         filePath: value.path,
@@ -72,7 +121,6 @@ export const fetchDocumentById = async (
   fromDocuments?: DocumentReference[],
 ): Promise<Document | null> => {
   const documents = fromDocuments ?? (await fetchDocumentsReferences());
-
   const documentRef = documents.find((document) =>
     document.fileName?.includes(id),
   );
@@ -81,13 +129,46 @@ export const fetchDocumentById = async (
     return null;
   }
 
-  const contents = await readTextFile(
-    `${FILE.path}/${formatDocumentName(documentRef.name, documentRef.id)}`,
+  const json = await readTextFile(
+    formatDocumentPath(documentRef.name, documentRef.id),
     {
       dir: FILE.source,
     },
   );
+  const contents = decodeDocumentContent(json);
 
-  const content: DocumentContent = JSON.parse(contents);
-  return createDocument(documentRef.name, content);
+  return parseDocument(
+    documentRef.name,
+    documentRef.id,
+    contents.meta,
+    contents.text,
+  );
+};
+
+export const deleteDocumentById = async (
+  id: string,
+  fromDocuments?: DocumentReference[],
+) => {
+  await requireDir(FILE_BIN.path, {
+    dir: FILE_BIN.source,
+  });
+
+  const documents = fromDocuments ?? (await fetchDocumentsReferences());
+  const documentRef = documents.find((document) =>
+    document.fileName?.includes(id),
+  );
+
+  if (documentRef === undefined) {
+    return null;
+  }
+
+  const currentPath = formatDocumentPath(documentRef.name, documentRef.id);
+  const binPath = `${FILE_BIN.path}/${formatDocumentName(documentRef.name, documentRef.id)}`;
+
+  await copyFile(currentPath, binPath, {
+    dir: FILE.source,
+  });
+  await removeFile(currentPath, {
+    dir: FILE.source,
+  });
 };

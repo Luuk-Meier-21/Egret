@@ -5,113 +5,133 @@ import {
   getDefaultReactSlashMenuItems,
   useCreateBlockNote,
 } from "@blocknote/react";
-import {
-  BlockIdentifier,
-  filterSuggestionItems,
-  insertOrUpdateBlock,
-} from "@blocknote/core";
+import { filterSuggestionItems } from "@blocknote/core";
 import { insertTitle } from "../../blocks/Title";
 import { insertAlert } from "../../blocks/Alert";
 import { schema } from "../../blocks/schema";
 import { Document } from "../../types/documents";
-import { TauriEvent, listen } from "@tauri-apps/api/event";
-import { fetchDocumentById, saveDocument } from "../../utils/documents";
-import { useHotkeyOverride, useHotkeys } from "../../utils/hotkeys";
-import { useContext, useRef } from "react";
-import { IBlock } from "../../types/block";
+import { useEditorAutosave } from "../../utils/editor";
+import { deleteDocumentById } from "../../utils/documents";
+import { useRegisterAction } from "../../services/actions";
 import { toggleBlock } from "../../utils/block";
-import { PromptContext } from "../Prompt/PromptProvider";
-import { isValidUrl } from "../../utils/url";
+import { shell } from "@tauri-apps/api";
+import {
+  dereferenceKeywordFromDocument,
+  fetchKeywords,
+  keywordHasRelation,
+  referenceKeywordToDocument,
+  saveKeyword,
+} from "../../utils/keywords";
+import { useState } from "react";
+import { Keyword } from "../../types/keywords";
+import { handleError } from "../../utils/announce";
 
 interface DocumentDetailProps {}
 
-const UNSAVED_CHANGES_MAX = 15;
-
 function DocumentDetail({}: DocumentDetailProps) {
-  const unsavedChangesCount = useRef(0);
+  // const navigate = useNavigate();
 
-  const documentData = useLoaderData() as Document;
+  const [initialDocument, initialKeywords] = useLoaderData() as [
+    Document,
+    Keyword[],
+  ];
   const editor = useCreateBlockNote({
     schema,
-    initialContent: documentData.content,
+    initialContent: initialDocument.content.text,
   });
 
-  const getDocument = (): Document => ({
-    name: documentData.name,
-    id: documentData.id,
-    content: editor.document,
-  });
+  const [keywords, setKeywords] = useState<Keyword[]>(initialKeywords);
+  const [openSettings, setOpenSettings] = useState(false);
 
-  const save = async () => {
-    await saveDocument(getDocument());
-    console.log("🚀 ~ save ~ after:", unsavedChangesCount.current);
-    unsavedChangesCount.current = 0;
+  const setKeywordRelation = async (keyword: Keyword) => {
+    const hasRelation = keywordHasRelation(keyword, initialDocument);
+
+    hasRelation
+      ? await dereferenceKeywordFromDocument(keyword, initialDocument)
+      : await referenceKeywordToDocument(keyword, initialDocument);
+
+    await saveKeyword(keyword);
+
+    const keywords = await fetchKeywords();
+
+    setKeywords(keywords);
   };
 
-  const syncDocument = async () => {
-    const document = await fetchDocumentById(documentData.id);
-    if (document === null) {
-      // Rly weird, revert to old state? this would mean a corrupted document
-      return;
-    }
-    editor.replaceBlocks(editor.document, document.content);
-  };
+  useEditorAutosave(editor, initialDocument);
 
-  const handleBlur = async () => {
-    await save();
-    await syncDocument();
-  };
-
-  editor.onEditorContentChange(() => {
-    unsavedChangesCount.current++;
-
-    if (unsavedChangesCount.current > UNSAVED_CHANGES_MAX) {
-      save();
-    }
-  });
-
-  listen(TauriEvent.WINDOW_CLOSE_REQUESTED, async () => {
-    await save();
-  });
-
-  useHotkeyOverride();
-  useHotkeys("cmd+s", () => {
-    save();
-  });
-
-  useHotkeys("cmd+b", () => {
+  useRegisterAction("Selection to title", "cmd+b", () => {
     const selectedBlock = editor.getTextCursorPosition().block;
     toggleBlock(editor, selectedBlock, {
       type: "title",
     });
   });
 
-  // useHotkeys("cmd+e", () => {
-  //   (async () => {
-  //     console.log(await editor.blocksToHTMLLossy());
-  //     console.log(await editor.blocksToMarkdownLossy());
-  //   })();
-  // });
-
-  useHotkeys("cmd+u", () => {
+  useRegisterAction("Open selected url", "cmd+u", () => {
     const url = editor.getSelectedLinkUrl();
-    console.log(url);
-    window.open(url);
+    if (url === undefined) {
+      return;
+    }
+    shell.open(url);
+  });
+
+  const { elementWithShortcut: EditSettings } = useRegisterAction(
+    "Edit Keyword",
+    "cmd+k",
+    () => {
+      if (keywords.length <= 0) {
+        handleError("No keywords to edit");
+      }
+
+      setOpenSettings(!openSettings);
+    },
+  );
+
+  useRegisterAction("Delete document", "shift+cmd+backspace", async () => {
+    await deleteDocumentById(initialDocument.id);
   });
 
   return (
-    <div data-component-name="DocumentDetail" role="application">
-      <h1 aria-live="polite" role="alert">
-        {documentData.name}
+    <div
+      data-component-name="DocumentDetail"
+      role="application"
+      lang={initialDocument.content.meta.lang ?? "en"}
+    >
+      <h1 className="p-4" aria-live="polite" role="alert">
+        {initialDocument.name}
       </h1>
+
+      <section className="p-4">
+        <EditSettings aria-expanded={openSettings} />
+        {openSettings && (
+          <ul>
+            {keywords.map((keyword) => (
+              <li key={keyword.id}>
+                <input
+                  id={keyword.id}
+                  type="checkbox"
+                  checked={keywordHasRelation(keyword, initialDocument)}
+                  onChange={() => setKeywordRelation(keyword)}
+                />
+                <label htmlFor={keyword.id}>{keyword.label}</label>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       <BlockNoteView
-        className="max-w-[46em] text-black ring-1 ring-black [&_a]:underline"
+        className="max-w-[46em] p-4 text-white ring-1 ring-white [&_a]:underline"
         editor={editor}
+        autoFocus
         slashMenu={false}
+        autoCorrect="false"
+        spellCheck="false"
+        onFocusCapture={(event) => {
+          event.preventDefault();
+        }}
         sideMenu={false}
         formattingToolbar={false}
         hyperlinkToolbar={false}
-        onBlur={handleBlur}
       >
         <SuggestionMenuController
           triggerCharacter="/"

@@ -20,6 +20,7 @@ export const schema = BlockNoteSchema.create({
     // ...defaultBlockSpecs,
     // Adds the Alert block.
     paragraph: defaultBlockSpecs.paragraph,
+    bulletListItem: defaultBlockSpecs.bulletListItem,
     alert: Alert,
     title: Title,
     url: Link,

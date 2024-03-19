@@ -8,7 +8,9 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "gen": "npx generate-react-cli"
+    "gen": "npx generate-react-cli component",
+    "gen-block": "npx generate-react-cli component $0 --type=block",
+    "cargo": "cd src-tauri; cargo"
   },
   "dependencies": {
     "@blocknote/core": "^0.12.0",
@@ -16,14 +18,17 @@
     "@tauri-apps/api": "^1.5.2",
     "fuse.js": "^7.0.0",
     "hotkeys-js": "^3.13.7",
+    "howler": "^2.2.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router": "^6.22.3",
     "react-router-dom": "^6.22.3",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "uuid-validate": "^0.0.3"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.5.8",
+    "@types/howler": "^2.2.11",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@types/uuid": "^9.0.8",

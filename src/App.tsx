@@ -1,12 +1,13 @@
-import { Outlet, RouterProvider } from "react-router";
-import { Link, createBrowserRouter } from "react-router-dom";
+import { Outlet, RouterProvider, useNavigate } from "react-router";
+import { createBrowserRouter } from "react-router-dom";
 import DocumentsOverview from "./components/DocumentsOverview/DocumentsOverview";
 import DocumentDetail from "./components/DocumentDetail/DocumentDetail";
 import { fetchDocumentById, fetchDocumentsReferences } from "./utils/documents";
 import { isWithoutTauri } from "./utils/tauri";
 import PromptProvider from "./components/Prompt/PromptProvider";
-import { useHotkeyOverride, useHotkeys } from "./utils/hotkeys";
 import Actions from "./components/Actions/Actions";
+import { fetchKeywords } from "./utils/keywords";
+import AppDocumentsOverview from "./components/DocumentsOverview/AppDocumentsOverview";
 
 function App() {
   if (isWithoutTauri) {
@@ -28,29 +29,22 @@ function App() {
       children: [
         {
           path: "/",
-          element: <DocumentsOverview />,
-          loader: ({}) => fetchDocumentsReferences(),
+          element: <AppDocumentsOverview />,
+          loader: async ({}) => [
+            await fetchDocumentsReferences(),
+            await fetchKeywords(),
+          ],
         },
         {
           path: "documents/:id",
           element: <DocumentDetail />,
-          loader: ({ params }) => {
-            return params.id ? fetchDocumentById(params.id) : null;
+          loader: async ({ params }) => {
+            return [
+              params.id ? await fetchDocumentById(params.id) : null,
+              await fetchKeywords(),
+            ];
           },
         },
-        // {
-        //   path: "documents/:id",
-        //   Component: (a) => {
-        //     console.log(a);
-        //     return <div>b</div>;
-        //   },
-        //   loader: ({ request, params }) => {
-        //     console.log(params);
-        //     return fetch("/api/dashboard.json", {
-        //       signal: request.signal,
-        //     });
-        //   },
-        // },
       ],
     },
   ]);

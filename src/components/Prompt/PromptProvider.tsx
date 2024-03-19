@@ -5,23 +5,25 @@ interface PromptProviderProps {
   children: ReactNode | ReactNode[];
 }
 
-export const PromptContext = createContext<
-  (question: string) => Promise<string | null>
->(async () => "default");
+export const PromptContext = createContext<(question: string) => string>(
+  (_: string) => "default",
+);
 
 function PromptProvider({ children }: PromptProviderProps) {
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState("default");
+  const [_, setType] = useState<string | null>("none");
 
-  const ref = useRef<HTMLInputElement>(null);
-  const resolve = useRef<(value: string | null) => void>();
+  const resolve = useRef<(...args: any[]) => any>();
+  const reject = useRef<(...args: any[]) => any>();
 
-  const promptUser = (question: string): Promise<string | null> => {
+  const prompt = (question: string): Promise<string> => {
     setQuestion(question);
     setOpen(true);
 
-    return new Promise((res) => {
+    return new Promise((res, rej) => {
       resolve.current = res;
+      reject.current = rej;
     });
   };
 
@@ -33,12 +35,13 @@ function PromptProvider({ children }: PromptProviderProps) {
 
     resolve.current && resolve.current(value);
     setOpen(false);
-    dialog!.close();
+    setType("none");
   };
 
-  const cancel = (dialog: HTMLDialogElement | null) => {
-    resolve.current && resolve.current(null);
-    dialog!.close();
+  const cancel = (_: HTMLDialogElement | null) => {
+    reject.current && reject.current();
+    setOpen(false);
+    setType("none");
   };
 
   return (
@@ -46,13 +49,16 @@ function PromptProvider({ children }: PromptProviderProps) {
       {open && (
         <Prompt
           open={open}
-          ref={ref}
           promptLabel={question}
           onSubmit={submit}
           onCancel={cancel}
         />
       )}
-      <PromptContext.Provider value={promptUser}>
+
+      <PromptContext.Provider
+        //@ts-ignore
+        value={prompt}
+      >
         {children}
       </PromptContext.Provider>
     </>
