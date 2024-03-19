@@ -1,5 +1,6 @@
 import {
   copyFile,
+  exists,
   readDir,
   readTextFile,
   removeFile,
@@ -60,11 +61,11 @@ export const createDocument = (
 ): Document => parseDocument(name, uuidv4(), content?.meta, content?.text);
 
 export const saveDocument = async (document: Document): Promise<boolean> => {
-  if (!validate(document.id)) {
-    return Promise.reject(false);
-  }
-
   try {
+    if (!validate(document.id)) {
+      return Promise.reject(false);
+    }
+
     await writeTextFile(
       `${FILE.path}/${formatDocumentName(document.name, document.id)}`,
       encodeDocumentContent(document),
