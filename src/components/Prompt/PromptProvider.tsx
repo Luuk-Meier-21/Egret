@@ -6,13 +6,13 @@ interface PromptProviderProps {
 }
 
 export const PromptContext = createContext<(question: string) => string>(
-  (question: string) => "default",
+  (_: string) => "default",
 );
 
 function PromptProvider({ children }: PromptProviderProps) {
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState("default");
-  const [type, setType] = useState<string | null>("none");
+  const [_, setType] = useState<string | null>("none");
 
   const resolve = useRef<(...args: any[]) => any>();
   const reject = useRef<(...args: any[]) => any>();
@@ -38,7 +38,7 @@ function PromptProvider({ children }: PromptProviderProps) {
     setType("none");
   };
 
-  const cancel = (dialog: HTMLDialogElement | null) => {
+  const cancel = (_: HTMLDialogElement | null) => {
     reject.current && reject.current();
     setOpen(false);
     setType("none");
@@ -54,7 +54,13 @@ function PromptProvider({ children }: PromptProviderProps) {
           onCancel={cancel}
         />
       )}
-      <PromptContext.Provider value={prompt}>{children}</PromptContext.Provider>
+
+      <PromptContext.Provider
+        //@ts-ignore
+        value={prompt}
+      >
+        {children}
+      </PromptContext.Provider>
     </>
   );
 }

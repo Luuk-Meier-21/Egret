@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { IBlockEditor } from "../types/block";
 import { Document } from "../types/documents";
-import { fetchDocumentById, saveDocument } from "./documents";
+import { fetchDocumentById, parseDocument, saveDocument } from "./documents";
 import { useHotkeyOverride, useHotkeys } from "./hotkeys";
 import { TauriEvent, listen } from "@tauri-apps/api/event";
 
@@ -17,11 +17,13 @@ export function useEditorAutosave(
 } {
   const unsavedChangesCount = useRef(0);
 
-  const getCurrentDocument = (): Document => ({
-    name: initialDocument.name,
-    id: initialDocument.id,
-    content: editor.document,
-  });
+  const getCurrentDocument = (): Document =>
+    parseDocument(
+      initialDocument.name,
+      initialDocument.id,
+      initialDocument.content.meta,
+      editor.document,
+    );
 
   const saveChanges = async () => {
     if (unsavedChangesCount.current > 0) {
@@ -41,7 +43,7 @@ export function useEditorAutosave(
       // Rly weird, revert to old state? this would mean a corrupted document
       return;
     }
-    editor.replaceBlocks(editor.document, document.content);
+    editor.replaceBlocks(editor.document, document.content.text);
   };
 
   const saveAndSync = async () => {
@@ -60,6 +62,7 @@ export function useEditorAutosave(
 
   // Save on component unmount
   useEffect(() => {
+    //@ts-ignore
     let unlisten = () => {};
 
     // Save on window close

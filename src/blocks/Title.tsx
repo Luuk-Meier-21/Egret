@@ -29,7 +29,7 @@ export const Title = createReactBlockSpec(
           role="heading"
           aria-level={1}
           aria-relevant="additions text"
-          className="font-bold"
+          className="text-xl font-bold"
           ref={props.contentRef}
         />
       );

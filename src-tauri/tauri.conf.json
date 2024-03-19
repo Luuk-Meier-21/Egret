@@ -6,15 +6,21 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "contextual-notes",
+    "productName": "Contextual Notes",
     "version": "0.0.0"
   },
+
   "tauri": {
     "allowlist": {
       "all": false,
       "shell": {
         "all": false,
         "open": true
+      },
+      "protocol": {
+        "all": true,
+        "asset": true,
+        "assetScope": ["**"]
       },
       "dialog": {
         "all": false,
@@ -25,7 +31,7 @@
         "save": false
       },
       "fs": {
-        "scope": ["$APPDATA/**/*", "$APPDATA/.bin/**/*"],
+        "scope": ["$APPDATA/**/*", "$APPDATA/.bin/**/*", "$RESOURCE/audio/*"],
         "all": true,
         "readFile": false,
         "writeFile": false,
@@ -36,18 +42,24 @@
         "removeFile": false,
         "renameFile": false,
         "exists": false
+      },
+      "clipboard": {
+        "all": false,
+        "readText": true,
+        "writeText": true
       }
     },
     "windows": [
       {
         "title": "contextual-notes",
-        "width": 800,
-        "height": 600
+        "width": 1080,
+        "height": 900
       }
     ],
     "security": {
       "csp": null
     },
+
     "bundle": {
       "active": true,
       "targets": "all",

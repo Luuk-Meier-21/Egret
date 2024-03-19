@@ -1,7 +1,5 @@
 import {
   copyFile,
-  createDir,
-  exists,
   readDir,
   readTextFile,
   removeFile,
@@ -10,8 +8,10 @@ import {
 import { FILE, FILE_BIN } from "../config/files";
 import {
   Document,
-  DocumentContent,
+  DocumentTextContent,
+  DocumentMetaContent,
   DocumentReference,
+  DocumentContent,
 } from "../types/documents";
 import { v4 as uuidv4, validate } from "uuid";
 import { requireDir } from "./filesystem";
@@ -25,21 +25,38 @@ export const formatDocumentPath = (name: string, id: string): string =>
 export const parseDocument = (
   name: string,
   id: string,
-  content?: DocumentContent,
-) => ({
+  meta?: Partial<DocumentMetaContent>,
+  text?: DocumentTextContent,
+): Document => ({
   name: name,
   id: id,
-  content: content ?? [
-    {
-      type: "paragraph",
-      content: [],
-    },
-  ],
-  keywords: [],
+  content: {
+    meta: meta ?? {},
+    text: text ?? [
+      {
+        type: "paragraph",
+        content: [],
+      },
+    ],
+  },
 });
 
-export const createDocument = (name: string, content?: DocumentContent) =>
-  parseDocument(name, uuidv4(), content);
+export const encodeDocumentContent = (document: Document): string => {
+  const content: DocumentContent = {
+    meta: document.content.meta,
+    text: document.content.text,
+  };
+
+  return JSON.stringify(content);
+};
+
+export const decodeDocumentContent = (jsonString: string): DocumentContent =>
+  JSON.parse(jsonString);
+
+export const createDocument = (
+  name: string,
+  content?: DocumentContent,
+): Document => parseDocument(name, uuidv4(), content?.meta, content?.text);
 
 export const saveDocument = async (document: Document): Promise<boolean> => {
   if (!validate(document.id)) {
@@ -49,7 +66,7 @@ export const saveDocument = async (document: Document): Promise<boolean> => {
   try {
     await writeTextFile(
       `${FILE.path}/${formatDocumentName(document.name, document.id)}`,
-      JSON.stringify(document.content),
+      encodeDocumentContent(document),
       {
         dir: FILE.source,
       },
@@ -112,15 +129,20 @@ export const fetchDocumentById = async (
     return null;
   }
 
-  const contents = await readTextFile(
+  const json = await readTextFile(
     formatDocumentPath(documentRef.name, documentRef.id),
     {
       dir: FILE.source,
     },
   );
-  const content: DocumentContent = JSON.parse(contents);
+  const contents = decodeDocumentContent(json);
 
-  return parseDocument(documentRef.name, documentRef.id, content);
+  return parseDocument(
+    documentRef.name,
+    documentRef.id,
+    contents.meta,
+    contents.text,
+  );
 };
 
 export const deleteDocumentById = async (

@@ -6,6 +6,7 @@ export const insertTemplateName = (editor: typeof schema.BlockNoteEditor) => ({
   title: "TemplateName",
   onItemClick: () => {
     insertOrUpdateBlock(editor, {
+      // @ts-ignore
       type: "template-name",
     });
   },

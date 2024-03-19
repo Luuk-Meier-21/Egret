@@ -1,6 +1,6 @@
 import Fuse, { FuseOptionKey, IFuseOptions } from "fuse.js";
-import { useHotkeys } from "../../utils/hotkeys";
 import { useEffect, useRef, useState } from "react";
+import { useRegisterAction } from "../../services/actions";
 
 interface SearchProps<T> {
   list: ReadonlyArray<T>;
@@ -29,12 +29,19 @@ function Search<T>({
     element.focus();
   };
 
-  useHotkeys("cmd+f", (event) => {
-    event.preventDefault();
+  useRegisterAction("Search for document, by title or keyword", "cmd+f", () => {
     focusSearch();
-
-    return false;
   });
+
+  const { element: DeleteButton } = useRegisterAction(
+    "Delete search query",
+    "shift+cmd+f",
+    () => {
+      setQuery(null);
+      setKey(null);
+      focusSearch();
+    },
+  );
 
   useEffect(() => {
     const search = (query: string, key: FuseOptionKey<T> | null) => {
@@ -62,24 +69,20 @@ function Search<T>({
     <div
       data-testid="Search"
       data-component-name="Search"
-      aria-labelledby="zoeken"
+      aria-labelledby="search"
       id="search-box"
       className="gap-2 ring-1 ring-black"
     >
-      <h2 id="zoeken">Zoeken in documenten</h2>
-      <button
-        onClick={() => {
-          setQuery(null);
-          setKey(null);
-        }}
-      >
-        Wis huidige zoekopdracht
-      </button>
-      <label htmlFor="search-query">Zoek op tekst:</label>
+      <DeleteButton />
+      <label id="search" htmlFor="search-query">
+        Search documents
+      </label>
       <input
         id="search-query"
         ref={ref}
         type="text"
+        spellCheck="false"
+        autoCorrect="false"
         onKeyDown={(event) => {
           if (event.code !== "Enter") {
             return true;

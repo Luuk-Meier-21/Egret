@@ -15,7 +15,16 @@ export type DocumentReferenceWithKeywords = DocumentReference & {
   keywords: Keyword[];
 };
 
-export type DocumentContent = IBlock[];
+export type DocumentMetaContent = {
+  lang: ("en" | "nl") & string;
+};
+
+export type DocumentTextContent = IBlock[];
+
+export type DocumentContent = {
+  meta: Partial<DocumentMetaContent>;
+  text: DocumentTextContent;
+};
 
 /**
  * document data at file location

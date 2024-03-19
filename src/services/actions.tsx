@@ -1,14 +1,10 @@
 // Typing registries
 // https://stackoverflow.com/questions/47098643/implementing-a-type-safe-service-registry-in-typescript
 
-import {
-  ComponentPropsWithoutRef,
-  ReactNode,
-  createContext,
-  useEffect,
-} from "react";
+import { ComponentPropsWithoutRef, createContext, useEffect } from "react";
 import { ObjectRegistry } from "../utils/object";
 import { useHotkeyOverride, useHotkeys } from "../utils/hotkeys";
+import { formatShortcutsForSpeech } from "../utils/speech";
 
 export type ActionCallback = () => void;
 
@@ -43,7 +39,7 @@ class ActionsRegistry {
   }
 }
 
-export const actionsRegistry = new ActionsRegistry();
+const actionsRegistry = new ActionsRegistry();
 
 /**
  * a hook for handling actions in caller component scope
@@ -65,7 +61,10 @@ export function useRegisterAction(
   const elementWithShortcut = (props: ComponentPropsWithoutRef<"button">) =>
     renderActionWithShortcut({ ...newAction, ...props });
 
-  useHotkeys(shortcut, callback);
+  useHotkeys(shortcut, (event) => {
+    event.preventDefault();
+    callback();
+  });
 
   useEffect(() => {
     actionsRegistry.define(newAction);
@@ -106,30 +105,10 @@ export function renderActionWithShortcut({
       onClick={callback}
       {...props}
     >
-      {label} <em>({shortcut.split("+").join(", ")})</em>
+      {label}{" "}
+      <em>({formatShortcutsForSpeech(shortcut.split("+")).join(", ")})</em>
     </button>
   );
-}
-
-/**
- * @deprecated
- * a hook for handling actions in caller component scope
- * @param action the action to be added / removed in the scope of the caller component
- */
-export function useRegisterActionsGrouped(actions: ActionConfiguration[]) {
-  useHotkeyOverride();
-
-  useEffect(() => {
-    for (let action of actions) {
-      actionsRegistry.define(action);
-    }
-
-    return () => {
-      for (let action of actions) {
-        actionsRegistry.delete(action);
-      }
-    };
-  }, []);
 }
 
 export function action(

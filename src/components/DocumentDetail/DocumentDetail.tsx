@@ -16,14 +16,13 @@ import { useRegisterAction } from "../../services/actions";
 import { toggleBlock } from "../../utils/block";
 import { shell } from "@tauri-apps/api";
 import {
-  createKeyword,
   dereferenceKeywordFromDocument,
   fetchKeywords,
   keywordHasRelation,
   referenceKeywordToDocument,
   saveKeyword,
 } from "../../utils/keywords";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Keyword } from "../../types/keywords";
 
 interface DocumentDetailProps {}
@@ -37,7 +36,7 @@ function DocumentDetail({}: DocumentDetailProps) {
   ];
   const editor = useCreateBlockNote({
     schema,
-    initialContent: initialDocument.content,
+    initialContent: initialDocument.content.text,
   });
 
   const [keywords, setKeywords] = useState<Keyword[]>(initialKeywords);
@@ -86,16 +85,16 @@ function DocumentDetail({}: DocumentDetailProps) {
     },
   );
 
-  useRegisterAction("Relate keyword", "cmd+r", async () => {
-    console.log("jhi");
-  });
-
   useRegisterAction("Delete document", "shift+cmd+backspace", async () => {
     await deleteDocumentById(initialDocument.id);
   });
 
   return (
-    <div data-component-name="DocumentDetail" role="application">
+    <div
+      data-component-name="DocumentDetail"
+      role="application"
+      lang={initialDocument.content.meta.lang ?? "en"}
+    >
       <h1 aria-live="polite" role="alert">
         {initialDocument.name}
       </h1>
@@ -110,7 +109,7 @@ function DocumentDetail({}: DocumentDetailProps) {
                   id={keyword.id}
                   type="checkbox"
                   checked={keywordHasRelation(keyword, initialDocument)}
-                  onChange={(event) => setKeywordRelation(keyword)}
+                  onChange={() => setKeywordRelation(keyword)}
                 />
                 <label htmlFor={keyword.id}>{keyword.label}</label>
               </li>

@@ -1,6 +1,5 @@
 import { ForwardedRef, forwardRef, useEffect, useRef, useState } from "react";
 import { useHotkeys } from "../../utils/hotkeys";
-import { event } from "@tauri-apps/api";
 
 interface PromptProps {
   open: boolean;
@@ -15,7 +14,6 @@ interface PromptProps {
 const Prompt = forwardRef(function Prompt(
   {
     open,
-    defaultValue = null,
     promptLabel,
     submitLabel,
     onSubmit = () => {},

@@ -2,7 +2,7 @@ import { readTextFile, writeTextFile } from "@tauri-apps/api/fs";
 import { v4 as uuidv4 } from "uuid";
 import { KEYWORD_FILE } from "../config/files";
 import { slugify } from "./url";
-import { requireDir, requireFile } from "./filesystem";
+import { requireFile } from "./filesystem";
 import { Keyword } from "../types/keywords";
 import { Document, DocumentReference } from "../types/documents";
 

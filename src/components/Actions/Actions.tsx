@@ -1,16 +1,11 @@
 import { ReactNode, useContext, useRef } from "react";
-import { useHotkeyOverride, useHotkeys } from "../../utils/hotkeys";
 import { PromptContext } from "../Prompt/PromptProvider";
 import { createDocument, saveDocument } from "../../utils/documents";
 import { useNavigate } from "react-router";
-import { Link } from "react-router-dom";
 import { Document } from "../../types/documents";
-import {
-  action,
-  actionsRegistry,
-  useRegisterAction,
-} from "../../services/actions";
+import { useRegisterAction } from "../../services/actions";
 import { createKeyword, saveKeyword } from "../../utils/keywords";
+import { handleSucces } from "../../utils/announce";
 
 interface ActionsProps {
   children: ReactNode | ReactNode[];
@@ -31,6 +26,16 @@ function Actions({ children }: ActionsProps) {
     },
   );
 
+  useRegisterAction("Focus first action", "cmd+2", async () => {
+    (
+      mainRef.current?.querySelector("#documents > button") as HTMLButtonElement
+    )?.focus();
+  });
+
+  useRegisterAction("Focus first action", "cmd+3", async () => {
+    actionsRef.current?.querySelector("button")?.focus();
+  });
+
   const { elementWithShortcut: NewDocumentButton } = useRegisterAction(
     "New document",
     "cmd+n",
@@ -39,9 +44,12 @@ function Actions({ children }: ActionsProps) {
         const name = await prompt("What will the document be called?");
         const document: Document = createDocument(name);
         await saveDocument(document);
+        console.log(name);
 
         // TODO: share succes state
         setTimeout(() => {
+          navigate(`/`);
+          handleSucces();
           navigate(`/documents/${document.id}`);
         }, 100);
       } catch (error) {
@@ -62,27 +70,34 @@ function Actions({ children }: ActionsProps) {
       } catch (error) {
         console.error("Failed to create keyword: ", error);
       }
+
+      handleSucces();
     },
   );
+
+  useRegisterAction("Test success audio", "cmd+l", async () => {
+    handleSucces();
+  });
 
   useRegisterAction("Focus main content", "control+space", () => {
     actionsRef?.current?.focus();
   });
 
   return (
-    <div data-component-name="Actions" className="it flex flex-col">
+    <div data-component-name="Actions menu" className="it flex flex-col">
       <BackHomeButton />
 
       <main ref={mainRef} className="ring-1 ring-black">
         {children}
       </main>
-      {/* {actionsRegistry.map((action) => (
-        <li key={action.shortcut}>
-          <button onClick={action.callback}>
-            {action.label} <em>{action.shortcut}</em>
-          </button>
+      <ul ref={actionsRef} role="menu">
+        <li role="menuitem">
+          <NewDocumentButton />
         </li>
-      ))} */}
+        <li role="menuitem">
+          <NewKeywordButton />
+        </li>
+      </ul>
     </div>
   );
 }
