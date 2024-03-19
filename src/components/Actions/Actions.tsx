@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 import { Document } from "../../types/documents";
 import { useRegisterAction } from "../../services/actions";
 import { createKeyword, saveKeyword } from "../../utils/keywords";
-import { handleSucces } from "../../utils/announce";
+import { handleError, handleSucces } from "../../utils/announce";
 
 interface ActionsProps {
   children: ReactNode | ReactNode[];
@@ -53,7 +53,7 @@ function Actions({ children }: ActionsProps) {
           navigate(`/documents/${document.id}`);
         }, 100);
       } catch (error) {
-        console.error("Failed to create document: ", error);
+        handleError("Failed to create document: ", error);
       }
     },
   );
@@ -68,7 +68,7 @@ function Actions({ children }: ActionsProps) {
 
         await saveKeyword(keyword);
       } catch (error) {
-        console.error("Failed to create keyword: ", error);
+        handleError("Failed to create keyword: ", error);
       }
 
       handleSucces();
@@ -84,13 +84,15 @@ function Actions({ children }: ActionsProps) {
   });
 
   return (
-    <div data-component-name="Actions menu" className="it flex flex-col">
-      <BackHomeButton />
+    <div data-component-name="Actions menu" className="flex flex-col">
+      <div className="p-4">
+        <BackHomeButton />
+      </div>
 
-      <main ref={mainRef} className="ring-1 ring-black">
+      <main ref={mainRef} className="ring-1 ring-white">
         {children}
       </main>
-      <ul ref={actionsRef} role="menu">
+      <ul ref={actionsRef} className=" p-4" role="menu">
         <li role="menuitem">
           <NewDocumentButton />
         </li>

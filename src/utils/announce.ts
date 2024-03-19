@@ -7,8 +7,8 @@ export async function handleSucces() {
   sound.play();
 }
 
-export async function handleError(message: string) {
-  console.error(message);
+export async function handleError(...messages: any[]) {
+  console.error(messages.join(""));
   const sound = new Howl({
     src: ["audio/error.mp3"],
   });

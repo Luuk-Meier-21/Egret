@@ -71,7 +71,7 @@ function Search<T>({
       data-component-name="Search"
       aria-labelledby="search"
       id="search-box"
-      className="gap-2 ring-1 ring-black"
+      className="gap-2 p-4 ring-1 ring-white"
     >
       <DeleteButton />
       <label id="search" htmlFor="search-query">
@@ -83,6 +83,7 @@ function Search<T>({
         type="text"
         spellCheck="false"
         autoCorrect="false"
+        className="bg-transparent"
         onKeyDown={(event) => {
           if (event.code !== "Enter") {
             return true;

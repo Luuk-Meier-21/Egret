@@ -24,6 +24,7 @@ import {
 } from "../../utils/keywords";
 import { useState } from "react";
 import { Keyword } from "../../types/keywords";
+import { handleError } from "../../utils/announce";
 
 interface DocumentDetailProps {}
 
@@ -78,7 +79,7 @@ function DocumentDetail({}: DocumentDetailProps) {
     "cmd+k",
     () => {
       if (keywords.length <= 0) {
-        console.error("No keywords to edit");
+        handleError("No keywords to edit");
       }
 
       setOpenSettings(!openSettings);
@@ -95,11 +96,11 @@ function DocumentDetail({}: DocumentDetailProps) {
       role="application"
       lang={initialDocument.content.meta.lang ?? "en"}
     >
-      <h1 aria-live="polite" role="alert">
+      <h1 className="p-4" aria-live="polite" role="alert">
         {initialDocument.name}
       </h1>
 
-      <section>
+      <section className="p-4">
         <EditSettings aria-expanded={openSettings} />
         {openSettings && (
           <ul>
@@ -119,12 +120,15 @@ function DocumentDetail({}: DocumentDetailProps) {
       </section>
 
       <BlockNoteView
-        className="max-w-[46em] text-black ring-1 ring-black [&_a]:underline"
+        className="max-w-[46em] p-4 text-white ring-1 ring-white [&_a]:underline"
         editor={editor}
         autoFocus
         slashMenu={false}
         autoCorrect="false"
         spellCheck="false"
+        onFocusCapture={(event) => {
+          event.preventDefault();
+        }}
         sideMenu={false}
         formattingToolbar={false}
         hyperlinkToolbar={false}

@@ -65,7 +65,7 @@ function DocumentsOverview({
       <section
         id="documents"
         aria-label="Documents"
-        className="ring-1 ring-black"
+        className="p-4 ring-1 ring-white"
       >
         {filteredDocuments.length > 0 ? (
           <ul ref={documentsRef} role="menu">
@@ -81,6 +81,7 @@ function DocumentsOverview({
                   onBlur={() => selectDocument(null)}
                   onClick={() => onDocumentClick(document)}
                   // to={`/documents/${document.id}`}
+                  className="underline"
                 >
                   {document.name}
                   {document.keywords.length > 0 && (

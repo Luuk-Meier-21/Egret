@@ -74,7 +74,7 @@ export const saveDocument = async (document: Document): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    console.error(error);
+    handleError(error);
     return Promise.reject(false);
   }
 };
