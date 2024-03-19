@@ -1,9 +1,17 @@
 import { useEffect, useRef } from "react";
 import { IBlockEditor } from "../types/block";
 import { Document } from "../types/documents";
-import { fetchDocumentById, parseDocument, saveDocument } from "./documents";
+import {
+  fetchDocumentById,
+  formatDocumentName,
+  parseDocument,
+  saveDocument,
+} from "./documents";
 import { useHotkeyOverride, useHotkeys } from "./hotkeys";
 import { TauriEvent, listen } from "@tauri-apps/api/event";
+import { handleError } from "./announce";
+import { FILE } from "../config/files";
+import { exists } from "@tauri-apps/api/fs";
 
 const UNSAVED_CHANGES_MAX = 15;
 
@@ -32,6 +40,17 @@ export function useEditorAutosave(
   };
 
   const save = async () => {
+    const fileExists = await exists(
+      `${FILE.path}/${formatDocumentName(initialDocument.name, initialDocument.id)}`,
+      {
+        dir: FILE.source,
+      },
+    );
+
+    if (!fileExists) {
+      handleError("File is deleted, unable to save");
+    }
+
     await saveDocument(getCurrentDocument());
     console.log("🚀 ~ save ~ after:", unsavedChangesCount.current);
     unsavedChangesCount.current = 0;
