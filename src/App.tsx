@@ -1,6 +1,5 @@
-import { Outlet, RouterProvider, useNavigate } from "react-router";
+import { Outlet, RouterProvider } from "react-router";
 import { createBrowserRouter } from "react-router-dom";
-import DocumentsOverview from "./components/DocumentsOverview/DocumentsOverview";
 import DocumentDetail from "./components/DocumentDetail/DocumentDetail";
 import { fetchDocumentById, fetchDocumentsReferences } from "./utils/documents";
 import { isWithoutTauri } from "./utils/tauri";
@@ -8,6 +7,7 @@ import PromptProvider from "./components/Prompt/PromptProvider";
 import Actions from "./components/Actions/Actions";
 import { fetchKeywords } from "./utils/keywords";
 import AppDocumentsOverview from "./components/DocumentsOverview/AppDocumentsOverview";
+import { useHotkeyOverride } from "./utils/hotkeys";
 
 function App() {
   if (isWithoutTauri) {
@@ -48,6 +48,8 @@ function App() {
       ],
     },
   ]);
+
+  useHotkeyOverride();
 
   return (
     <div data-component-name="App">

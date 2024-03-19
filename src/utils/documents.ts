@@ -15,6 +15,7 @@ import {
 } from "../types/documents";
 import { v4 as uuidv4, validate } from "uuid";
 import { requireDir } from "./filesystem";
+import { handleError } from "./announce";
 
 export const formatDocumentName = (name: string, id: string) =>
   `${name}.${id}.json`;

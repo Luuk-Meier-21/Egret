@@ -1,9 +1,9 @@
 // Typing registries
 // https://stackoverflow.com/questions/47098643/implementing-a-type-safe-service-registry-in-typescript
 
-import { ComponentPropsWithoutRef, createContext, useEffect } from "react";
+import { ComponentPropsWithoutRef, useEffect } from "react";
 import { ObjectRegistry } from "../utils/object";
-import { useHotkeyOverride, useHotkeys } from "../utils/hotkeys";
+import { useHotkeys } from "../utils/hotkeys";
 import { formatShortcutsForSpeech } from "../utils/speech";
 
 export type ActionCallback = () => void;

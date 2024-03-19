@@ -1,5 +1,3 @@
-import { useLoaderData } from "react-router";
-import { Link } from "react-router-dom";
 import {
   DocumentReference,
   DocumentReferenceWithKeywords,

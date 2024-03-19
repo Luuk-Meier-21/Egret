@@ -1,4 +1,4 @@
-import { Howl, Howler } from "howler";
+import { Howl } from "howler";
 
 export async function handleSucces() {
   const sound = new Howl({
