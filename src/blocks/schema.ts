@@ -25,8 +25,8 @@ export const schema = BlockNoteSchema.create({
     alert: Alert,
     title: Title,
     url: Link,
-    row: Row,
-    bullet: Bullet,
+    // row: Row,
+    // bullet: Bullet,
   },
   inlineContentSpecs: {
     ...defaultInlineContentSpecs,

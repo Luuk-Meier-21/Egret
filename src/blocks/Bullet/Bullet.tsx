@@ -37,27 +37,68 @@ const BulletListItemBlockContent = createStronglyTypedTiptapNode({
   //   ];
   // },
 
-  // addKeyboardShortcuts() {
-  //   return {
-  //     Enter: () => handleEnter(this.editor),
-  //     "Mod-Shift-8": () => {
-  //       if (getCurrentBlockContentType(this.editor) !== "inline*") {
-  //         return true;
-  //       }
+  addKeyboardShortcuts() {
+    return {
+      Enter: () => {
+        return this.editor
+          .chain()
+          .deleteSelection()
+          .insertContent(
+            {
+              type: "bullet",
+            },
+            {
+              updateSelection: true,
+            },
+          )
+          .run();
+        // return this.editor.commands.first(({ state, chain, commands }) => [
+        //   () => {
+        //     return false;
+        //   },
+        //   // // Changes list item block to a text block if the content is empty.
+        //   // commands.command(() => {
+        //   //   if (node.textContent.length === 0) {
+        //   //     return commands.BNUpdateBlock(state.selection.from, {
+        //   //       type: "paragraph",
+        //   //       props: {},
+        //   //     });
+        //   //   }
 
-  //       return this.editor.commands.BNUpdateBlock(
-  //         this.editor.state.selection.anchor,
-  //         {
-  //           type: "bulletListItem",
-  //           props: {},
-  //         },
-  //       );
-  //     },
-  //   };
-  // },
+        //   //   return false;
+        //   // }),
+
+        //   () =>
+        //     // Splits the current block, moving content inside that's after the cursor to a new block of the same type
+        //     // below.
+        //     commands.command(() => {
+        //       if (true) {
+        //         chain().deleteSelection().splitBlock().run();
+
+        //         return true;
+        //       }
+
+        //       return false;
+        //     }),
+        // ]);
+      },
+      // "Mod-Shift-8": () => {
+      //   if (getCurrentBlockContentType(this.editor) !== "inline*") {
+      //     return true;
+      //   }
+
+      //   return this.editor.commands.BNUpdateBlock(
+      //     this.editor.state.selection.anchor,
+      //     {
+      //       type: "bulletListItem",
+      //       props: {},
+      //     },
+      //   );
+      // },
+    };
+  },
 
   parseHTML() {
-    console.log(this.name);
     return [
       // Case for regular HTML list structure.
       {
@@ -141,7 +182,7 @@ export function createDefaultBlockDOMOutputSpec(
   blockContentHTMLAttributes: Record<string, string>,
   inlineContentHTMLAttributes: Record<string, string>,
 ) {
-  const blockContent = document.createElement("ul");
+  const blockContent = document.createElement("span");
   blockContent.className = mergeCSSClasses(
     "bn-block-content",
     blockContentHTMLAttributes.class,
@@ -165,7 +206,6 @@ export function createDefaultBlockDOMOutputSpec(
       inlineContent.setAttribute(attribute, value);
     }
   }
-  console.log(blockContent);
 
   blockContent.appendChild(inlineContent);
 

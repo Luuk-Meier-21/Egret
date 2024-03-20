@@ -24,13 +24,7 @@ export const Title = createReactBlockSpec(
   },
   {
     render: (props) => {
-      return (
-        <h2
-          role="heading"
-          className="text-xl font-bold"
-          ref={props.contentRef}
-        />
-      );
+      return <h2 className="text-xl font-bold" ref={props.contentRef} />;
     },
     parse: (el) => {
       console.log(el);

@@ -24,7 +24,7 @@ const Rowa = {
     propSchema: {},
     content: "inline",
   },
-  implemenation: {
+  implementation: {
     // render: (props) => {
     //   return (
     //     <div

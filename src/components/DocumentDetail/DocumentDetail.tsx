@@ -93,13 +93,13 @@ function DocumentDetail({}: DocumentDetailProps) {
   });
 
   useRegisterAction("Export document to html", "shift+cmd+enter", async () => {
-    console.log(await editor.blocksToHTMLLossy(editor.document));
+    console.log(await editor.blocksToMarkdownLossy(editor.document));
   });
 
   useRegisterAction("insert row", "cmd+4", async () => {
     const selectedBlock = editor.getTextCursorPosition().block;
     insertOrUpdateBlock(editor, {
-      type: "row",
+      type: "bullet",
     });
     // editor.insertInlineContent([
     //   "test",
