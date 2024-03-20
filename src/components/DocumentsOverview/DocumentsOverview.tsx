@@ -8,6 +8,7 @@ import { Keyword } from "../../types/keywords";
 import { includeKeywordsInDocuments } from "../../utils/keywords";
 import { useRegisterAction } from "../../services/actions";
 import { writeText } from "@tauri-apps/api/clipboard";
+import { useTitle } from "../../utils/title";
 
 interface DocumentsOverviewProps {
   // Documents overview could be uses as a document selector, wrapped in a dialog component. Callbacks resolve promise like prompt handles this
@@ -31,9 +32,12 @@ function DocumentsOverview({
     useState<DocumentReference | null>(null);
 
   const selectDocument = (document: DocumentReference | null) => {
+    console.log(document);
     setSelectedDocument(document);
     onDocumentSelection(document);
   };
+
+  useTitle("Documents");
 
   useRegisterAction("Copy selected document id", "cmd+c", async () => {
     if (selectedDocument === null) {
@@ -53,7 +57,7 @@ function DocumentsOverview({
         list={includeKeywordsInDocuments(documentReferences, keywords)}
         keys={["name", "keywords.label"]}
         onConfirm={() => {
-          documentsRef.current?.querySelector("a")?.focus();
+          documentsRef.current?.querySelector("button")?.focus();
         }}
         onResult={(searchResults) => {
           // Currently all documents go tru search, this might not be the best idea
@@ -77,8 +81,7 @@ function DocumentsOverview({
                 <button
                   onFocus={() => selectDocument(document)}
                   onBlur={() => selectDocument(null)}
-                  onClick={() => onDocumentClick(document)}
-                  // to={`/documents/${document.id}`}
+                  onClickCapture={() => onDocumentClick(document)}
                   className="underline"
                 >
                   {document.name}

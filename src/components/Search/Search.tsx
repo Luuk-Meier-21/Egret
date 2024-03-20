@@ -89,6 +89,7 @@ function Search<T>({
             return true;
           }
           onConfirm();
+          event.preventDefault();
         }}
         value={query || ""}
         onChange={(event) => {

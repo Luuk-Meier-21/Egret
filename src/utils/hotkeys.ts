@@ -1,5 +1,11 @@
+import {
+  isRegistered,
+  register,
+  unregister,
+} from "@tauri-apps/api/globalShortcut";
 import hotkeys, { HotkeysEvent, KeyHandler } from "hotkeys-js";
 import { useEffect } from "react";
+import { capitalize } from "./string";
 
 export function useHotkeys(key: string, handler: KeyHandler) {
   useEffect(() => {
@@ -28,6 +34,39 @@ export function useHotkeyOverride() {
         tagName == "SELECT" ||
         tagName == "TEXTAREA"
       );
+    };
+  }, []);
+}
+
+export function useTauriShortcut(
+  shortcut: string,
+  callback: (shortcut: string) => void,
+) {
+  const segments = shortcut.split("+");
+  const parsedShortcut = segments
+    .map((key) => (key === "cmd" ? "CommandOrControl" : key))
+    .map((key) => capitalize(key))
+    .join("+");
+  console.log(parsedShortcut);
+
+  useEffect(() => {
+    isRegistered(parsedShortcut)
+      .then((isRegistered) => {
+        console.log(isRegistered);
+        if (isRegistered === false) {
+          register(parsedShortcut, callback);
+        }
+      })
+      .catch((err) => console.error(err));
+
+    return () => {
+      isRegistered(parsedShortcut)
+        .then((isRegistered) => {
+          if (isRegistered) {
+            unregister(parsedShortcut);
+          }
+        })
+        .catch((err) => console.error(err));
     };
   }, []);
 }

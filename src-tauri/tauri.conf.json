@@ -7,7 +7,7 @@
   },
   "package": {
     "productName": "Contextual Notes",
-    "version": "0.0.0"
+    "version": "1.0.0"
   },
 
   "tauri": {
@@ -16,6 +16,9 @@
       "shell": {
         "all": false,
         "open": true
+      },
+      "globalShortcut": {
+        "all": true
       },
       "protocol": {
         "all": true,

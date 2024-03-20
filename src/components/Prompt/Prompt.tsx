@@ -52,9 +52,10 @@ const Prompt = forwardRef(function Prompt(
 
   return (
     <dialog ref={dialogRef} open={open}>
-      <p>{promptLabel}</p>
+      <p id="title">{promptLabel}</p>
       <form method="dialog">
         <input
+          aria-labelledby="title"
           ref={ref}
           autoFocus
           type="text"

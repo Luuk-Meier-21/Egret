@@ -1,18 +1,23 @@
 import { ReactNode, useContext, useRef } from "react";
 import { PromptContext } from "../Prompt/PromptProvider";
-import { createDocument, saveDocument } from "../../utils/documents";
+import {
+  createDocument,
+  fetchDocumentsReferences,
+  saveDocument,
+} from "../../utils/documents";
 import { useNavigate } from "react-router";
 import { Document } from "../../types/documents";
 import { useRegisterAction } from "../../services/actions";
 import { createKeyword, saveKeyword } from "../../utils/keywords";
 import { handleError, handleSucces } from "../../utils/announce";
+import { ONBOARDING_CONTENT } from "../../config/onboarding";
 
 interface ActionsProps {
   children: ReactNode | ReactNode[];
 }
 
 function Actions({ children }: ActionsProps) {
-  const mainRef = useRef<HTMLElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLUListElement>(null);
 
   const prompt = useContext(PromptContext);
@@ -41,8 +46,13 @@ function Actions({ children }: ActionsProps) {
     "cmd+n",
     async () => {
       try {
+        const documents = await fetchDocumentsReferences();
         const name = await prompt("What will the document be called?");
-        const document: Document = createDocument(name);
+
+        const introductionContent =
+          documents.length <= 0 ? ONBOARDING_CONTENT : undefined;
+
+        const document: Document = createDocument(name, introductionContent);
         await saveDocument(document);
         console.log(name);
 
@@ -89,10 +99,15 @@ function Actions({ children }: ActionsProps) {
         <BackHomeButton />
       </div>
 
-      <main ref={mainRef} className="ring-1 ring-white">
+      <div ref={mainRef} className="ring-1 ring-white">
         {children}
-      </main>
-      <ul ref={actionsRef} className=" p-4" role="menu">
+      </div>
+      <ul
+        aria-label="Actions menu"
+        ref={actionsRef}
+        className=" p-4"
+        role="menu"
+      >
         <li role="menuitem">
           <NewDocumentButton />
         </li>

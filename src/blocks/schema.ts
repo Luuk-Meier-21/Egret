@@ -9,6 +9,7 @@ import {
 import { Alert } from "./Alert";
 import { Title } from "./Title";
 import { Link } from "./Link";
+import { Reference } from "./Reference/Reference";
 
 export type BlockData = PartialBlock<
   BlockSchemaFromSpecs<typeof schema.blockSpecs>
@@ -24,6 +25,7 @@ export const schema = BlockNoteSchema.create({
     alert: Alert,
     title: Title,
     url: Link,
+    reference: Reference,
   },
   inlineContentSpecs: {
     ...defaultInlineContentSpecs,

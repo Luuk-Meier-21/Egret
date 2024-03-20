@@ -1,11 +1,11 @@
-import { useLoaderData } from "react-router";
+import { useLoaderData, useLocation, useNavigate } from "react-router";
 import {
   BlockNoteView,
   SuggestionMenuController,
   getDefaultReactSlashMenuItems,
   useCreateBlockNote,
 } from "@blocknote/react";
-import { filterSuggestionItems } from "@blocknote/core";
+import { filterSuggestionItems, insertOrUpdateBlock } from "@blocknote/core";
 import { insertTitle } from "../../blocks/Title";
 import { insertAlert } from "../../blocks/Alert";
 import { schema } from "../../blocks/schema";
@@ -22,23 +22,28 @@ import {
   referenceKeywordToDocument,
   saveKeyword,
 } from "../../utils/keywords";
-import { useState } from "react";
+import { FocusEventHandler, useEffect, useRef, useState } from "react";
 import { Keyword } from "../../types/keywords";
 import { handleError } from "../../utils/announce";
+import { useLinkClickHandler } from "react-router-dom";
+import { useTitle } from "../../utils/title";
 
 interface DocumentDetailProps {}
 
 function DocumentDetail({}: DocumentDetailProps) {
-  // const navigate = useNavigate();
+  const editRef = useRef<HTMLElement>(null);
 
   const [initialDocument, initialKeywords] = useLoaderData() as [
     Document,
     Keyword[],
   ];
+
   const editor = useCreateBlockNote({
     schema,
     initialContent: initialDocument.content.text,
   });
+
+  useTitle(initialDocument.name);
 
   const [keywords, setKeywords] = useState<Keyword[]>(initialKeywords);
   const [openSettings, setOpenSettings] = useState(false);
@@ -68,16 +73,34 @@ function DocumentDetail({}: DocumentDetailProps) {
 
   useRegisterAction("Open selected url", "cmd+u", () => {
     const url = editor.getSelectedLinkUrl();
+    console.log(url);
     if (url === undefined) {
       return;
     }
     shell.open(url);
   });
 
+  // useRegisterAction("Open selected url", "cmd+y", () => {
+  //   const props = editor.getTextCursorPosition().block.props as {
+  //     documentId?: string;
+  //   };
+  //   const id = props.documentId;
+  //   if (id === undefined) {
+  //     return;
+  //   }
+  //   // Temp fix for: https://github.com/Luuk-Meier-21/contextual-notes/issues/20
+  //   navigate(`/`);
+  //   setTimeout(() => {
+  //     navigate(`/documents/${id}`);
+  //   }, 100);
+  // });
+
   const { elementWithShortcut: EditSettings } = useRegisterAction(
     "Edit Keyword",
     "cmd+k",
     () => {
+      editRef.current?.querySelector("button")?.focus();
+
       if (keywords.length <= 0) {
         handleError("No keywords to edit");
       }
@@ -90,17 +113,52 @@ function DocumentDetail({}: DocumentDetailProps) {
     await deleteDocumentById(initialDocument.id);
   });
 
+  useRegisterAction("Delete document", "cmd+4", async () => {
+    insertOrUpdateBlock(editor, {
+      type: "reference",
+      props: {
+        documentId: "7eb35b67-831f-4d11-b398-cc1178ab50d3",
+      },
+    });
+  });
+
+  editor.onSelectionChange((editor) => {
+    const { block } = editor.getTextCursorPosition();
+    if (block.type === "title") {
+      return;
+    }
+  });
+
+  // Sits in betweed editor and blocknotejs, makes 'freezing blocks' possible
+  // const beforeEditorChange = (
+  //   event: React.KeyboardEvent<HTMLDivElement>,
+  // ): boolean => {
+  //   const { block } = editor.getTextCursorPosition();
+
+  //   if (block.type === "title" && event.key === "Backspace") {
+  //     handleError(block.type, " is frozen");
+  //     event.preventDefault();
+  //   }
+
+  //   return false;
+  // };
+
   return (
-    <div
+    <main
+      aria-labelledby="document-title"
       data-component-name="DocumentDetail"
-      role="application"
       lang={initialDocument.content.meta.lang ?? "en"}
     >
-      <h1 className="p-4" aria-live="polite" role="alert">
-        {initialDocument.name}
+      <h1 id="document-title" className="p-4" aria-live="polite">
+        Document: {initialDocument.name}{" "}
+        <span aria-hidden>{initialDocument.id}</span>
       </h1>
 
-      <section className="p-4">
+      <section
+        aria-label="Edit document settings"
+        ref={editRef}
+        className="p-4"
+      >
         <EditSettings aria-expanded={openSettings} />
         {openSettings && (
           <ul>
@@ -120,14 +178,17 @@ function DocumentDetail({}: DocumentDetailProps) {
       </section>
 
       <BlockNoteView
+        aria-label="Document editor"
         className="max-w-[46em] p-4 text-white ring-1 ring-white [&_a]:underline"
         editor={editor}
         autoFocus
         slashMenu={false}
         autoCorrect="false"
         spellCheck="false"
-        onFocusCapture={(event) => {
-          event.preventDefault();
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            editor;
+          }
         }}
         sideMenu={false}
         formattingToolbar={false}
@@ -147,7 +208,7 @@ function DocumentDetail({}: DocumentDetailProps) {
           }
         />
       </BlockNoteView>
-    </div>
+    </main>
   );
 }
 export default DocumentDetail;
