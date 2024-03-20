@@ -1,3 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.bn-block-group .bn-block-group {
+  @apply ml-5 ring-1 ring-white;
+}

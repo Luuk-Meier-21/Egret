@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "gen": "npx generate-react-cli component",
-    "gen-block": "npx generate-react-cli component $0 --type=block",
+    "gen-block": "npx generate-react-cli component --type=block",
     "cargo": "cd src-tauri; cargo"
   },
   "dependencies": {

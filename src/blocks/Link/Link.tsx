@@ -1,7 +1,7 @@
 import { insertOrUpdateBlock } from "@blocknote/core";
 import { createReactBlockSpec } from "@blocknote/react";
 import { RiAlertFill } from "react-icons/ri";
-import { schema } from "./schema";
+import { schema } from "../schema";
 
 export const insertLink = (editor: typeof schema.BlockNoteEditor) => ({
   title: "Link",

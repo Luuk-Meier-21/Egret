@@ -2,7 +2,7 @@ import { defaultProps, insertOrUpdateBlock } from "@blocknote/core";
 import { createReactBlockSpec } from "@blocknote/react";
 import { MdCancel, MdCheckCircle, MdError, MdInfo } from "react-icons/md";
 import { RiAlertFill } from "react-icons/ri";
-import { schema } from "./schema";
+import { schema } from "../schema";
 
 // The types of alerts that users can choose from.
 export const alertTypes = [

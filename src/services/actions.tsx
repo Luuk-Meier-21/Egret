@@ -17,10 +17,7 @@ export interface ActionConfiguration {
 class ActionsRegistry {
   actions = ObjectRegistry.init();
 
-  constructor() {
-    console.log("Actions registry");
-    console.log(this.actions);
-  }
+  constructor() {}
 
   define(action: ActionConfiguration) {
     this.actions.register(action.shortcut, action);

@@ -5,9 +5,9 @@ import {
   getDefaultReactSlashMenuItems,
   useCreateBlockNote,
 } from "@blocknote/react";
-import { filterSuggestionItems } from "@blocknote/core";
-import { insertTitle } from "../../blocks/Title";
-import { insertAlert } from "../../blocks/Alert";
+import { filterSuggestionItems, insertOrUpdateBlock } from "@blocknote/core";
+import { insertTitle } from "../../blocks/Title/Title";
+import { insertAlert } from "../../blocks/Alert/Alert";
 import { schema } from "../../blocks/schema";
 import { Document } from "../../types/documents";
 import { useEditorAutosave } from "../../utils/editor";
@@ -22,9 +22,11 @@ import {
   referenceKeywordToDocument,
   saveKeyword,
 } from "../../utils/keywords";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Keyword } from "../../types/keywords";
 import { handleError } from "../../utils/announce";
+import { appWindow } from "@tauri-apps/api/window";
+import { insertRow } from "../../blocks/Row/Row";
 
 interface DocumentDetailProps {}
 
@@ -90,6 +92,21 @@ function DocumentDetail({}: DocumentDetailProps) {
     await deleteDocumentById(initialDocument.id);
   });
 
+  useRegisterAction("Export document to html", "shift+cmd+enter", async () => {
+    console.log(await editor.blocksToHTMLLossy(editor.document));
+  });
+
+  useRegisterAction("insert row", "cmd+4", async () => {
+    const selectedBlock = editor.getTextCursorPosition().block;
+    insertOrUpdateBlock(editor, {
+      type: "row",
+    });
+    // editor.insertInlineContent([
+    //   "test",
+    //   { type: "text", text: "World", styles: {} },
+    // ]);
+  });
+
   return (
     <div
       data-component-name="DocumentDetail"
@@ -141,6 +158,7 @@ function DocumentDetail({}: DocumentDetailProps) {
                 ...getDefaultReactSlashMenuItems(editor),
                 insertTitle(editor),
                 insertAlert(editor),
+                insertRow(editor),
               ],
               query,
             )
