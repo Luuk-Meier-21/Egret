@@ -1,6 +1,5 @@
 import {
   copyFile,
-  exists,
   readDir,
   readTextFile,
   removeFile,

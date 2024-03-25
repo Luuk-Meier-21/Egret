@@ -3,9 +3,8 @@
 
 import { ComponentPropsWithoutRef, useEffect } from "react";
 import { ObjectRegistry } from "../utils/object";
-import { useHotkeys, useTauriShortcut } from "../utils/hotkeys";
+import { useHotkeys } from "../utils/hotkeys";
 import { formatShortcutsForSpeech } from "../utils/speech";
-import { capitalize } from "../utils/string";
 
 export type ActionCallback = () => void;
 

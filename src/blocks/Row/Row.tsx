@@ -1,7 +1,7 @@
 import { insertOrUpdateBlock } from "@blocknote/core";
 import { createReactBlockSpec } from "@blocknote/react";
 import { schema } from "../../blocks/schema";
-import { ReactNode, useEffect } from "react";
+import { ReactNode } from "react";
 import { BlockComponentProps } from "../../types/block";
 import { useRegisterAction } from "../../services/actions";
 

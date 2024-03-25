@@ -1,17 +1,8 @@
-import {
-  BlockNoteEditor,
-  BlockSchemaFromSpecs,
-  BlockSchemaWithBlock,
-  insertOrUpdateBlock,
-} from "@blocknote/core";
+import { insertOrUpdateBlock } from "@blocknote/core";
 import { createReactBlockSpec } from "@blocknote/react";
 import { schema } from "../../blocks/schema";
-import { availableMonitors } from "@tauri-apps/api/window";
-import { Link } from "react-router-dom";
 import { validate } from "uuid";
 import { fetchDocumentById } from "../../utils/documents";
-import { useRef, useState } from "react";
-import { IBlockEditor } from "../../types/block";
 
 const setReferenceName = async (
   documentId: string,

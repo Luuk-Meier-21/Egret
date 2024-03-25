@@ -1,11 +1,11 @@
-import { useLoaderData, useLocation, useNavigate } from "react-router";
+import { useLoaderData } from "react-router";
 import {
   BlockNoteView,
   SuggestionMenuController,
   getDefaultReactSlashMenuItems,
   useCreateBlockNote,
 } from "@blocknote/react";
-import { filterSuggestionItems, insertOrUpdateBlock } from "@blocknote/core";
+import { filterSuggestionItems } from "@blocknote/core";
 import { insertTitle } from "../../blocks/Title";
 import { insertAlert } from "../../blocks/Alert";
 import { schema } from "../../blocks/schema";
@@ -22,10 +22,9 @@ import {
   referenceKeywordToDocument,
   saveKeyword,
 } from "../../utils/keywords";
-import { FocusEventHandler, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Keyword } from "../../types/keywords";
 import { handleError } from "../../utils/announce";
-import { useLinkClickHandler } from "react-router-dom";
 import { useTitle } from "../../utils/title";
 
 interface DocumentDetailProps {}
@@ -113,11 +112,11 @@ function DocumentDetail({}: DocumentDetailProps) {
     await deleteDocumentById(initialDocument.id);
   });
 
-  useRegisterAction("Delete document", "cmd+4", async () => {
-    insertOrUpdateBlock(editor, {
-      type: "row",
-    });
-  });
+  // useRegisterAction("Delete document", "cmd+4", async () => {
+  //   insertOrUpdateBlock(editor, {
+  //     type: "row",
+  //   });
+  // });
 
   editor.onSelectionChange((editor) => {
     const { block } = editor.getTextCursorPosition();
