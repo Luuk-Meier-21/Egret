@@ -115,10 +115,7 @@ function DocumentDetail({}: DocumentDetailProps) {
 
   useRegisterAction("Delete document", "cmd+4", async () => {
     insertOrUpdateBlock(editor, {
-      type: "reference",
-      props: {
-        documentId: "7eb35b67-831f-4d11-b398-cc1178ab50d3",
-      },
+      type: "row",
     });
   });
 

@@ -10,6 +10,7 @@ import { Alert } from "./Alert";
 import { Title } from "./Title";
 import { Link } from "./Link";
 import { Reference } from "./Reference/Reference";
+import { Row } from "./Row/Row";
 
 export type BlockData = PartialBlock<
   BlockSchemaFromSpecs<typeof schema.blockSpecs>
