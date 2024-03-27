@@ -8,6 +8,7 @@ import Actions from "./components/Actions/Actions";
 import { fetchKeywords } from "./utils/keywords";
 import AppDocumentsOverview from "./components/DocumentsOverview/AppDocumentsOverview";
 import { useHotkeyOverride } from "./utils/hotkeys";
+import DialogProvider from "./components/Dialog/DialogProvider";
 
 function App() {
   if (isWithoutTauri) {
@@ -53,9 +54,11 @@ function App() {
 
   return (
     <div data-component-name="App">
-      <PromptProvider>
-        <RouterProvider router={router} />
-      </PromptProvider>
+      <DialogProvider>
+        <PromptProvider>
+          <RouterProvider router={router} />
+        </PromptProvider>
+      </DialogProvider>
     </div>
   );
 }

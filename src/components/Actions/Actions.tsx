@@ -1,5 +1,4 @@
 import { ReactNode, useContext, useRef } from "react";
-import { PromptContext } from "../Prompt/PromptProvider";
 import {
   createDocument,
   fetchDocumentsReferences,
@@ -11,6 +10,7 @@ import { useRegisterAction } from "../../services/actions";
 import { createKeyword, saveKeyword } from "../../utils/keywords";
 import { handleError, handleSucces } from "../../utils/announce";
 import { ONBOARDING_CONTENT } from "../../config/onboarding";
+import { DialogContext } from "../Dialog/DialogProvider";
 
 interface ActionsProps {
   children: ReactNode | ReactNode[];
@@ -20,8 +20,8 @@ function Actions({ children }: ActionsProps) {
   const mainRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLUListElement>(null);
 
-  const prompt = useContext(PromptContext);
   const navigate = useNavigate();
+  const { prompt, select } = useContext(DialogContext);
 
   const { elementWithShortcut: BackHomeButton } = useRegisterAction(
     "Back to home",
@@ -84,10 +84,6 @@ function Actions({ children }: ActionsProps) {
       handleSucces();
     },
   );
-
-  useRegisterAction("Test success audio", "cmd+l", async () => {
-    handleSucces();
-  });
 
   useRegisterAction("Focus main content", "control+space", () => {
     actionsRef?.current?.focus();
