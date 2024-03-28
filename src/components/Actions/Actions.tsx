@@ -6,7 +6,7 @@ import {
 } from "../../utils/documents";
 import { useNavigate } from "react-router";
 import { Document } from "../../types/documents";
-import { useRegisterAction } from "../../services/actions";
+import { useRegisterAction } from "../../services/actions-registry";
 import { createKeyword, saveKeyword } from "../../utils/keywords";
 import { handleError, handleSucces } from "../../utils/announce";
 import { ONBOARDING_CONTENT } from "../../config/onboarding";

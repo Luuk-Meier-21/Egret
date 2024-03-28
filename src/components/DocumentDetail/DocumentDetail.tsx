@@ -12,7 +12,7 @@ import { schema } from "../../blocks/schema";
 import { Document } from "../../types/documents";
 import { useEditorAutosave } from "../../utils/editor";
 import { deleteDocumentById } from "../../utils/documents";
-import { useRegisterAction } from "../../services/actions";
+import { useRegisterAction } from "../../services/actions-registry";
 import { toggleBlock } from "../../utils/block";
 import { shell } from "@tauri-apps/api";
 import {

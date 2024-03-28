@@ -5,9 +5,8 @@ use rodio::source::SineWave;
 use rodio::Sink;
 use rodio::{source::Source, Decoder, OutputStream};
 use std::io::BufReader;
-use std::time::Duration;
 use std::{fs::File, io::sink};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, Menu, Window, WindowBuilder};
 
 #[derive(Clone, serde::Serialize)]
 struct Payload {
@@ -21,6 +20,8 @@ fn greet(name: &str) -> String {
 }
 
 fn main() {
+    let menu = Menu::new();
+
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![greet])
         .run(tauri::generate_context!())
