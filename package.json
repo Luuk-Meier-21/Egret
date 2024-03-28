@@ -11,7 +11,11 @@
     "gen": "npx generate-react-cli",
     "prisma": "npx prisma",
     "migrate": "drizzle-kit generate:sqlite",
+    "migrate:prisma": "npm run prisma migrate dev",
     "drizzle": "drizzle-kit"
+  },
+  "prisma": {
+    "schema": "src-tauri/prisma/schema.prisma"
   },
   "dependencies": {
     "@blocknote/core": "^0.12.0",
@@ -26,6 +30,7 @@
     "hotkeys-js": "^3.13.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-error-boundary": "^4.0.13",
     "react-router": "^6.22.3",
     "react-router-dom": "^6.22.3",
     "tauri-plugin-sql-api": "github:tauri-apps/tauri-plugin-sql#v1",

@@ -1,7 +1,6 @@
 import { drizzle } from "drizzle-orm/sqlite-proxy";
 import Database, { QueryResult } from "tauri-plugin-sql-api";
 import * as schema from "../db/schema";
-import { updater } from "@tauri-apps/api";
 
 /**
  * Represents the result of a SELECT query.
@@ -45,7 +44,6 @@ export const db = drizzle<typeof schema>(
           console.error("SQL Error:", e);
           return [];
         });
-      console.log(method);
     }
 
     console.log(method === "all" ? rows : [rows[0]]);

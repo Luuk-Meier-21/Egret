@@ -6,6 +6,14 @@ import { fetchDocumentById, fetchDocumentsReferences } from "./utils/documents";
 import { isWithoutTauri } from "./utils/tauri";
 import PromptProvider from "./components/Prompt/PromptProvider";
 import Actions from "./components/Actions/Actions";
+import { useEffect, useState } from "react";
+import { db } from "./db/database";
+import * as dbShema from "./db/schema";
+import { slugify } from "./utils/url";
+import { IBlock } from "./types/block";
+import { useHotkeys } from "./utils/hotkeys";
+import { ErrorBoundary } from "react-error-boundary";
+import { prisma } from "./main";
 
 function App() {
   if (isWithoutTauri) {
@@ -64,52 +72,61 @@ function App() {
   //   loadUsers();
   // }
 
-  // async function addDocument() {
-  //   const content: IBlock[] = [
-  //     {
-  //       type: "paragraph",
-  //       content: "test",
-  //     },
-  //   ];
+  async function addDocument() {
+    const content: IBlock[] = [
+      {
+        type: "paragraph",
+        content: "test",
+      },
+    ];
 
-  //   // const keyword = await db.query.keywords.findFirst().execute();
-  //   const document = await db
-  //     .insert(dbShema.documents)
-  //     .values({ name: "test-document" })
-  //     .returning({ test: dbShema.documents.id })
-  //     .execute();
+    // const keyword = await db.query.keywords.findFirst().execute();
+    const document = await db
+      .insert(dbShema.documents)
+      .values({ name: "test-document" })
+      .returning({ test: dbShema.documents.id })
+      .execute();
 
-  //   console.log(document);
-  //   // await db
-  //   //   .insert(dbShema.keywordsToDocuments)
-  //   //   .values({ documentId: document[0].id, keywordId: keyword!.id });
+    console.log(document);
+    // await db
+    //   .insert(dbShema.keywordsToDocuments)
+    //   .values({ documentId: document[0].id, keywordId: keyword!.id });
 
-  //   // await db.query.documents.findFirst({
-  //   //   with: {
-  //   //     keywords: true,
-  //   //   },
-  //   // });
-  // }
+    // await db.query.documents.findFirst({
+    //   with: {
+    //     keywords: true,
+    //   },
+    // });
+  }
 
-  // useHotkeys("cmd+y", () => {
-  //   addDocument();
-  // });
+  useHotkeys("cmd+y", () => {
+    addDocument();
+  });
 
-  // useEffect(() => {
-  //   async function init() {
-  //     loadUsers();
-  //   }
-  //   init();
-  // }, []);
+  useEffect(() => {
+    async function init() {
+      loadUsers();
+    }
+    init();
+  }, []);
 
-  // const loadUsers = async () => {
-  //   const documents = await db.query.documents.findMany().execute();
-  //   console.log(documents);
-  //   // setUsers(a);
-  // };
+  const loadUsers = async () => {
+    const users = await prisma.user.findMany();
+    console.log(users);
+  };
 
   return (
     <div data-component-name="App">
+      <ErrorBoundary
+        onError={async () => {
+          await prisma.$disconnect();
+        }}
+        fallback={<p>⚠️Something went wrong</p>}
+      >
+        <PromptProvider>
+          <RouterProvider router={router} />
+        </PromptProvider>
+      </ErrorBoundary>
       {/* <form
         className="row"
         onSubmit={(e) => {
@@ -125,9 +142,6 @@ function App() {
         />
         <button type="submit">Add name to the db</button>
       </form> */}
-      <PromptProvider>
-        <RouterProvider router={router} />
-      </PromptProvider>
     </div>
   );
 }

@@ -62,7 +62,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "resources": ["migrations/*"]
+      "resources": ["prisma/*"]
     }
   }
 }

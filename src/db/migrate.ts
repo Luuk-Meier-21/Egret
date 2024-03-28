@@ -1,6 +1,7 @@
 import { readDir, readTextFile } from "@tauri-apps/api/fs";
 import { sqlite } from "./database";
 import { resourceDir } from "@tauri-apps/api/path";
+import Database from "tauri-plugin-sql-api";
 
 export type ProxyMigrator = (migrationQueries: string[]) => Promise<void>;
 
@@ -28,12 +29,12 @@ export async function migrate() {
   });
 
   const migrationTableCreate = /*sql*/ `
-		CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (
+  	CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             hash text NOT NULL UNIQUE,
-			created_at numeric
-		)
-	`;
+  		created_at numeric
+  	)
+  `;
 
   await sqlite.execute(migrationTableCreate, []);
 
