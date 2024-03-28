@@ -1,5 +1,7 @@
 generator client {
-  provider = "prisma-client-js"
+  provider    = "cargo prisma"
+  output      = "../src/db.rs"
+  module_path = "crate::db"
 }
 
 datasource db {
