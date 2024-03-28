@@ -1,23 +1,34 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use tauri::Manager;
+#[allow(warnings, unused)]
+mod prisma;
 
-#[derive(Clone, serde::Serialize)]
-struct Payload {
-    message: String,
-}
+// #[allow(warnings, unused)]
+// mod prisma;
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
+// use prisma_client_rust::{tokio, PrismaClient};
+// use specta::{collect_types, Type};
+// use tauri_specta::ts;
 
+// #[tauri::command]
+// #[specta::specta]
+// fn get_users(name: &str) -> String {
+//     format!("Hello, {}! You've been greeted from Rust!", name)
+// }
+
+// #[tokio::main]
 fn main() {
-    tauri::Builder::default()
-        .plugin(tauri_plugin_sql::Builder::default().build())
-        .invoke_handler(tauri::generate_handler![greet])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+    // let db = PrismaClient::_builder().build().await.unwrap();
+
+    // #[cfg(debug_assertions)]
+    // ts::export(collect_types![get_users], "../src/bindings.ts").unwrap();
+
+    // #[cfg(debug_assertions)]
+    // db._db_push().await.unwrap();
+
+    // tauri::Builder::default()
+    //     .invoke_handler(tauri::generate_handler![get_users])
+    //     .run(tauri::generate_context!())
+    //     .expect("error while running tauri application");
 }

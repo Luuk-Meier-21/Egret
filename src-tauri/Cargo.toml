@@ -1,5 +1,6 @@
+workspace = { members = ["prisma-cli"] }
 [package]
-name = "tauri-drizzle-sqlite-proxy-demo"
+name = "contextual-notes-prisma"
 version = "0.0.0"
 description = "A Tauri App"
 authors = ["you"]
@@ -16,7 +17,10 @@ tauri-build = { version = "1.5", features = [] }
 tauri = { version = "1.5", features = [ "fs-all", "path-all", "shell-open"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tauri-plugin-sql = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1", features = ["sqlite"] }
+specta = "1.0.5"
+tauri-specta = { version =  "1.0.2", features = ["typescript", "javascript"] }
+prisma-client-rust = { git = "https://github.com/Brendonovich/prisma-client-rust", tag = "0.6.11", features = ["sqlite", "migrations", "mocking", "specta"] }
+
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

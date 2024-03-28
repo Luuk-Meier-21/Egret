@@ -6,14 +6,9 @@ import { fetchDocumentById, fetchDocumentsReferences } from "./utils/documents";
 import { isWithoutTauri } from "./utils/tauri";
 import PromptProvider from "./components/Prompt/PromptProvider";
 import Actions from "./components/Actions/Actions";
-import { useEffect, useState } from "react";
-import { db } from "./db/database";
-import * as dbShema from "./db/schema";
-import { slugify } from "./utils/url";
-import { IBlock } from "./types/block";
 import { useHotkeys } from "./utils/hotkeys";
 import { ErrorBoundary } from "react-error-boundary";
-import { prisma } from "./main";
+import { getText } from "./bindings";
 
 function App() {
   if (isWithoutTauri) {
@@ -72,46 +67,48 @@ function App() {
   //   loadUsers();
   // }
 
-  async function addDocument() {
-    const content: IBlock[] = [
-      {
-        type: "paragraph",
-        content: "test",
-      },
-    ];
+  // async function addDocument() {
+  //   const content: IBlock[] = [
+  //     {
+  //       type: "paragraph",
+  //       content: "test",
+  //     },
+  //   ];
 
-    // const keyword = await db.query.keywords.findFirst().execute();
-    const document = await db
-      .insert(dbShema.documents)
-      .values({ name: "test-document" })
-      .returning({ test: dbShema.documents.id })
-      .execute();
+  //   // const keyword = await db.query.keywords.findFirst().execute();
+  //   const document = await db
+  //     .insert(dbShema.documents)
+  //     .values({ name: "test-document" })
+  //     .returning({ test: dbShema.documents.id })
+  //     .execute();
 
-    console.log(document);
-    // await db
-    //   .insert(dbShema.keywordsToDocuments)
-    //   .values({ documentId: document[0].id, keywordId: keyword!.id });
+  //   console.log(document);
+  //   // await db
+  //   //   .insert(dbShema.keywordsToDocuments)
+  //   //   .values({ documentId: document[0].id, keywordId: keyword!.id });
 
-    // await db.query.documents.findFirst({
-    //   with: {
-    //     keywords: true,
-    //   },
-    // });
-  }
+  //   // await db.query.documents.findFirst({
+  //   //   with: {
+  //   //     keywords: true,
+  //   //   },
+  //   // });
+  // }
 
   useHotkeys("cmd+y", () => {
-    addDocument();
+    getText("hi").then((a) => {
+      console.log(a);
+    });
   });
 
-  useEffect(() => {
-    async function init() {
-      loadUsers();
-    }
-    init();
-  }, []);
+  // useEffect(() => {
+  //   async function init() {
+  //     loadUsers();
+  //   }
+  //   init();
+  // }, []);
 
   const loadUsers = async () => {
-    const users = await prisma.user.findMany();
+    // const users = await prisma.user.findMany();
     console.log(users);
   };
 
