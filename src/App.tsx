@@ -8,7 +8,8 @@ import PromptProvider from "./components/Prompt/PromptProvider";
 import Actions from "./components/Actions/Actions";
 import { useHotkeys } from "./utils/hotkeys";
 import { ErrorBoundary } from "react-error-boundary";
-import { getText } from "./bindings";
+import { getUsers, newUser } from "./bindings";
+import { useState } from "react";
 
 function App() {
   if (isWithoutTauri) {
@@ -95,10 +96,16 @@ function App() {
   // }
 
   useHotkeys("cmd+y", () => {
-    getText("hi").then((a) => {
+    getUsers().then((a) => {
       console.log(a);
     });
   });
+
+  // useHotkeys("cmd+t", () => {
+  //   newUser().then((a) => {
+  //     console.log(a);
+  //   });
+  // });
 
   // useEffect(() => {
   //   async function init() {
@@ -109,36 +116,33 @@ function App() {
 
   const loadUsers = async () => {
     // const users = await prisma.user.findMany();
-    console.log(users);
   };
+
+  const [email, setEmail] = useState("");
 
   return (
     <div data-component-name="App">
-      <ErrorBoundary
-        onError={async () => {
-          await prisma.$disconnect();
-        }}
-        fallback={<p>⚠️Something went wrong</p>}
-      >
-        <PromptProvider>
-          <RouterProvider router={router} />
-        </PromptProvider>
-      </ErrorBoundary>
-      {/* <form
+      <PromptProvider>
+        <RouterProvider router={router} />
+      </PromptProvider>
+
+      <form
         className="row"
         onSubmit={(e) => {
           e.preventDefault();
-          addKeyword();
+          newUser(email).then((a) => {
+            console.log(a);
+          });
         }}
       >
         <input
           id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          value={name}
+          onChange={(e) => setEmail(e.currentTarget.value)}
+          value={email}
           placeholder="Enter a name..."
         />
         <button type="submit">Add name to the db</button>
-      </form> */}
+      </form>
     </div>
   );
 }

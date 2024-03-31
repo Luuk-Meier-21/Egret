@@ -10,7 +10,8 @@
     "tauri": "tauri",
     "cargo": "cd src-tauri; cargo",
     "gen": "npx generate-react-cli",
-    "migrate": "npm run prisma migrate dev"
+    "prisma:client": "cd src-tauri; cargo prisma generate",
+    "prisma": "cd src-tauri; cargo prisma"
   },
   "prisma": {
     "schema": "src-tauri/prisma/schema.prisma"
