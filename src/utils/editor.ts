@@ -5,8 +5,6 @@ import { toggleBlock } from "./block";
 import { fetchDocumentById, saveDocument } from "./documents";
 import { useHotkeyOverride, useHotkeys } from "./hotkeys";
 import { TauriEvent, listen } from "@tauri-apps/api/event";
-import { Command } from "@tauri-apps/api/shell";
-import { open } from "@tauri-apps/api/dialog";
 import { shell } from "@tauri-apps/api";
 
 export function useEditorHotkeys(editor: IBlockEditor) {
@@ -82,13 +80,11 @@ export function useEditorAutosave(
 
   // Save on component unmount
   useEffect(() => {
-    let unlisten = () => {};
-
     // Save on window close
     listen(TauriEvent.WINDOW_CLOSE_REQUESTED, async () => {
       saveChanges();
     }).then((callback) => {
-      unlisten = callback;
+      callback;
     });
 
     return () => {

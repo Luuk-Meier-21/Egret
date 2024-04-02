@@ -1,11 +1,10 @@
 import { ReactNode, useContext, useRef } from "react";
 import { useHotkeyOverride, useHotkeys } from "../../utils/hotkeys";
 import { PromptContext } from "../Prompt/PromptProvider";
-import { createDocument, saveDocument } from "../../utils/documents";
+import { createDocument } from "../../utils/documents";
 import { useNavigate } from "react-router";
 import { Link } from "react-router-dom";
 import { Document } from "../../types/documents";
-import { createKeyword, saveKeyword } from "../../utils/keywords";
 
 interface ActionsProps {
   children: ReactNode | ReactNode[];
@@ -26,7 +25,7 @@ function Actions({ children }: ActionsProps) {
     }
 
     const document: Document = createDocument(name);
-    const succes = await saveDocument(document);
+    // const succes = await saveDocument(document);
 
     // TODO: share succes state
     setTimeout(() => {

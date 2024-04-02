@@ -5,7 +5,7 @@ import { useEffect } from "react";
  * @param message message to announce
  * @param condition not implmented yet
  */
-export function useAnnounce(message: string, condition: boolean = true) {
+export function useAnnounce(message: string) {
   useEffect(() => {
     document.title = message;
 

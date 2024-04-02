@@ -62,7 +62,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "resources": ["prisma/*"]
+      "resources": ["prisma/*", "../db/*"]
     }
   }
 }

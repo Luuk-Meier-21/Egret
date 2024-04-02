@@ -7,7 +7,6 @@ import { isWithoutTauri } from "./utils/tauri";
 import PromptProvider from "./components/Prompt/PromptProvider";
 import Actions from "./components/Actions/Actions";
 import { useHotkeys } from "./utils/hotkeys";
-import { ErrorBoundary } from "react-error-boundary";
 import { getUsers, newUser } from "./bindings";
 import { useState } from "react";
 
@@ -114,9 +113,9 @@ function App() {
   //   init();
   // }, []);
 
-  const loadUsers = async () => {
-    // const users = await prisma.user.findMany();
-  };
+  // const loadUsers = async () => {
+  //   // const users = await prisma.user.findMany();
+  // };
 
   const [email, setEmail] = useState("");
 

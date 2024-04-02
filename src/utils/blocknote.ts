@@ -1,21 +1,10 @@
-import {
-  InlineContent,
-  PartialInlineContent,
-  StyleSchema,
-  StyledText,
-} from "@blocknote/core";
-import { schema } from "../App";
+import { StyleSchema, StyledText } from "@blocknote/core";
+import { schema } from "../blocks/schema";
 
 type PartialLink = {
   type: "link";
   content: string | StyledText<typeof schema.styleSchema>[];
   href: string;
-};
-
-type PartialContent = {
-  type: "text";
-  text: string;
-  styles: StyleSchema;
 };
 
 export const createLinkContent = (

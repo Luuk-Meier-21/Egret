@@ -1,9 +1,8 @@
 import { defaultProps, insertOrUpdateBlock } from "@blocknote/core";
 import { createReactBlockSpec } from "@blocknote/react";
-import { Menu } from "@mantine/core";
 import { MdCancel, MdCheckCircle, MdError, MdInfo } from "react-icons/md";
-import { schema } from "../App";
 import { RiAlertFill } from "react-icons/ri";
+import { schema } from "./schema";
 
 // The types of alerts that users can choose from.
 export const alertTypes = [
@@ -85,10 +84,10 @@ export const Alert = createReactBlockSpec(
   },
   {
     render: (props) => {
-      const alertType = alertTypes.find(
-        (a) => a.value === props.block.props.type,
-      )!;
-      const Icon = alertType.icon;
+      // const alertType = alertTypes.find(
+      //   (a) => a.value === props.block.props.type,
+      // )!;
+      // const Icon = alertType.icon;
       return (
         <div className="bg-red-400" data-alert-type={props.block.props.type}>
           <div className="inline-content" ref={props.contentRef} />

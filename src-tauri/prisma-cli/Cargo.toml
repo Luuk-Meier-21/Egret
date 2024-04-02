@@ -13,3 +13,7 @@ mocking = ["prisma-client-rust-cli/mocking"]
 
 [dependencies]
 prisma-client-rust-cli = { git = "https://github.com/Brendonovich/prisma-client-rust", tag = "0.6.11", features = ["migrations"] }
+prisma-client-rust-sdk = { git = "https://github.com/Brendonovich/prisma-client-rust", tag = "0.6.11" }
+prisma-client-rust-generator = { git = "https://github.com/Brendonovich/prisma-client-rust" }
+serde = { version = "1.0.145", features = ["derive"] }
+thiserror = "1.0.40"

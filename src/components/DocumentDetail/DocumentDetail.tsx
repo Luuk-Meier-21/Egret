@@ -1,15 +1,11 @@
-import { useLoaderData, useNavigate } from "react-router";
+import { useLoaderData } from "react-router";
 import {
   BlockNoteView,
   SuggestionMenuController,
   getDefaultReactSlashMenuItems,
   useCreateBlockNote,
 } from "@blocknote/react";
-import {
-  BlockIdentifier,
-  filterSuggestionItems,
-  insertOrUpdateBlock,
-} from "@blocknote/core";
+import { filterSuggestionItems } from "@blocknote/core";
 import { insertTitle } from "../../blocks/Title";
 import { insertAlert } from "../../blocks/Alert";
 import { schema } from "../../blocks/schema";

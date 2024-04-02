@@ -14,7 +14,6 @@ interface PromptProps {
 const Prompt = forwardRef(function Prompt(
   {
     open,
-    defaultValue = null,
     promptLabel,
     submitLabel,
     onSubmit = () => {},

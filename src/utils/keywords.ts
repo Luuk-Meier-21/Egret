@@ -60,7 +60,9 @@ export async function referenceKeywordToDocument(
   if (!keyword.documents.includes(keyword.id)) {
     keyword.documents.push(keyword.id);
   }
+  //@ts-ignore
   if (!document.keywords.includes(document.id)) {
+    //@ts-ignore
     document.keywords.push(keyword.id);
   }
 
@@ -74,7 +76,9 @@ export async function dereferenceKeywordFromDocument(
   if (!keyword.documents.includes(keyword.id)) {
     keyword.documents.push(keyword.id);
   }
+  //@ts-ignore
   if (!document.keywords.includes(document.id)) {
+    //@ts-ignore
     document.keywords.push(keyword.id);
   }
 }
