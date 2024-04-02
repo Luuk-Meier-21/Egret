@@ -26,6 +26,16 @@ import { useRef, useState } from "react";
 import { Keyword } from "../../types/keywords";
 import { handleError } from "../../utils/announce";
 import { useTitle } from "../../utils/title";
+import {
+  DocumentContent,
+  DocumentData,
+  DocumentViewData,
+} from "../../types/document-service";
+import {
+  generateDocumentRegion,
+  generateDocumentView,
+} from "../../services/document/document-parser";
+import DocumentRegion from "../DocumentRegion/DocumentRegion";
 
 interface DocumentDetailProps {}
 
@@ -41,6 +51,7 @@ function DocumentDetail({}: DocumentDetailProps) {
     schema,
     initialContent: initialDocument.content.text,
   });
+  console.log(editor);
 
   useTitle(initialDocument.name);
 
@@ -139,6 +150,26 @@ function DocumentDetail({}: DocumentDetailProps) {
   //   return false;
   // };
 
+  const views: DocumentViewData[] = [
+    generateDocumentView({
+      label: "test view",
+      content: [
+        generateDocumentRegion({
+          label: "region a",
+        }),
+        generateDocumentRegion({
+          label: "region b",
+        }),
+        generateDocumentRegion({
+          label: "region c",
+        }),
+        generateDocumentRegion({
+          label: "region d",
+        }),
+      ],
+    }),
+  ];
+
   return (
     <main
       aria-labelledby="document-title"
@@ -173,38 +204,53 @@ function DocumentDetail({}: DocumentDetailProps) {
         )}
       </section>
 
-      <BlockNoteView
-        aria-label="Document editor"
-        className="max-w-[46em] p-4 text-white ring-1 ring-white [&_a]:underline"
-        editor={editor}
-        autoFocus
-        slashMenu={false}
-        autoCorrect="false"
-        spellCheck="false"
-        onKeyDown={(event) => {
-          if (event.key === "Escape") {
-            editor;
-          }
-        }}
-        sideMenu={false}
-        formattingToolbar={false}
-        hyperlinkToolbar={false}
-      >
-        <SuggestionMenuController
-          triggerCharacter="/"
-          getItems={async (query) =>
-            filterSuggestionItems(
-              [
-                ...getDefaultReactSlashMenuItems(editor),
-                insertTitle(editor),
-                insertAlert(editor),
-              ],
-              query,
-            )
-          }
-        />
-      </BlockNoteView>
+      <ul>
+        <li>
+          {views.map((view) => (
+            <article>
+              <h2>{view.label}</h2>
+              {view.content.map((region) => (
+                <DocumentRegion region={region} />
+              ))}
+            </article>
+          ))}
+        </li>
+      </ul>
     </main>
   );
 }
 export default DocumentDetail;
+
+{
+  /* <BlockNoteView
+          aria-label="Document editor"
+          className="max-w-[46em] p-4 text-white ring-1 ring-white [&_a]:underline"
+          editor={editor}
+          autoFocus
+          slashMenu={false}
+          autoCorrect="false"
+          spellCheck="false"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              editor;
+            }
+          }}
+          sideMenu={false}
+          formattingToolbar={false}
+          hyperlinkToolbar={false}
+        >
+          <SuggestionMenuController
+            triggerCharacter="/"
+            getItems={async (query) =>
+              filterSuggestionItems(
+                [
+                  ...getDefaultReactSlashMenuItems(editor),
+                  insertTitle(editor),
+                  insertAlert(editor),
+                ],
+                query,
+              )
+            }
+        />
+      </BlockNoteView> */
+}

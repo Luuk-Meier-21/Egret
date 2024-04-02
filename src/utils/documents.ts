@@ -11,7 +11,7 @@ import {
   DocumentTextContent,
   DocumentMetaContent,
   DocumentReference,
-  DocumentContent,
+  LegacyDocumentContent as DocumentContent,
 } from "../types/documents";
 import { v4 as uuidv4, validate } from "uuid";
 import { requireDir } from "./filesystem";
