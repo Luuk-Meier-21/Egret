@@ -142,9 +142,11 @@ function App() {
 
   return (
     <div data-component-name="App">
-      <PromptProvider>
-        <RouterProvider router={router} />
-      </PromptProvider>
+      <DialogProvider>
+        <PromptProvider>
+          <RouterProvider router={router} />
+        </PromptProvider>
+      </DialogProvider>
     </div>
   );
 }

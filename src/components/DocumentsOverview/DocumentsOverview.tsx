@@ -6,7 +6,7 @@ import Search from "../Search/Search";
 import { ReactNode, useRef, useState } from "react";
 import { Keyword } from "../../types/keywords";
 import { includeKeywordsInDocuments } from "../../utils/keywords";
-import { useRegisterAction } from "../../services/actions";
+import { useRegisterAction } from "../../services/actions-registry";
 import { writeText } from "@tauri-apps/api/clipboard";
 import { useTitle } from "../../utils/title";
 

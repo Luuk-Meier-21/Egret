@@ -3,7 +3,7 @@ import { createReactBlockSpec } from "@blocknote/react";
 import { schema } from "../../blocks/schema";
 import { ReactNode } from "react";
 import { BlockComponentProps } from "../../types/block";
-import { useRegisterAction } from "../../services/actions";
+import { useRegisterAction } from "../../services/actions-registry";
 
 export const insertRow = (editor: typeof schema.BlockNoteEditor) => ({
   title: "Row",

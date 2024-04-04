@@ -5,6 +5,9 @@ interface PromptProviderProps {
   children: ReactNode | ReactNode[];
 }
 
+/**
+ * @deprecated
+ */
 export const PromptContext = createContext<(question: string) => string>(
   (_: string) => "default",
 );
@@ -17,6 +20,11 @@ function PromptProvider({ children }: PromptProviderProps) {
   const resolve = useRef<(...args: any[]) => any>();
   const reject = useRef<(...args: any[]) => any>();
 
+  /**
+   * @deprecated
+   * @param question
+   * @returns
+   */
   const prompt = (question: string): Promise<string> => {
     setQuestion(question);
     setOpen(true);

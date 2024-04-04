@@ -1,6 +1,5 @@
 import { useLoaderData } from "react-router";
 import { deleteDocumentById } from "../../utils/documents";
-import { useRegisterAction } from "../../services/actions";
 import { Keyword } from "../../types/keywords";
 import { useTitle } from "../../utils/title";
 import DocumentRegion from "../DocumentRegion/DocumentRegion";
@@ -11,6 +10,7 @@ import {
   TextDocumentRegionData,
 } from "../../types/document-service";
 import { IBlockEditor } from "../../types/block";
+import { useRegisterAction } from "../../services/actions-registry";
 
 interface DocumentDetailProps {}
 

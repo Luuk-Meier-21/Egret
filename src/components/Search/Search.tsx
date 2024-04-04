@@ -1,6 +1,6 @@
 import Fuse, { FuseOptionKey, IFuseOptions } from "fuse.js";
 import { useEffect, useRef, useState } from "react";
-import { useRegisterAction } from "../../services/actions";
+import { useRegisterAction } from "../../services/actions-registry";
 
 interface SearchProps<T> {
   list: ReadonlyArray<T>;
