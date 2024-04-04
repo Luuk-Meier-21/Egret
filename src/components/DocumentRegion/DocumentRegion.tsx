@@ -6,13 +6,13 @@ import {
 } from "../../types/document-service";
 import { schema } from "../../blocks/schema";
 import { shell } from "@tauri-apps/api";
-import {
-  useRegisterAction,
-  useRegisterEditorAction,
-} from "../../services/actions";
 import { toggleBlock } from "../../utils/block";
 import { useEditorOnSave } from "../../utils/editor";
 import { IBlockEditor } from "../../types/block";
+import {
+  useRegisterAction,
+  useRegisterEditorAction,
+} from "../../services/actions-registry";
 
 interface DocumentRegionProps<
   T extends

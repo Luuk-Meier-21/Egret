@@ -30,6 +30,7 @@ import {
   generateContentfullLayout,
 } from "./services/layout/layout-document";
 import { ContentfullLayout, Layout } from "./types/layout-service";
+import DialogProvider from "./components/Dialog/DialogProvider";
 
 const TEST_DOCUMENT: Readonly<DocumentData> = generateDocumentData({
   name: "test document",
