@@ -1,5 +1,5 @@
 import { IBlock } from "./block";
-import { DocumentMetaContent } from "./documents";
+import { DocumentMetaData } from "./documents";
 
 export interface TreeData {
   id: string;
@@ -8,19 +8,17 @@ export interface TreeData {
   contentType: string;
 }
 
-export interface ContentData<T extends TreeData> extends TreeData {
-  id: string;
-  type: string;
+export type ContentData<T extends TreeData> = TreeData & {
   contentType: "inline";
   content: T[];
-}
-
-export interface TextData extends TreeData {
-  id: string;
-  type: string;
+};
+export type TextData = TreeData & {
   contentType: "text";
   blocks: BlockData;
-}
+};
+
+export type ContentOrTextData<T extends TreeData> = TreeData &
+  (TextData | ContentData<T>);
 
 export type BlockData = IBlock[];
 
@@ -30,11 +28,11 @@ export type DocumentData = {
   name: string;
   id: string;
   keywords?: string[];
-  content: DocumentContent;
+  data: DocumentContentData;
 };
 
-export type DocumentContent = {
-  meta: Partial<DocumentMetaContent>;
+export type DocumentContentData = {
+  meta: Partial<DocumentMetaData>;
   views: DocumentViewData[];
 };
 
@@ -45,12 +43,33 @@ export interface DocumentViewData extends ContentData<DocumentRegionData> {
   content: DocumentRegionData[];
 }
 
-export interface DocumentRegionData extends TextData {
+type RegionTree = TextRegion;
+
+/**
+ * Support up to 3 layers nested content
+ */
+export type DocumentRegionData = {
   id: string;
   type: "region";
-  contentType: "text";
-  blocks: BlockData;
-}
+} & RegionTree;
+
+export type TextRegion = {
+  id: string;
+  type: "region";
+} & TextData;
+
+export type QRegionData<
+  ChildType extends TreeData = TextData,
+  WrapperType extends TreeData = ContentOrTextData<ChildType>,
+> = {
+  id: string;
+  type: "region";
+} & WrapperType;
+
+export type ContentDocumentRegionData<T extends TreeData = RegionTree> =
+  QRegionData<T, ContentData<T>>;
+
+export type TextDocumentRegionData = QRegionData<TextData, TextData>;
 
 // export interface DocumentText extends TextData {
 //   id: string;

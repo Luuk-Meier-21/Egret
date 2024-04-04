@@ -6,7 +6,7 @@ import {
   fetchDocumentById,
   formatDocumentName,
 } from "../../utils/documents";
-import { parseDocumentContentFromLegacy } from "./document-parser";
+import { parseDocumentContentFromLegacy } from "./document-generator";
 import { DOCUMENTS } from "../../config/files";
 import { writeTextFile } from "@tauri-apps/api/fs";
 

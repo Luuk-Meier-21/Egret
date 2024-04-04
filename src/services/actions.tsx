@@ -5,6 +5,7 @@ import { ComponentPropsWithoutRef, useEffect } from "react";
 import { ObjectRegistry } from "../utils/object";
 import { useHotkeys } from "../utils/hotkeys";
 import { formatShortcutsForSpeech } from "../utils/speech";
+import { IBlockEditor } from "../types/block";
 
 export type ActionCallback = () => void;
 
@@ -77,6 +78,19 @@ export function useRegisterAction(
   }, []);
 
   return { callback, element, elementWithShortcut };
+}
+
+export function useRegisterEditorAction(
+  editor: IBlockEditor,
+  label: string,
+  shortcut: string,
+  callback: ActionCallback,
+) {
+  useRegisterAction(label, shortcut, () => {
+    if (editor.isFocused() && editor.isEditable) {
+      callback();
+    }
+  });
 }
 
 export function renderAction({

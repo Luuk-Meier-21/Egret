@@ -1,187 +1,111 @@
 import { useLoaderData } from "react-router";
-import {
-  BlockNoteView,
-  SuggestionMenuController,
-  getDefaultReactSlashMenuItems,
-  useCreateBlockNote,
-} from "@blocknote/react";
-import { filterSuggestionItems } from "@blocknote/core";
-import { insertTitle } from "../../blocks/Title";
-import { insertAlert } from "../../blocks/Alert";
-import { schema } from "../../blocks/schema";
-import { Document } from "../../types/documents";
-import { useEditorAutosave } from "../../utils/editor";
 import { deleteDocumentById } from "../../utils/documents";
 import { useRegisterAction } from "../../services/actions";
-import { toggleBlock } from "../../utils/block";
-import { shell } from "@tauri-apps/api";
-import {
-  dereferenceKeywordFromDocument,
-  fetchKeywords,
-  keywordHasRelation,
-  referenceKeywordToDocument,
-  saveKeyword,
-} from "../../utils/keywords";
-import { useRef, useState } from "react";
 import { Keyword } from "../../types/keywords";
-import { handleError } from "../../utils/announce";
 import { useTitle } from "../../utils/title";
-import {
-  DocumentContent,
-  DocumentData,
-  DocumentViewData,
-} from "../../types/document-service";
-import {
-  generateDocumentRegion,
-  generateDocumentView,
-} from "../../services/document/document-parser";
 import DocumentRegion from "../DocumentRegion/DocumentRegion";
+import { LayoutBranchOrNode } from "../LayoutBranch/LayoutBranch";
+import { ContentfullLayout } from "../../types/layout-service";
+import {
+  DocumentData,
+  TextDocumentRegionData,
+} from "../../types/document-service";
+import { IBlockEditor } from "../../types/block";
 
 interface DocumentDetailProps {}
 
 function DocumentDetail({}: DocumentDetailProps) {
-  const editRef = useRef<HTMLElement>(null);
-
-  const [initialDocument, initialKeywords] = useLoaderData() as [
-    Document,
+  const [staticDocumentData, staticLayout, _] = useLoaderData() as [
+    DocumentData,
+    ContentfullLayout,
     Keyword[],
   ];
 
-  const editor = useCreateBlockNote({
-    schema,
-    initialContent: initialDocument.content.text,
-  });
-  console.log(editor);
+  // const view = staticDocumentData.data.views[0];
 
-  useTitle(initialDocument.name);
+  // const [structuredView, setStructuredView] = useState<ContentfullLayout>(
+  //   generateContentfullLayout(view, staticLayout),
+  // );
 
-  const [keywords, setKeywords] = useState<Keyword[]>(initialKeywords);
-  const [openSettings, setOpenSettings] = useState(false);
+  // const [tempViewStorage, setTempViewStorage] =
+  //   useState<DocumentViewData>(view);
 
-  const setKeywordRelation = async (keyword: Keyword) => {
-    const hasRelation = keywordHasRelation(keyword, initialDocument);
-
-    hasRelation
-      ? await dereferenceKeywordFromDocument(keyword, initialDocument)
-      : await referenceKeywordToDocument(keyword, initialDocument);
-
-    await saveKeyword(keyword);
-
-    const keywords = await fetchKeywords();
-
-    setKeywords(keywords);
-  };
-
-  useEditorAutosave(editor, initialDocument);
-
-  useRegisterAction("Selection to title", "cmd+b", () => {
-    const selectedBlock = editor.getTextCursorPosition().block;
-    toggleBlock(editor, selectedBlock, {
-      type: "title",
-    });
-  });
-
-  useRegisterAction("Open selected url", "cmd+u", () => {
-    const url = editor.getSelectedLinkUrl();
-    console.log(url);
-    if (url === undefined) {
-      return;
-    }
-    shell.open(url);
-  });
-
-  // useRegisterAction("Open selected url", "cmd+y", () => {
-  //   const props = editor.getTextCursorPosition().block.props as {
-  //     documentId?: string;
-  //   };
-  //   const id = props.documentId;
-  //   if (id === undefined) {
-  //     return;
-  //   }
-  //   // Temp fix for: https://github.com/Luuk-Meier-21/contextual-notes/issues/20
-  //   navigate(`/`);
-  //   setTimeout(() => {
-  //     navigate(`/documents/${id}`);
-  //   }, 100);
-  // });
-
-  const { elementWithShortcut: EditSettings } = useRegisterAction(
-    "Edit Keyword",
-    "cmd+k",
-    () => {
-      editRef.current?.querySelector("button")?.focus();
-
-      if (keywords.length <= 0) {
-        handleError("No keywords to edit");
-      }
-
-      setOpenSettings(!openSettings);
-    },
-  );
-
-  useRegisterAction("Delete document", "shift+cmd+backspace", async () => {
-    await deleteDocumentById(initialDocument.id);
-  });
-
-  // useRegisterAction("Delete document", "cmd+4", async () => {
-  //   insertOrUpdateBlock(editor, {
-  //     type: "row",
+  // const getViewWithUpdatedRegion = (
+  //   region: TextDocumentRegionData,
+  // ): DocumentViewData => {
+  //   const newView = { ...view };
+  //   const index = newView.content.findIndex((r) => {
+  //     return r.id === region.id;
   //   });
-  // });
 
-  editor.onSelectionChange((editor) => {
-    const { block } = editor.getTextCursorPosition();
-    if (block.type === "title") {
-      return;
-    }
-  });
-
-  // Sits in betweed editor and blocknotejs, makes 'freezing blocks' possible
-  // const beforeEditorChange = (
-  //   event: React.KeyboardEvent<HTMLDivElement>,
-  // ): boolean => {
-  //   const { block } = editor.getTextCursorPosition();
-
-  //   if (block.type === "title" && event.key === "Backspace") {
-  //     handleError(block.type, " is frozen");
-  //     event.preventDefault();
+  //   if (index === -1) {
+  //     return newView;
   //   }
 
-  //   return false;
+  //   newView.content[index] = region;
+  //   return newView;
   // };
 
-  const views: DocumentViewData[] = [
-    generateDocumentView({
-      label: "test view",
-      content: [
-        generateDocumentRegion({
-          label: "region a",
-        }),
-        generateDocumentRegion({
-          label: "region b",
-        }),
-        generateDocumentRegion({
-          label: "region c",
-        }),
-        generateDocumentRegion({
-          label: "region d",
-        }),
-      ],
-    }),
-  ];
+  const handleSave = (region: TextDocumentRegionData, editor: IBlockEditor) => {
+    // setTempViewStorage(getViewWithUpdatedRegion(region));
+  };
+
+  const handleChange = (
+    region: TextDocumentRegionData,
+    editor: IBlockEditor,
+  ) => {
+    // setTempViewStorage(getViewWithUpdatedRegion(region));
+  };
+
+  useTitle(staticDocumentData.name);
+
+  // const [keywords, setKeywords] = useState<Keyword[]>(staticKeywords);
+  // const [openSettings, setOpenSettings] = useState(false);
+
+  // const setKeywordRelation = async (keyword: Keyword) => {
+  //   const hasRelation = keywordHasRelation(keyword, staticDocumentData);
+
+  //   hasRelation
+  //     ? await dereferenceKeywordFromDocument(keyword, staticDocumentData)
+  //     : await referenceKeywordToDocument(keyword, staticDocumentData);
+
+  //   await saveKeyword(keyword);
+
+  //   const keywords = await fetchKeywords();
+
+  //   setKeywords(keywords);
+  // };
+
+  // const { elementWithShortcut: EditSettings } = useRegisterAction(
+  //   "Edit Keyword",
+  //   "cmd+k",
+  //   () => {
+  //     editRef.current?.querySelector("button")?.focus();
+
+  //     if (keywords.length <= 0) {
+  //       handleError("No keywords to edit");
+  //     }
+
+  //     setOpenSettings(!openSettings);
+  //   },
+  // );
+
+  useRegisterAction("Delete document", "shift+cmd+backspace", async () => {
+    await deleteDocumentById(staticDocumentData.id);
+  });
 
   return (
     <main
       aria-labelledby="document-title"
       data-component-name="DocumentDetail"
-      lang={initialDocument.content.meta.lang ?? "en"}
+      lang={staticDocumentData.data.meta.lang ?? "en"}
     >
       <h1 id="document-title" className="p-4" aria-live="polite">
-        Document: {initialDocument.name}{" "}
-        <span aria-hidden>{initialDocument.id}</span>
+        Document: {staticDocumentData.name}{" "}
+        <span aria-hidden>{staticDocumentData.id}</span>
       </h1>
 
-      <section
+      {/* <section
         aria-label="Edit document settings"
         ref={editRef}
         className="p-4"
@@ -202,20 +126,23 @@ function DocumentDetail({}: DocumentDetailProps) {
             ))}
           </ul>
         )}
-      </section>
+      </section> */}
 
-      <ul>
-        <li>
-          {views.map((view) => (
-            <article>
-              <h2>{view.label}</h2>
-              {view.content.map((region) => (
-                <DocumentRegion region={region} />
-              ))}
-            </article>
-          ))}
-        </li>
-      </ul>
+      <section>
+        {staticLayout.tree.map((branchOrNode) => (
+          <LayoutBranchOrNode
+            key={branchOrNode.id}
+            value={branchOrNode}
+            renderRegion={(region) => (
+              <DocumentRegion
+                onSave={handleSave}
+                onChange={handleChange}
+                region={region}
+              />
+            )}
+          />
+        ))}
+      </section>
     </main>
   );
 }

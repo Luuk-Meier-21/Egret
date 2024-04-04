@@ -29,3 +29,7 @@ export class ObjectRegistry<T extends Record<string, {}>> {
     return new ObjectRegistry({});
   }
 }
+
+export function deepJSONClone<T>(data: T): T {
+  return JSON.parse(JSON.stringify(data));
+}

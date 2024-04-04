@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IBlockEditor } from "../types/block";
 import { Document } from "../types/documents";
 import {
@@ -14,6 +14,63 @@ import { FILE } from "../config/files";
 import { exists } from "@tauri-apps/api/fs";
 
 const UNSAVED_CHANGES_MAX = 15;
+
+export function useEditorOnSave(editor: IBlockEditor, onSave: () => void) {
+  const [isFocused, setFocused] = useState(false);
+
+  const unsavedChangesCount = useRef(0);
+
+  const handleSave = (type: string = "unknown") => {
+    if (!isFocused) {
+      unsavedChangesCount.current = 0;
+      return;
+    }
+    console.log(
+      `🚀 ~ save, event: ${type}, after:`,
+      unsavedChangesCount.current,
+    );
+    onSave();
+    unsavedChangesCount.current = 0;
+  };
+
+  useEffect(() => {
+    editor.onEditorContentChange(() => {
+      unsavedChangesCount.current++;
+
+      if (unsavedChangesCount.current > UNSAVED_CHANGES_MAX) {
+        handleSave("auto");
+      }
+    });
+
+    editor._tiptapEditor.on("blur", () => {
+      setFocused(false);
+      handleSave("blur");
+    });
+
+    editor._tiptapEditor.on("focus", () => {
+      setFocused(true);
+    });
+
+    let unlisten = () => {};
+
+    // Save on window close
+    listen(TauriEvent.WINDOW_CLOSE_REQUESTED, async () => {
+      handleSave("close");
+    }).then((callback) => {
+      unlisten = callback;
+    });
+
+    return () => {
+      handleSave("unmount");
+    };
+  }, []);
+
+  // Save on save hotkey
+  useHotkeyOverride();
+  useHotkeys("cmd+s", () => {
+    handleSave("forced");
+  });
+}
 
 export function useEditorAutosave(
   editor: IBlockEditor,
