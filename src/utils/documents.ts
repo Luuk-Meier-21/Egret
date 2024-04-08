@@ -9,9 +9,9 @@ import { FILE, FILE_BIN } from "../config/files";
 import {
   Document,
   DocumentTextContent,
-  DocumentMetaContent,
   DocumentReference,
   LegacyDocumentContent as DocumentContent,
+  DocumentMetaData,
 } from "../types/documents";
 import { v4 as uuidv4, validate } from "uuid";
 import { requireDir } from "./filesystem";
@@ -26,7 +26,7 @@ export const formatDocumentPath = (name: string, id: string): string =>
 export const parseDocument = (
   name: string,
   id: string,
-  meta?: Partial<DocumentMetaContent>,
+  meta?: Partial<DocumentMetaData>,
   text?: DocumentTextContent,
 ): Document => ({
   name: name,

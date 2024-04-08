@@ -1,4 +1,4 @@
-import { ForwardedRef, ReactNode, forwardRef, useRef } from "react";
+import { ForwardedRef, ReactNode, forwardRef } from "react";
 
 interface DialogProps {
   children: ReactNode | ReactNode[];

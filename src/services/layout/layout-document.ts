@@ -1,5 +1,4 @@
 import {
-  DocumentData,
   DocumentRegionData,
   DocumentViewData,
 } from "../../types/document-service";
@@ -50,7 +49,7 @@ export function generateContentfullLayout(
   };
 
   // First do relations
-  for (const [i, relation] of relations.entries()) {
+  for (const relation of relations) {
     const nodeIndex = nodes.findIndex(
       (node) => node.id === relation.layoutNodeId,
     );
@@ -62,7 +61,7 @@ export function generateContentfullLayout(
   }
 
   // Give leftover regions a spot
-  for (const [i, node] of nodes.entries()) {
+  for (const node of nodes) {
     if (node.contentfull === false) {
       const region = availableRegions.shift();
 
@@ -102,7 +101,7 @@ export function flattenLayoutNodesByReference(
 }
 
 export function flattenLayoutNodes(layout: Layout): LayoutNodeData[] {
-  const newLayout = { ...layout };
+  const newLayout = deepJSONClone(layout);
 
-  return flattenLayoutNodesByReference(layout.tree);
+  return flattenLayoutNodesByReference(newLayout.tree);
 }

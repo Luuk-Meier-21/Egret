@@ -63,7 +63,10 @@ function LayoutNode({
         <button
           className="p-4"
           onClick={async () => {
-            console.error("Adding new data not implemented yet");
+            console.error(
+              "Adding new data not implemented yet, node:",
+              value.id,
+            );
           }}
         >
           Blank

@@ -46,12 +46,15 @@ function DocumentDetail({}: DocumentDetailProps) {
   //   return newView;
   // };
 
+  //@ts-ignore
   const handleSave = (region: TextDocumentRegionData, editor: IBlockEditor) => {
     // setTempViewStorage(getViewWithUpdatedRegion(region));
   };
 
   const handleChange = (
+    //@ts-ignore
     region: TextDocumentRegionData,
+    //@ts-ignore
     editor: IBlockEditor,
   ) => {
     // setTempViewStorage(getViewWithUpdatedRegion(region));

@@ -45,6 +45,7 @@ function RecursiveDocumentRegion({
   }
 }
 
+//@ts-ignore
 function InlineDocumentRegion({
   region,
   onSave,
@@ -115,12 +116,11 @@ function TextDocumentRegion({
       data-component-name="DocumentDetail"
       className="w-full p-4 text-white focus-within:bg-white focus-within:text-black"
     >
-      <h3>{region.label}</h3>
       <BlockNoteView
         aria-label="Document editor"
         className="w-full max-w-[46em] [&_a]:underline"
         editor={editor}
-        autoFocus
+        // editable={false}
         slashMenu={false}
         autoCorrect="false"
         spellCheck="false"

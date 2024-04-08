@@ -51,6 +51,7 @@ export function useEditorOnSave(editor: IBlockEditor, onSave: () => void) {
       setFocused(true);
     });
 
+    // @ts-ignore
     let unlisten = () => {};
 
     // Save on window close

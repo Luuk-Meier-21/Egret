@@ -121,7 +121,7 @@ function App() {
         {
           path: "documents/:id",
           element: <DocumentDetail />,
-          loader: async ({ params }) => {
+          loader: async ({}) => {
             const a: ContentfullLayout = generateContentfullLayout(
               TEST_DOCUMENT.data.views[0],
               addRelationsToLayout(TEST_LAYOUT, TEST_RELATIONS),
