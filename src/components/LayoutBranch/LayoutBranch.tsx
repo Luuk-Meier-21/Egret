@@ -1,78 +1,76 @@
-import { ReactNode, useContext } from "react";
-import { DocumentRegionData } from "../../types/document-service";
+import { ReactNode } from "react";
 import {
   LayoutBranchData,
   LayoutCommon,
   LayoutNodeData,
   LayoutTreeTrunk,
 } from "../../types/layout-service";
-import { PromptContext } from "../Prompt/PromptProvider";
 
 interface LayoutBranchProps<T extends LayoutCommon = LayoutTreeTrunk> {
   value: T;
-  renderRegion: (region: DocumentRegionData) => ReactNode;
+  level?: "row" | "column" | "unknown";
+  renderNode: (data: LayoutNodeData) => ReactNode;
 }
 
 export function LayoutBranchOrNode({
   value,
-  renderRegion = () => null,
+  level = "row",
+  renderNode = () => null,
 }: LayoutBranchProps) {
   if (value.type === "branch") {
-    return <LayoutBranch renderRegion={renderRegion} value={value} />;
+    return <LayoutBranch level={level} renderNode={renderNode} value={value} />;
   } else {
-    return <LayoutNode renderRegion={renderRegion} value={value} />;
+    return <LayoutNode level={level} renderNode={renderNode} value={value} />;
   }
 }
 
 function LayoutBranch({
   value,
-  renderRegion,
+  level,
+  renderNode,
 }: LayoutBranchProps<LayoutBranchData<LayoutTreeTrunk>>) {
   return (
-    <ul
+    <div
       aria-label={`${value.flow}`}
+      id={value.id}
+      data-layout-level={level}
+      data-layout-type="branch"
       data-component-name="LayoutBranch"
       data-flow={value.flow}
-      className="flex w-full flex-col data-[flow='horizontal']:flex-row"
+      className="flex flex-col"
     >
-      {value.children.map((value) => (
-        <LayoutBranchOrNode
-          renderRegion={renderRegion}
-          key={value.id}
-          value={value}
-        />
-      ))}
-    </ul>
+      list horizontal {value.children.length} items
+      <ul className="flex w-full flex-row">
+        {value.children.map((value) => (
+          <li className="flex w-full">
+            <LayoutBranchOrNode
+              renderNode={renderNode}
+              level="column"
+              key={value.id}
+              value={value}
+            />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
 function LayoutNode({
   value,
-  renderRegion,
+  level,
+  renderNode,
 }: LayoutBranchProps<LayoutNodeData>) {
-  const {} = useContext(PromptContext);
-
   return (
-    <article
+    <section
       data-component-name="LayoutNode"
+      id={value.id}
+      data-layout-level={level}
+      data-layout-type="node"
       className="flex w-full ring-1 ring-white"
     >
-      {value.data ? (
-        renderRegion(value.data)
-      ) : (
-        <button
-          className="p-4"
-          onClick={async () => {
-            console.error(
-              "Adding new data not implemented yet, node:",
-              value.id,
-            );
-          }}
-        >
-          Blank
-        </button>
-      )}
-    </article>
+      {renderNode(value)}
+    </section>
   );
 }
 

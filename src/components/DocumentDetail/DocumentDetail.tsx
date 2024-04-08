@@ -2,15 +2,18 @@ import { useLoaderData } from "react-router";
 import { deleteDocumentById } from "../../utils/documents";
 import { Keyword } from "../../types/keywords";
 import { useTitle } from "../../utils/title";
-import DocumentRegion from "../DocumentRegion/DocumentRegion";
 import { LayoutBranchOrNode } from "../LayoutBranch/LayoutBranch";
 import { ContentfullLayout } from "../../types/layout-service";
-import {
-  DocumentData,
-  TextDocumentRegionData,
-} from "../../types/document-service";
+import { DocumentData } from "../../types/document-service";
 import { IBlockEditor } from "../../types/block";
 import { useRegisterAction } from "../../services/actions-registry";
+import { useEffect, useRef, useState } from "react";
+import { LayoutNavigator } from "../../services/layout/layout-navigator";
+import { LayoutRegionNavigator } from "../../services/layout/layout-region-navigator";
+import DocumentRegion from "../DocumentRegion/DocumentRegion";
+import { createKeyword } from "../../utils/keywords";
+import { validate } from "uuid";
+import { invoke } from "@tauri-apps/api";
 
 interface DocumentDetailProps {}
 
@@ -21,30 +24,33 @@ function DocumentDetail({}: DocumentDetailProps) {
     Keyword[],
   ];
 
-  // const view = staticDocumentData.data.views[0];
+  const ref = useRef<HTMLElement>(null);
 
   // const [structuredView, setStructuredView] = useState<ContentfullLayout>(
   //   generateContentfullLayout(view, staticLayout),
   // );
 
-  // const [tempViewStorage, setTempViewStorage] =
-  //   useState<DocumentViewData>(view);
+  const navigator = new LayoutNavigator(
+    new LayoutRegionNavigator(staticLayout),
+  );
 
-  // const getViewWithUpdatedRegion = (
-  //   region: TextDocumentRegionData,
-  // ): DocumentViewData => {
-  //   const newView = { ...view };
-  //   const index = newView.content.findIndex((r) => {
-  //     return r.id === region.id;
-  //   });
+  const [rowId, setRowId] = useState<string | null>(staticLayout.tree[0].id);
+  const [nodeId, setNodeId] = useState<string | null>(navigator.getFirst().id);
 
-  //   if (index === -1) {
-  //     return newView;
-  //   }
+  useEffect(() => {
+    const row = staticLayout.tree.find((row) => row.id === rowId);
+    if (row?.type === "branch") {
+      const columnInRow = row.children.find((column) => column.id === nodeId);
 
-  //   newView.content[index] = region;
-  //   return newView;
-  // };
+      if (columnInRow) {
+        setNodeId(columnInRow.id);
+      } else {
+        setNodeId(row.children[0].id);
+      }
+    } else if (row?.type === "node") {
+      setNodeId(row.id);
+    }
+  }, [rowId]);
 
   //@ts-ignore
   const handleSave = (region: TextDocumentRegionData, editor: IBlockEditor) => {
@@ -97,16 +103,73 @@ function DocumentDetail({}: DocumentDetailProps) {
     await deleteDocumentById(staticDocumentData.id);
   });
 
+  useRegisterAction("Move up", "option+up", async () => {
+    const index = staticLayout.tree.findIndex((row) => row.id === rowId);
+    const previousRow = staticLayout.tree[index - 1];
+    if (previousRow) {
+      setRowId(previousRow.id);
+    } else {
+      // Create new row
+    }
+  });
+
+  useRegisterAction("Move down", "option+down", async () => {
+    const index = staticLayout.tree.findIndex((row) => row.id === rowId);
+    const nextRow = staticLayout.tree[index + 1];
+    if (nextRow) {
+      setRowId(nextRow.id);
+    } else {
+      // Create new row
+    }
+  });
+
+  useRegisterAction("Move right", "option+left", async () => {
+    const row = staticLayout.tree.find((row) => row.id === rowId);
+    if (row?.type === "branch") {
+      const index = row.children.findIndex((column) => column.id === nodeId);
+      const previousColumn = row.children[index - 1];
+      if (previousColumn) {
+        setNodeId(previousColumn.id);
+      } else {
+        // Create new column
+      }
+    } else {
+      // Create new column
+    }
+  });
+
+  useRegisterAction("Move left", "option+right", async () => {
+    const row = staticLayout.tree.find((row) => row.id === rowId);
+    if (row?.type === "branch") {
+      const index = row.children.findIndex((column) => column.id === nodeId);
+      const nextColumn = row.children[index + 1];
+      if (nextColumn) {
+        setNodeId(nextColumn.id);
+      } else {
+        // Create new column
+      }
+    } else {
+      // Create new column
+    }
+  });
+
+  useRegisterAction("Move left", "k", async () => {
+    await invoke("sound");
+  });
+
+  // useRegisterAction("b", "cmd+down", async () => {
+  //   navigator.down();
+  // });
+
   return (
     <main
-      aria-labelledby="document-title"
       data-component-name="DocumentDetail"
       lang={staticDocumentData.data.meta.lang ?? "en"}
     >
-      <h1 id="document-title" className="p-4" aria-live="polite">
+      {/* <h1 id="document-title" className="p-4" aria-live="polite">
         Document: {staticDocumentData.name}{" "}
         <span aria-hidden>{staticDocumentData.id}</span>
-      </h1>
+      </h1> */}
 
       {/* <section
         aria-label="Edit document settings"
@@ -131,21 +194,38 @@ function DocumentDetail({}: DocumentDetailProps) {
         )}
       </section> */}
 
-      <section>
+      <main ref={ref}>
         {staticLayout.tree.map((branchOrNode) => (
           <LayoutBranchOrNode
             key={branchOrNode.id}
             value={branchOrNode}
-            renderRegion={(region) => (
-              <DocumentRegion
-                onSave={handleSave}
-                onChange={handleChange}
-                region={region}
-              />
-            )}
+            renderNode={(node) => {
+              const isFocused = node.id === nodeId;
+
+              if (node.data === undefined) {
+                return <div>Blank</div>;
+              }
+
+              return (
+                <DocumentRegion
+                  onSave={handleSave}
+                  onChange={handleChange}
+                  isFocused={isFocused}
+                  onFocus={() => {
+                    setNodeId(node.id);
+                    setRowId(branchOrNode.id);
+                  }}
+                  onBlur={() => {
+                    setNodeId(null);
+                    setRowId(null);
+                  }}
+                  region={node.data as any}
+                />
+              );
+            }}
           />
         ))}
-      </section>
+      </main>
     </main>
   );
 }

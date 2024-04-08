@@ -54,6 +54,15 @@ const TEST_DOCUMENT: Readonly<DocumentData> = generateDocumentData({
           generateDocumentRegion({
             label: "region d",
           }),
+          generateDocumentRegion({
+            label: "region d",
+          }),
+          generateDocumentRegion({
+            label: "region e",
+          }),
+          generateDocumentRegion({
+            label: "region f",
+          }),
         ],
       }),
     ],
@@ -65,32 +74,32 @@ const TEST_LAYOUT: Readonly<Layout> = generateLayout({
   tree: [
     generateLayoutBranch({
       flow: "horizontal",
+      children: [generateLayoutNode({}), generateLayoutNode({})],
+    }),
+    generateLayoutNode({}),
+    generateLayoutBranch({
+      flow: "horizontal",
       children: [
+        generateLayoutNode({}),
         generateLayoutNode({}),
         generateLayoutNode({}),
         generateLayoutNode({}),
       ],
     }),
-    generateLayoutNode({}),
-    generateLayoutBranch({
-      flow: "horizontal",
-      children: [generateLayoutNode({}), generateLayoutNode({})],
-    }),
-    generateLayoutNode({}),
   ],
 });
 
-const TEST_LAYOUT_NODES = flattenLayoutNodes(TEST_LAYOUT);
+// const TEST_LAYOUT_NODES = flattenLayoutNodes(TEST_LAYOUT);
 
-const TEST_REGIONS = TEST_DOCUMENT.data.views[0].content;
+// const TEST_REGIONS = TEST_DOCUMENT.data.views[0].content;
 
-const TEST_RELATIONS = [
-  generateLayoutToDocumentRelation(
-    TEST_LAYOUT,
-    TEST_LAYOUT_NODES[6],
-    TEST_REGIONS[0],
-  ),
-];
+// const TEST_RELATIONS = [
+//   generateLayoutToDocumentRelation(
+//     TEST_LAYOUT,
+//     TEST_LAYOUT_NODES[6],
+//     TEST_REGIONS[0],
+//   ),
+// ];
 
 function App() {
   if (isWithoutTauri) {
@@ -124,7 +133,7 @@ function App() {
           loader: async ({}) => {
             const a: ContentfullLayout = generateContentfullLayout(
               TEST_DOCUMENT.data.views[0],
-              addRelationsToLayout(TEST_LAYOUT, TEST_RELATIONS),
+              addRelationsToLayout(TEST_LAYOUT, []),
             );
 
             return [

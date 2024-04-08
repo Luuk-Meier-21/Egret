@@ -4,7 +4,6 @@ import {
   DocumentData,
   DocumentRegionData,
   DocumentViewData,
-  TextDocumentRegionData,
 } from "../../types/document-service";
 import { DocumentMetaData, LegacyDocumentContent } from "../../types/documents";
 import { v4 as uuidv4 } from "uuid";
@@ -41,37 +40,34 @@ export function generateDocumentMetaData(
 export function generateDocumentView(
   data: Partial<DocumentViewData>,
 ): DocumentViewData {
+  const dictFromArray = (array: DocumentRegionData[]) =>
+    array.reduce<Record<string, DocumentRegionData>>(
+      (prev, curr) => ({ ...prev, [curr.id]: curr }),
+      {},
+    );
+
+  const arrayFromDict = (dict: Record<string, DocumentRegionData>) =>
+    Object.values(dict);
+
   return {
     id: data.id || uuidv4(),
     label: data.label || undefined,
     type: "view",
     contentType: "inline",
-    content: data.content ?? [],
+    content: data.content ?? arrayFromDict(data.contentDict || {}),
+    contentDict: data.contentDict ?? dictFromArray(data.content || []),
   };
 }
 
 export function generateDocumentRegion(
   data: Partial<DocumentRegionData>,
 ): DocumentRegionData {
-  // nested regions not implemented yet
-  // if (data.contentType === "inline") {
-  //   return {
-  //     id: data.id || uuidv4(),
-  //     label: data.label || undefined,
-  //     type: "region",
-  //     contentType: "inline",
-  //     content: data.content || [],
-  //   };
-  // }
-
-  const textData = data as TextDocumentRegionData;
-
   return {
-    id: textData.id || uuidv4(),
-    label: textData.label || undefined,
+    id: data.id || uuidv4(),
+    label: data.label || undefined,
     type: "region",
     contentType: "text",
-    blocks: generateBlocks(textData.blocks),
+    blocks: generateBlocks(data.blocks),
   };
 }
 
@@ -86,17 +82,6 @@ export function generateBlocks(blocks: BlockData | undefined): BlockData {
     ] as BlockData)
   );
 }
-
-// export function generateDocumentText(
-//   data: Partial<DocumentText>,
-// ): DocumentText {
-//   return {
-//     id: data.id || uuidv4(),
-//     type: "text",
-//     contentType: "text",
-//     blocks: data.blocks ?? [],
-//   };
-// }
 
 export function parseDocumentContentFromLegacy(
   content: LegacyDocumentContent,

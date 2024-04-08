@@ -11,11 +11,11 @@ export type LayoutCommon = {
   type: string;
 };
 
-export type LayoutNodeData = LayoutCommon & {
+export type LayoutNodeData<T = unknown> = LayoutCommon & {
   shortcut?: `cmd+shift+${string}`;
   type: "node";
   contentfull: boolean;
-  data?: DocumentRegionData;
+  data?: T;
 };
 
 export type LayoutBranchData<T extends LayoutCommon = LayoutNodeData> =

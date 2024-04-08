@@ -17,8 +17,8 @@ export type TextData = TreeData & {
   blocks: BlockData;
 };
 
-export type ContentOrTextData<T extends TreeData> = TreeData &
-  (TextData | ContentData<T>);
+// export type ContentOrTextData<T extends TreeData> = TreeData &
+//   (TextData | ContentData<T>);
 
 export type BlockData = IBlock[];
 
@@ -41,9 +41,8 @@ export interface DocumentViewData extends ContentData<DocumentRegionData> {
   type: "view";
   contentType: "inline";
   content: DocumentRegionData[];
+  contentDict: Record<string, DocumentRegionData>;
 }
-
-type RegionTree = TextRegion;
 
 /**
  * Support up to 3 layers nested content
@@ -51,25 +50,25 @@ type RegionTree = TextRegion;
 export type DocumentRegionData = {
   id: string;
   type: "region";
-} & RegionTree;
-
-export type TextRegion = {
-  id: string;
-  type: "region";
 } & TextData;
 
-export type QRegionData<
-  ChildType extends TreeData = TextData,
-  WrapperType extends TreeData = ContentOrTextData<ChildType>,
-> = {
-  id: string;
-  type: "region";
-} & WrapperType;
+// export type TextRegion = {
+//   id: string;
+//   type: "region";
+// } & TextData;
 
-export type ContentDocumentRegionData<T extends TreeData = RegionTree> =
-  QRegionData<T, ContentData<T>>;
+// export type QRegionData<
+//   ChildType extends TreeData = TextData,
+//   WrapperType extends TreeData = ContentOrTextData<ChildType>,
+// > = {
+//   id: string;
+//   type: "region";
+// } & WrapperType;
 
-export type TextDocumentRegionData = QRegionData<TextData, TextData>;
+// export type ContentDocumentRegionData<T extends TreeData = RegionTree> =
+//   QRegionData<T, ContentData<T>>;
+
+// export type TextDocumentRegionData = QRegionData<TextData, TextData>;
 
 // export interface DocumentText extends TextData {
 //   id: string;

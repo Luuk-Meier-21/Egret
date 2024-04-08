@@ -1,9 +1,5 @@
 import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
-import {
-  ContentDocumentRegionData,
-  DocumentRegionData,
-  TextDocumentRegionData,
-} from "../../types/document-service";
+import { DocumentRegionData } from "../../types/document-service";
 import { schema } from "../../blocks/schema";
 import { shell } from "@tauri-apps/api";
 import { toggleBlock } from "../../utils/block";
@@ -13,73 +9,34 @@ import {
   useRegisterAction,
   useRegisterEditorAction,
 } from "../../services/actions-registry";
+import { useEffect, useRef } from "react";
+import { deepJSONClone } from "../../utils/object";
 
-interface DocumentRegionProps<
-  T extends
-    | TextDocumentRegionData
-    | ContentDocumentRegionData = DocumentRegionData,
-> {
-  region: T;
-  onSave: (region: TextDocumentRegionData, editor: IBlockEditor) => void;
-  onChange: (region: TextDocumentRegionData, editor: IBlockEditor) => void;
+interface DocumentRegionProps {
+  region: DocumentRegionData;
+  onSave: (region: DocumentRegionData, editor: IBlockEditor) => void;
+  onChange: (region: DocumentRegionData, editor: IBlockEditor) => void;
+  onFocus: (region: DocumentRegionData, editor: IBlockEditor) => void;
+  onBlur: (region: DocumentRegionData, editor: IBlockEditor) => void;
+  isFocused: boolean;
 }
 
-function RecursiveDocumentRegion({
+function DocumentRegion({
   region,
   onSave,
   onChange,
+  isFocused = false,
+  onFocus,
+  onBlur,
 }: DocumentRegionProps) {
-  if (false) {
-    // if (region.contentType === "inline") {
-    // return (
-    //   <InlineDocumentRegion
-    //     region={region}
-    //     onChange={onChange}
-    //     onSave={onSave}
-    //   />
-    // );
-  } else {
-    return (
-      <TextDocumentRegion region={region} onChange={onChange} onSave={onSave} />
-    );
-  }
-}
+  const ref = useRef<HTMLDivElement>(null);
 
-//@ts-ignore
-function InlineDocumentRegion({
-  region,
-  onSave,
-  onChange,
-}: DocumentRegionProps<ContentDocumentRegionData>) {
-  return (
-    <article className="p-4 ring-1 ring-white">
-      <h3>{region.label}</h3>
-      <ul>
-        {region.content.map((region) => (
-          <li>
-            <RecursiveDocumentRegion
-              region={region}
-              onChange={onChange}
-              onSave={onSave}
-            />
-          </li>
-        ))}
-      </ul>
-    </article>
-  );
-}
-
-function TextDocumentRegion({
-  region,
-  onSave,
-  onChange,
-}: DocumentRegionProps<TextDocumentRegionData>) {
   const editor = useCreateBlockNote({
     schema,
     initialContent: region.blocks,
   });
 
-  const regionWithCurrentBlock = (): TextDocumentRegionData => ({
+  const regionWithCurrentBlock = (): DocumentRegionData => ({
     ...region,
     blocks: editor.document,
   });
@@ -87,6 +44,14 @@ function TextDocumentRegion({
   useEditorOnSave(editor, () => {
     onSave(regionWithCurrentBlock(), editor);
   });
+
+  useEffect(() => {
+    if (isFocused) {
+      try {
+        editor.focus();
+      } catch (error) {}
+    }
+  }, [isFocused]);
 
   editor.onEditorContentChange(() => {
     onChange(regionWithCurrentBlock(), editor);
@@ -112,18 +77,27 @@ function TextDocumentRegion({
 
   return (
     <section
-      aria-label={`Region: `}
+      aria-label={`Region: ${region.label || ""}`}
       data-component-name="DocumentDetail"
+      ref={ref}
       className="w-full p-4 text-white focus-within:bg-white focus-within:text-black"
     >
       <BlockNoteView
-        aria-label="Document editor"
+        id={region.id}
+        data-editor
+        onFocus={() => {
+          onFocus(region, editor);
+        }}
+        onBlur={() => {
+          onBlur(region, editor);
+        }}
+        role="document"
+        aria-label={`field, ${region.label}`}
         className="w-full max-w-[46em] [&_a]:underline"
         editor={editor}
+        aria-placeholder="test"
         // editable={false}
         slashMenu={false}
-        autoCorrect="false"
-        spellCheck="false"
         onKeyDown={(event) => {
           if (event.key === "Escape") {
             editor;
@@ -137,4 +111,4 @@ function TextDocumentRegion({
   );
 }
 
-export default RecursiveDocumentRegion;
+export default DocumentRegion;
