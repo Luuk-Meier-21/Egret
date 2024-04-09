@@ -7,13 +7,11 @@ import { ContentfullLayout } from "../../types/layout-service";
 import { DocumentData } from "../../types/document-service";
 import { IBlockEditor } from "../../types/block";
 import { useRegisterAction } from "../../services/actions-registry";
-import { useEffect, useRef, useState } from "react";
-import { LayoutNavigator } from "../../services/layout/layout-navigator";
-import { LayoutRegionNavigator } from "../../services/layout/layout-region-navigator";
 import DocumentRegion from "../DocumentRegion/DocumentRegion";
-import { createKeyword } from "../../utils/keywords";
-import { validate } from "uuid";
-import { invoke } from "@tauri-apps/api";
+import { useLayoutNavigator } from "../../utils/layout";
+import { generateDocumentRegion } from "../../services/document/document-generator";
+import { useLayoutBuilder } from "../../utils/layout-builder";
+import { useLayoutState } from "../../utils/layout-state";
 
 interface DocumentDetailProps {}
 
@@ -24,33 +22,18 @@ function DocumentDetail({}: DocumentDetailProps) {
     Keyword[],
   ];
 
-  const ref = useRef<HTMLElement>(null);
+  const state = useLayoutState(staticLayout);
+  const builder = useLayoutBuilder(state.layout);
+  const navigator = useLayoutNavigator(state.layout, state, builder);
 
-  // const [structuredView, setStructuredView] = useState<ContentfullLayout>(
-  //   generateContentfullLayout(view, staticLayout),
-  // );
+  builder.beforeLayoutChange((layout) => {
+    state.setLayout(layout);
+    console.log(layout);
+  });
 
-  const navigator = new LayoutNavigator(
-    new LayoutRegionNavigator(staticLayout),
-  );
-
-  const [rowId, setRowId] = useState<string | null>(staticLayout.tree[0].id);
-  const [nodeId, setNodeId] = useState<string | null>(navigator.getFirst().id);
-
-  useEffect(() => {
-    const row = staticLayout.tree.find((row) => row.id === rowId);
-    if (row?.type === "branch") {
-      const columnInRow = row.children.find((column) => column.id === nodeId);
-
-      if (columnInRow) {
-        setNodeId(columnInRow.id);
-      } else {
-        setNodeId(row.children[0].id);
-      }
-    } else if (row?.type === "node") {
-      setNodeId(row.id);
-    }
-  }, [rowId]);
+  builder.onLayoutChange((layout) => {
+    state.setLayout(layout);
+  });
 
   //@ts-ignore
   const handleSave = (region: TextDocumentRegionData, editor: IBlockEditor) => {
@@ -63,10 +46,8 @@ function DocumentDetail({}: DocumentDetailProps) {
     //@ts-ignore
     editor: IBlockEditor,
   ) => {
-    // setTempViewStorage(getViewWithUpdatedRegion(region));
+    console.log(region);
   };
-
-  useTitle(staticDocumentData.name);
 
   // const [keywords, setKeywords] = useState<Keyword[]>(staticKeywords);
   // const [openSettings, setOpenSettings] = useState(false);
@@ -104,62 +85,34 @@ function DocumentDetail({}: DocumentDetailProps) {
   });
 
   useRegisterAction("Move up", "option+up", async () => {
-    const index = staticLayout.tree.findIndex((row) => row.id === rowId);
-    const previousRow = staticLayout.tree[index - 1];
-    if (previousRow) {
-      setRowId(previousRow.id);
-    } else {
-      // Create new row
-    }
+    navigator.focusRowUp();
   });
 
   useRegisterAction("Move down", "option+down", async () => {
-    const index = staticLayout.tree.findIndex((row) => row.id === rowId);
-    const nextRow = staticLayout.tree[index + 1];
-    if (nextRow) {
-      setRowId(nextRow.id);
+    navigator.focusRowDown();
+  });
+
+  useRegisterAction("Move right", "option+right", async () => {
+    navigator.focusColumnRight();
+  });
+
+  useRegisterAction("Move left", "option+left", async () => {
+    navigator.focusColumnLeft();
+  });
+
+  useRegisterAction("Delete column", "option+backspace", async () => {
+    const currentRow = navigator.getCurrentRow();
+    const currentNode = navigator.getCurrentNode();
+
+    let availableNode;
+    if (currentRow.type === "branch") {
+      availableNode = builder.removeNodeFromRow(currentRow, currentNode);
     } else {
-      // Create new row
+      availableNode = builder.removeRow(currentRow);
     }
-  });
 
-  useRegisterAction("Move right", "option+left", async () => {
-    const row = staticLayout.tree.find((row) => row.id === rowId);
-    if (row?.type === "branch") {
-      const index = row.children.findIndex((column) => column.id === nodeId);
-      const previousColumn = row.children[index - 1];
-      if (previousColumn) {
-        setNodeId(previousColumn.id);
-      } else {
-        // Create new column
-      }
-    } else {
-      // Create new column
-    }
+    state.setNodeId(availableNode.id);
   });
-
-  useRegisterAction("Move left", "option+right", async () => {
-    const row = staticLayout.tree.find((row) => row.id === rowId);
-    if (row?.type === "branch") {
-      const index = row.children.findIndex((column) => column.id === nodeId);
-      const nextColumn = row.children[index + 1];
-      if (nextColumn) {
-        setNodeId(nextColumn.id);
-      } else {
-        // Create new column
-      }
-    } else {
-      // Create new column
-    }
-  });
-
-  useRegisterAction("Move left", "k", async () => {
-    await invoke("sound");
-  });
-
-  // useRegisterAction("b", "cmd+down", async () => {
-  //   navigator.down();
-  // });
 
   return (
     <main
@@ -194,17 +147,15 @@ function DocumentDetail({}: DocumentDetailProps) {
         )}
       </section> */}
 
-      <main ref={ref}>
-        {staticLayout.tree.map((branchOrNode) => (
+      <main>
+        {state.layout.tree.map((branchOrNode) => (
           <LayoutBranchOrNode
             key={branchOrNode.id}
             value={branchOrNode}
-            renderNode={(node) => {
-              const isFocused = node.id === nodeId;
+            renderNode={(node, isFirstInList) => {
+              const isFocused = node.id === state.nodeId;
 
-              if (node.data === undefined) {
-                return <div>Blank</div>;
-              }
+              node.data = node.data || generateDocumentRegion({});
 
               return (
                 <DocumentRegion
@@ -212,14 +163,12 @@ function DocumentDetail({}: DocumentDetailProps) {
                   onChange={handleChange}
                   isFocused={isFocused}
                   onFocus={() => {
-                    setNodeId(node.id);
-                    setRowId(branchOrNode.id);
+                    navigator.focusColumn(branchOrNode.id, node.id);
                   }}
                   onBlur={() => {
-                    setNodeId(null);
-                    setRowId(null);
+                    navigator.blurColumn();
                   }}
-                  region={node.data as any}
+                  region={node?.data}
                 />
               );
             }}

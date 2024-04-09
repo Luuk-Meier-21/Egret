@@ -45,11 +45,25 @@ function DocumentRegion({
     onSave(regionWithCurrentBlock(), editor);
   });
 
+  const focus = () => {
+    try {
+      editor.focus();
+    } catch (error) {
+      console.info(`Unable to focus: (${region.label || region.id})`);
+    }
+  };
+
+  useEffect(() => {
+    editor._tiptapEditor.on("create", () => {
+      if (isFocused) {
+        focus();
+      }
+    });
+  }, []);
+
   useEffect(() => {
     if (isFocused) {
-      try {
-        editor.focus();
-      } catch (error) {}
+      focus();
     }
   }, [isFocused]);
 
@@ -79,8 +93,9 @@ function DocumentRegion({
     <section
       aria-label={`Region: ${region.label || ""}`}
       data-component-name="DocumentDetail"
+      data-focused={isFocused || undefined}
       ref={ref}
-      className="w-full p-4 text-white focus-within:bg-white focus-within:text-black"
+      className="input-hint w-full p-4 text-white data-[focused]:bg-white data-[focused]:text-black"
     >
       <BlockNoteView
         id={region.id}
@@ -93,7 +108,7 @@ function DocumentRegion({
         }}
         role="document"
         aria-label={`field, ${region.label}`}
-        className="w-full max-w-[46em] [&_a]:underline"
+        className="mx-auto w-full max-w-[46em] [&_a]:underline"
         editor={editor}
         aria-placeholder="test"
         // editable={false}

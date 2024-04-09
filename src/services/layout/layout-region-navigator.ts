@@ -1,15 +1,6 @@
 import { DocumentRegionData } from "../../types/document-service";
-import {
-  Layout,
-  LayoutBranchOrNodeData,
-  LayoutCommon,
-  LayoutNodeData,
-} from "../../types/layout-service";
-import { deepJSONClone } from "../../utils/object";
-import {
-  flattenLayoutNodes,
-  flattenLayoutNodesByReference,
-} from "./layout-document";
+import { Layout, LayoutNodeData } from "../../types/layout-service";
+import { flattenLayoutNodesByReference } from "./layout-document";
 import { LayoutNavigatable } from "./layout-navigator";
 
 export interface LayoutInsertable<T> {
@@ -23,51 +14,36 @@ export interface LayoutInsertable<T> {
 export class LayoutRegionNavigator
   implements LayoutNavigatable<LayoutNodeData<DocumentRegionData>>
 {
-  positionId: string;
-  arrayLayout: LayoutNodeData<DocumentRegionData>[];
+  columnId: string;
+  rowId: string;
+  columns: LayoutNodeData<DocumentRegionData>[];
 
   constructor(
     public layout: Readonly<Layout>,
-    positionId?: string,
     // public builder: LayoutInsertable<LayoutNodeData<DocumentRegionData>>,
   ) {
-    this.arrayLayout = flattenLayoutNodesByReference(
+    this.columns = flattenLayoutNodesByReference(
       this.layout.tree,
     ) as LayoutNodeData<DocumentRegionData>[];
 
-    this.positionId = positionId || deepJSONClone(this.arrayLayout[0].id);
+    this.columnId = this.getFirstColumn().id;
+    this.rowId = this.getFirstRow().id;
   }
 
-  findRowById(tree: LayoutBranchOrNodeData[], id: string): number {
-    return tree.findIndex((v) =>
-      v.type === "branch" ? this.findRowById(v.children, id) : v.id === id,
-    );
-  }
+  getFirstRow = () => this.layout.tree[0];
 
-  getRowOfIndex() {}
+  getFirstColumn = () => this.columns[0];
 
-  nextRow(): LayoutBranchOrNodeData<DocumentRegionData> {
-    const row = this.findRowById(
-      this.layout.tree as LayoutBranchOrNodeData[],
-      this.positionId,
-    );
-    console.log(row);
-  }
+  getFirst = () => this.getFirstColumn();
 
-  // previousRow(): LayoutCommon {
-  //   return this.layout[]
-  // }
-
-  nextColumn(): this {
-    return this;
-  }
-
-  previousColumn(): this {
-    return this;
-  }
-
-  getFirst = () => {
-    return this.arrayLayout[0];
+  up = (): LayoutNodeData<DocumentRegionData> => {
+    const index = staticLayout.tree.findIndex((row) => row.id === rowId);
+    const previousRow = staticLayout.tree[index - 1];
+    if (previousRow) {
+      setRowId(previousRow.id);
+    } else {
+      // Create new row
+    }
   };
 
   left = (): LayoutNodeData<DocumentRegionData> => {
@@ -76,10 +52,6 @@ export class LayoutRegionNavigator
 
   right = (): LayoutNodeData<DocumentRegionData> => {
     return {} as any;
-  };
-
-  up = (): LayoutNodeData<DocumentRegionData> => {
-    return this.previousRow();
   };
 
   down = (): LayoutNodeData<DocumentRegionData> => {

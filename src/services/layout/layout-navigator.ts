@@ -7,33 +7,33 @@ export interface LayoutNavigatable<NT> {
   down: () => NT;
 }
 
-export class LayoutNavigator<T> {
-  constructor(public navigator: LayoutNavigatable<T>) {}
+// export class LayoutNavigator<T> {
+//   constructor(public navigator: LayoutNavigatable<T>) {}
 
-  getValue = (): T => {
-    return this.navigator.getValue();
-  };
+//   getValue = (): T => {
+//     return this.navigator.getValue();
+//   };
 
-  getFirst = () => this.navigator.getFirst();
+//   getFirst = () => this.navigator.getFirst();
 
-  update = (navigator: LayoutNavigatable<T>): LayoutNavigator<T> => {
-    this.navigator = navigator;
-    return this;
-  };
+//   update = (navigator: LayoutNavigatable<T>): LayoutNavigator<T> => {
+//     this.navigator = navigator;
+//     return this;
+//   };
 
-  left = (): T => {
-    return this.navigator.left();
-  };
+//   left = (): T => {
+//     return this.navigator.left();
+//   };
 
-  right = (): T => {
-    return this.navigator.right();
-  };
+//   right = (): T => {
+//     return this.navigator.right();
+//   };
 
-  up = (): T => {
-    return this.navigator.up();
-  };
+//   up = (): T => {
+//     return this.navigator.up();
+//   };
 
-  down = (): T => {
-    return this.navigator.down();
-  };
-}
+//   down = (): T => {
+//     return this.navigator.down();
+//   };
+// }

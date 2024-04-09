@@ -63,6 +63,18 @@ const TEST_DOCUMENT: Readonly<DocumentData> = generateDocumentData({
           generateDocumentRegion({
             label: "region f",
           }),
+          generateDocumentRegion({
+            label: "region d",
+          }),
+          generateDocumentRegion({
+            label: "region d",
+          }),
+          generateDocumentRegion({
+            label: "region e",
+          }),
+          generateDocumentRegion({
+            label: "region f",
+          }),
         ],
       }),
     ],

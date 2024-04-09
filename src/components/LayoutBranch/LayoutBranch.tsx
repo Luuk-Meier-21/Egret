@@ -9,50 +9,65 @@ import {
 interface LayoutBranchProps<T extends LayoutCommon = LayoutTreeTrunk> {
   value: T;
   level?: "row" | "column" | "unknown";
-  renderNode: (data: LayoutNodeData) => ReactNode;
+  index?: number;
+  renderNode: (data: LayoutNodeData, firstInList: boolean) => ReactNode;
 }
 
 export function LayoutBranchOrNode({
   value,
   level = "row",
+  index = -1,
   renderNode = () => null,
 }: LayoutBranchProps) {
   if (value.type === "branch") {
-    return <LayoutBranch level={level} renderNode={renderNode} value={value} />;
+    return (
+      <LayoutBranch
+        index={index}
+        level={level}
+        renderNode={renderNode}
+        value={value}
+      />
+    );
   } else {
-    return <LayoutNode level={level} renderNode={renderNode} value={value} />;
+    return (
+      <LayoutNode
+        index={index}
+        level={level}
+        renderNode={renderNode}
+        value={value}
+      />
+    );
   }
 }
 
 function LayoutBranch({
   value,
   level,
+  index,
   renderNode,
 }: LayoutBranchProps<LayoutBranchData<LayoutTreeTrunk>>) {
   return (
-    <div
+    <ul
       aria-label={`${value.flow}`}
       id={value.id}
       data-layout-level={level}
       data-layout-type="branch"
       data-component-name="LayoutBranch"
       data-flow={value.flow}
-      className="flex flex-col"
+      className="flex flex-row justify-start"
     >
-      list horizontal {value.children.length} items
-      <ul className="flex w-full flex-row">
-        {value.children.map((value) => (
-          <li className="flex w-full">
-            <LayoutBranchOrNode
-              renderNode={renderNode}
-              level="column"
-              key={value.id}
-              value={value}
-            />
-          </li>
-        ))}
-      </ul>
-    </div>
+      {value.children.map((value, index) => (
+        <li className="flex">
+          <LayoutBranchOrNode
+            renderNode={renderNode}
+            index={index}
+            level="column"
+            key={value.id}
+            value={value}
+          />
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -60,6 +75,7 @@ function LayoutNode({
   value,
   level,
   renderNode,
+  index,
 }: LayoutBranchProps<LayoutNodeData>) {
   return (
     <section
@@ -67,9 +83,9 @@ function LayoutNode({
       id={value.id}
       data-layout-level={level}
       data-layout-type="node"
-      className="flex w-full ring-1 ring-white"
+      className="flex ring-1 ring-white"
     >
-      {renderNode(value)}
+      {renderNode(value, index === 0)}
     </section>
   );
 }
