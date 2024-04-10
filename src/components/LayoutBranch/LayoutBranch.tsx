@@ -54,10 +54,10 @@ function LayoutBranch({
       data-layout-type="branch"
       data-component-name="LayoutBranch"
       data-flow={value.flow}
-      className="flex flex-row justify-start"
+      className="group flex w-full flex-row"
     >
       {value.children.map((value, index) => (
-        <li className="flex">
+        <li className="flex group-data-[flow='horizontal']:w-full">
           <LayoutBranchOrNode
             renderNode={renderNode}
             index={index}
@@ -83,7 +83,7 @@ function LayoutNode({
       id={value.id}
       data-layout-level={level}
       data-layout-type="node"
-      className="flex ring-1 ring-white"
+      className="flex w-full ring-1 ring-white"
     >
       {renderNode(value, index === 0)}
     </section>

@@ -4,8 +4,8 @@ import {
   LayoutBranchData,
   LayoutBranchOrNodeData,
   LayoutNodeData,
-} from "../types/layout-service";
-import { flattenLayoutNodesByReference } from "../services/layout/layout-document";
+} from "../../types/layout-service";
+import { flattenLayoutNodesByReference } from "./layout-content";
 import { LayoutState } from "./layout-state";
 import { LayoutBuilder } from "./layout-builder";
 

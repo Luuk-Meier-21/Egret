@@ -8,7 +8,7 @@ export const FILE = {
 } as const;
 
 export const DOCUMENTS = {
-  path: "documents-v2",
+  path: "store",
   source: BaseDirectory.AppData,
 } as const;
 

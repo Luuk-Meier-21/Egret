@@ -1,15 +1,12 @@
 import { useRef } from "react";
-import { flattenLayoutNodesByReference } from "../services/layout/layout-document";
-import {
-  generateLayoutBranch,
-  generateLayoutNode,
-} from "../services/layout/layout-generator";
+import { flattenLayoutNodesByReference } from "./layout-content";
+import { generateLayoutBranch, generateLayoutNode } from "./layout-generator";
 import {
   Layout,
   LayoutBranchData,
   LayoutBranchOrNodeData,
   LayoutNodeData,
-} from "../types/layout-service";
+} from "../../types/layout-service";
 import { clearMocks } from "@tauri-apps/api/mocks";
 
 export interface LayoutBuilder {
@@ -138,6 +135,7 @@ export function useLayoutBuilder(layout: Layout): LayoutBuilder {
     const children = position === "before" ? [newNode, row] : [row, newNode];
 
     rowsReference()[rowIndex] = generateLayoutBranch({
+      flow: "horizontal",
       children,
     });
 

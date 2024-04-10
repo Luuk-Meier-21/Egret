@@ -1,17 +1,18 @@
 import { useLoaderData } from "react-router";
 import { deleteDocumentById } from "../../utils/documents";
 import { Keyword } from "../../types/keywords";
-import { useTitle } from "../../utils/title";
 import { LayoutBranchOrNode } from "../LayoutBranch/LayoutBranch";
 import { ContentfullLayout } from "../../types/layout-service";
 import { DocumentData } from "../../types/document-service";
 import { IBlockEditor } from "../../types/block";
 import { useRegisterAction } from "../../services/actions-registry";
-import DocumentRegion from "../DocumentRegion/DocumentRegion";
-import { useLayoutNavigator } from "../../utils/layout";
+import { useLayoutNavigator } from "../../services/layout/layout-navigation";
 import { generateDocumentRegion } from "../../services/document/document-generator";
-import { useLayoutBuilder } from "../../utils/layout-builder";
-import { useLayoutState } from "../../utils/layout-state";
+import { useLayoutBuilder } from "../../services/layout/layout-builder";
+import { useLayoutState } from "../../services/layout/layout-state";
+import DocumentRegion from "../DocumentRegion/DocumentRegion";
+import { miscPath, useStore } from "../../services/store/store";
+import { useEffect } from "react";
 
 interface DocumentDetailProps {}
 
@@ -22,18 +23,38 @@ function DocumentDetail({}: DocumentDetailProps) {
     Keyword[],
   ];
 
+  const testStore = useStore(
+    {
+      test: "hi",
+    },
+    miscPath("test", "json"),
+  );
+
   const state = useLayoutState(staticLayout);
   const builder = useLayoutBuilder(state.layout);
   const navigator = useLayoutNavigator(state.layout, state, builder);
 
-  builder.beforeLayoutChange((layout) => {
-    state.setLayout(layout);
-    console.log(layout);
-  });
+  // Calling a lot of changes, why?
+  builder.beforeLayoutChange((layout) => {});
+  // setA(layout.tree);
 
   builder.onLayoutChange((layout) => {
-    state.setLayout(layout);
+    console.log(state.layout.tree);
   });
+
+  useEffect(() => {
+    (async () => {
+      await testStore
+        .write({
+          test: "writing from component b",
+        })
+        .save();
+
+      const a = await testStore.load();
+
+      console.log(a);
+    })();
+  }, []);
 
   //@ts-ignore
   const handleSave = (region: TextDocumentRegionData, editor: IBlockEditor) => {
@@ -46,39 +67,8 @@ function DocumentDetail({}: DocumentDetailProps) {
     //@ts-ignore
     editor: IBlockEditor,
   ) => {
-    console.log(region);
+    // console.log(region);
   };
-
-  // const [keywords, setKeywords] = useState<Keyword[]>(staticKeywords);
-  // const [openSettings, setOpenSettings] = useState(false);
-
-  // const setKeywordRelation = async (keyword: Keyword) => {
-  //   const hasRelation = keywordHasRelation(keyword, staticDocumentData);
-
-  //   hasRelation
-  //     ? await dereferenceKeywordFromDocument(keyword, staticDocumentData)
-  //     : await referenceKeywordToDocument(keyword, staticDocumentData);
-
-  //   await saveKeyword(keyword);
-
-  //   const keywords = await fetchKeywords();
-
-  //   setKeywords(keywords);
-  // };
-
-  // const { elementWithShortcut: EditSettings } = useRegisterAction(
-  //   "Edit Keyword",
-  //   "cmd+k",
-  //   () => {
-  //     editRef.current?.querySelector("button")?.focus();
-
-  //     if (keywords.length <= 0) {
-  //       handleError("No keywords to edit");
-  //     }
-
-  //     setOpenSettings(!openSettings);
-  //   },
-  // );
 
   useRegisterAction("Delete document", "shift+cmd+backspace", async () => {
     await deleteDocumentById(staticDocumentData.id);
@@ -213,3 +203,33 @@ export default DocumentDetail;
         />
       </BlockNoteView> */
 }
+// const [keywords, setKeywords] = useState<Keyword[]>(staticKeywords);
+// const [openSettings, setOpenSettings] = useState(false);
+
+// const setKeywordRelation = async (keyword: Keyword) => {
+//   const hasRelation = keywordHasRelation(keyword, staticDocumentData);
+
+//   hasRelation
+//     ? await dereferenceKeywordFromDocument(keyword, staticDocumentData)
+//     : await referenceKeywordToDocument(keyword, staticDocumentData);
+
+//   await saveKeyword(keyword);
+
+//   const keywords = await fetchKeywords();
+
+//   setKeywords(keywords);
+// };
+
+// const { elementWithShortcut: EditSettings } = useRegisterAction(
+//   "Edit Keyword",
+//   "cmd+k",
+//   () => {
+//     editRef.current?.querySelector("button")?.focus();
+
+//     if (keywords.length <= 0) {
+//       handleError("No keywords to edit");
+//     }
+
+//     setOpenSettings(!openSettings);
+//   },
+// );

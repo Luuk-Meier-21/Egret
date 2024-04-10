@@ -89,6 +89,24 @@ function DocumentRegion({
     shell.open(url);
   });
 
+  useRegisterAction("Insert image", "cmd+o", () => {
+    if (!editor.isFocused()) {
+      return;
+    }
+    const selectedBlock = editor.getTextCursorPosition().block;
+    editor.insertBlocks(
+      [
+        {
+          type: "image",
+          props: {
+            src: "https://letsenhance.io/static/8f5e523ee6b2479e26ecc91b9c25261e/1015f/MainAfter.jpg",
+          },
+        },
+      ],
+      selectedBlock,
+    );
+  });
+
   return (
     <section
       aria-label={`Region: ${region.label || ""}`}
