@@ -1,69 +1,47 @@
-import { useRef } from "react";
-import { flattenLayoutNodesByReference } from "./layout-content";
-import { generateLayoutBranch, generateLayoutNode } from "./layout-generator";
+import { useEffect, useReducer } from "react";
+import { generateLayoutNode } from "./layout-generator";
 import {
   Layout,
   LayoutBranchData,
-  LayoutBranchOrNodeData,
+  LayoutCommon,
   LayoutNodeData,
+  LayoutTreeTrunk,
 } from "../../types/layout-service";
-import { clearMocks } from "@tauri-apps/api/mocks";
-
-export interface LayoutBuilder {
-  addRow: (position: "before" | "after") => LayoutNodeData;
-  addColumn: (
-    row: LayoutBranchData,
-    position: "before" | "after",
-  ) => LayoutNodeData;
-  addColumnToNodeRow: (
-    row: LayoutNodeData,
-    position: "before" | "after",
-  ) => LayoutNodeData;
-  removeNodeFromRow: (
-    row: LayoutBranchOrNodeData,
-    node: LayoutNodeData,
-  ) => LayoutNodeData;
-  removeRow: (row: LayoutBranchOrNodeData) => LayoutNodeData;
-  onLayoutChange: (callback: LayoutBuilderCallback) => void;
-  beforeLayoutChange: (callback: LayoutBuilderCallback) => void;
-}
+import { layoutReducer } from "./layout-builder-reducer";
 
 export type LayoutBuilderCallback = (layout: Layout) => void;
 
-export function useLayoutBuilder(layout: Layout): LayoutBuilder {
-  const onLayoutChangeCallbacks = useRef<LayoutBuilderCallback>(() => {});
-  const beforeLayoutChangeCallbacks = useRef<LayoutBuilderCallback>(() => {});
+export function useLayoutBuilder(staticLayout: Layout) {
+  const [layout, dispatch] = useReducer(layoutReducer, staticLayout);
 
-  const onLayoutChange = (callback: LayoutBuilderCallback) => {
-    onLayoutChangeCallbacks.current = callback;
-  };
+  useEffect(() => {
+    handleRowChildrenChange(layout.tree);
+  }, [layout]);
 
-  const beforeLayoutChange = (callback: LayoutBuilderCallback) => {
-    beforeLayoutChangeCallbacks.current = callback;
-  };
+  const override = () => {};
 
-  const dispatchLayoutChange = (from: "before" | "after" = "after") => {
-    if (from === "before") {
-      return beforeLayoutChangeCallbacks.current(layout);
+  const handleRowChildrenChange = (rows: LayoutTreeTrunk[]) => {
+    for (let row of rows) {
+      if (row.type === "branch" && row.children.length <= 1) {
+        if (row.children.length < 1) {
+          // Remove empty rows
+          dispatch({
+            type: "remove-row",
+            row: row as LayoutCommon as LayoutNodeData,
+          });
+        } else {
+          dispatch({
+            type: "convert-row-to-node",
+            row: row as LayoutBranchData,
+          });
+        }
+      }
     }
-
-    onLayoutChangeCallbacks.current(layout);
-  };
-
-  const rowsReference = (): LayoutBranchOrNodeData[] => {
-    return layout.tree as LayoutBranchOrNodeData[];
   };
 
   const addRow = (position: "before" | "after"): LayoutNodeData => {
-    dispatchLayoutChange("before");
-    // TODO: Unshift erases state of editor, push does not (copying over array?)
-
     const newRow = generateLayoutNode({});
-    const appendKey = position === "before" ? "unshift" : "push";
-
-    rowsReference()[appendKey](newRow);
-
-    dispatchLayoutChange();
+    dispatch({ type: "add-row", position, newRow });
 
     return newRow;
   };
@@ -72,85 +50,72 @@ export function useLayoutBuilder(layout: Layout): LayoutBuilder {
     row: LayoutBranchData,
     position: "before" | "after",
   ): LayoutNodeData => {
-    dispatchLayoutChange("before");
-    // TODO: Unshift erases state of editor, push does not (copying over array?)
-
     const newColumn = generateLayoutNode({});
-    const appendKey = position === "before" ? "unshift" : "push";
-
-    row.children[appendKey](newColumn);
-
-    dispatchLayoutChange();
+    dispatch({
+      type: "add-column",
+      position,
+      row,
+      newColumn: newColumn,
+    });
 
     return newColumn;
-  };
-
-  const removeNodeFromRow = (
-    row: LayoutBranchData,
-    node: LayoutNodeData,
-  ): LayoutNodeData => {
-    dispatchLayoutChange("before");
-
-    const rowIndex = rowsReference().indexOf(row);
-    const nodeIndex = row.children.indexOf(node);
-    row.children = row.children.filter((a) => a.id !== node.id);
-
-    if (row.children.length <= 1) {
-      rowsReference()[rowIndex] = row.children[0];
-      return rowsReference()[rowIndex] as LayoutNodeData;
-    }
-
-    dispatchLayoutChange();
-
-    return (
-      row.children[nodeIndex] || row.children[nodeIndex - 1] || row.children[0]
-    );
-  };
-
-  const removeRow = (row: LayoutNodeData): LayoutNodeData => {
-    dispatchLayoutChange("before");
-
-    const index = rowsReference().indexOf(row);
-    layout.tree = rowsReference().filter((r) => r.id !== row.id);
-    const availableRow =
-      rowsReference()[index] ||
-      rowsReference()[index - 1] ||
-      rowsReference()[0];
-    if (availableRow.type === "branch") {
-      return availableRow.children[0] as LayoutNodeData;
-    } else {
-      return availableRow;
-    }
   };
 
   const addColumnToNodeRow = (
     row: LayoutNodeData,
     position: "before" | "after",
   ): LayoutNodeData => {
-    dispatchLayoutChange("before");
+    const newColumn = generateLayoutNode({});
 
-    const rowIndex = rowsReference().findIndex((r) => r.id === row.id);
-
-    const newNode = generateLayoutNode({});
-    const children = position === "before" ? [newNode, row] : [row, newNode];
-
-    rowsReference()[rowIndex] = generateLayoutBranch({
-      flow: "horizontal",
-      children,
+    dispatch({
+      type: "add-column-to-node",
+      row: row,
+      newColumn: newColumn,
+      position: position,
     });
 
-    dispatchLayoutChange();
+    return newColumn;
+  };
 
-    return newNode;
+  const removeRow = (row: LayoutNodeData): LayoutNodeData => {
+    const index = layout.tree.indexOf(row);
+
+    dispatch({ type: "remove-row", row });
+    // For some reason state is not updated here yet.
+
+    const futureRow =
+      layout.tree[index + 1] || layout.tree[index - 1] || layout.tree[0];
+
+    if (futureRow.type === "branch") {
+      return futureRow.children[0] as LayoutNodeData;
+    } else {
+      return futureRow;
+    }
+  };
+
+  const removeNodeFromRow = (
+    row: LayoutBranchData,
+    column: LayoutNodeData,
+  ): LayoutNodeData => {
+    const nodeIndex = row.children.indexOf(column);
+
+    dispatch({ type: "remove-column-from-row", row, column });
+
+    return (
+      row.children[nodeIndex + 1] ||
+      row.children[nodeIndex - 1] ||
+      row.children[0]
+    );
   };
 
   return {
     addRow,
     addColumn,
     addColumnToNodeRow,
-    onLayoutChange,
-    beforeLayoutChange,
-    removeNodeFromRow,
     removeRow,
-  };
+    removeNodeFromRow,
+    layout,
+  } as const;
 }
+
+export type LayoutBuilder = ReturnType<typeof useLayoutBuilder>;

@@ -31,6 +31,7 @@ import {
 } from "./services/layout/layout-content";
 import { ContentfullLayout, Layout } from "./types/layout-service";
 import DialogProvider from "./components/Dialog/DialogProvider";
+import { miscPath, useAbstractStore } from "./services/store/store";
 
 const TEST_DOCUMENT: Readonly<DocumentData> = generateDocumentData({
   name: "test document",
@@ -243,6 +244,8 @@ function App() {
     );
   }
 
+  const store = useAbstractStore();
+
   const router = createBrowserRouter([
     {
       path: "/",
@@ -263,16 +266,21 @@ function App() {
         {
           path: "documents/:id",
           element: <DocumentDetail />,
-          loader: async ({}) => {
-            const a: ContentfullLayout = generateContentfullLayout(
-              TEST_DOCUMENT.data.views[0],
-              addRelationsToLayout(TEST_LAYOUT, []),
+          loader: async ({ params }) => {
+            const layoutStore = await store.loadStore<Layout>(
+              miscPath("layout-test", "json"),
             );
+
+            const contentfullLayout: ContentfullLayout =
+              generateContentfullLayout(
+                TEST_DOCUMENT.data.views[0],
+                addRelationsToLayout(await layoutStore.load(), []),
+              );
 
             return [
               // params.id ? await fetchDocumentById(params.id) : null,
               TEST_DOCUMENT,
-              a,
+              contentfullLayout,
               await fetchKeywords(),
             ];
           },

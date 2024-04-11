@@ -1,32 +1,19 @@
 import { useEffect } from "react";
 import {
-  Layout,
   LayoutBranchData,
   LayoutBranchOrNodeData,
   LayoutNodeData,
 } from "../../types/layout-service";
 import { flattenLayoutNodesByReference } from "./layout-content";
-import { LayoutState } from "./layout-state";
 import { LayoutBuilder } from "./layout-builder";
-
-export interface LayoutNavigator {
-  focusRowUp: () => void;
-  focusRowDown: () => void;
-  focusColumnLeft: () => void;
-  focusColumnRight: () => void;
-  focusColumn: (rowId: string, columnId: string) => void;
-  blurColumn: () => void;
-  getCurrentRow: () => LayoutBranchOrNodeData;
-  getCurrentNode: () => LayoutNodeData;
-}
+import { LayoutState } from "./layout-state";
 
 export function useLayoutNavigator(
-  layout: Layout,
   { rowId, setRowId, nodeId, setNodeId }: LayoutState,
   builder: LayoutBuilder,
-): LayoutNavigator {
-  const rows = layout.tree;
-  const nodes = flattenLayoutNodesByReference(layout.tree);
+) {
+  const rows = builder.layout.tree;
+  const nodes = flattenLayoutNodesByReference(builder.layout.tree);
 
   useEffect(() => {
     const row = rows.find((row) => row.id === rowId);
@@ -41,7 +28,7 @@ export function useLayoutNavigator(
     } else if (row?.type === "node") {
       setNodeId(row.id);
     }
-  }, [rowId, nodeId]);
+  }, [rowId, nodeId, builder.layout]);
 
   const getCurrentRow = (): LayoutBranchOrNodeData | null =>
     (rows.find((row) => row.id === rowId) as LayoutBranchOrNodeData) || null;
@@ -130,5 +117,7 @@ export function useLayoutNavigator(
     blurColumn,
     getCurrentRow,
     getCurrentNode,
-  };
+  } as const;
 }
+
+export type LayoutNavigator = ReturnType<typeof useLayoutNavigator>;

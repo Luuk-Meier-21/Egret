@@ -2,7 +2,6 @@ import { ReactNode } from "react";
 import {
   LayoutBranchData,
   LayoutCommon,
-  LayoutNodeData,
   LayoutTreeTrunk,
 } from "../../types/layout-service";
 
@@ -57,7 +56,7 @@ function LayoutBranch({
       className="group flex w-full flex-row"
     >
       {value.children.map((value, index) => (
-        <li className="flex group-data-[flow='horizontal']:w-full">
+        <li key={index} className="flex group-data-[flow='horizontal']:w-full">
           <LayoutBranchOrNode
             renderNode={renderNode}
             index={index}

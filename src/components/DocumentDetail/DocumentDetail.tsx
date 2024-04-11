@@ -8,10 +8,11 @@ import { IBlockEditor } from "../../types/block";
 import { useRegisterAction } from "../../services/actions-registry";
 import { useLayoutNavigator } from "../../services/layout/layout-navigation";
 import { generateDocumentRegion } from "../../services/document/document-generator";
-import { useLayoutBuilder } from "../../services/layout/layout-builder";
-import { useLayoutState } from "../../services/layout/layout-state";
+
 import DocumentRegion from "../DocumentRegion/DocumentRegion";
 import { miscPath, useStore } from "../../services/store/store";
+import { useLayoutState } from "../../services/layout/layout-state";
+import { useLayoutBuilder } from "../../services/layout/layout-builder";
 import { useEffect } from "react";
 
 interface DocumentDetailProps {}
@@ -23,38 +24,16 @@ function DocumentDetail({}: DocumentDetailProps) {
     Keyword[],
   ];
 
-  const testStore = useStore(
-    {
-      test: "hi",
-    },
-    miscPath("test", "json"),
-  );
+  const builder = useLayoutBuilder(staticLayout);
+  const store = useStore(builder.layout, miscPath("layout-test", "json"));
+  const selection = useLayoutState(builder.layout);
+  const navigator = useLayoutNavigator(selection, builder);
 
-  const state = useLayoutState(staticLayout);
-  const builder = useLayoutBuilder(state.layout);
-  const navigator = useLayoutNavigator(state.layout, state, builder);
+  // const saveLayout = async () => {
+  //   store.set(builder.layout).save();
+  // };
 
-  // Calling a lot of changes, why?
-  builder.beforeLayoutChange((layout) => {});
-  // setA(layout.tree);
-
-  builder.onLayoutChange((layout) => {
-    console.log(state.layout.tree);
-  });
-
-  useEffect(() => {
-    (async () => {
-      await testStore
-        .write({
-          test: "writing from component b",
-        })
-        .save();
-
-      const a = await testStore.load();
-
-      console.log(a);
-    })();
-  }, []);
+  useEffect(() => {}, [builder.layout]);
 
   //@ts-ignore
   const handleSave = (region: TextDocumentRegionData, editor: IBlockEditor) => {
@@ -95,13 +74,14 @@ function DocumentDetail({}: DocumentDetailProps) {
     const currentNode = navigator.getCurrentNode();
 
     let availableNode;
+
     if (currentRow.type === "branch") {
       availableNode = builder.removeNodeFromRow(currentRow, currentNode);
     } else {
       availableNode = builder.removeRow(currentRow);
     }
 
-    state.setNodeId(availableNode.id);
+    selection.setNodeId(availableNode.id);
   });
 
   return (
@@ -138,12 +118,12 @@ function DocumentDetail({}: DocumentDetailProps) {
       </section> */}
 
       <main>
-        {state.layout.tree.map((branchOrNode) => (
+        {builder.layout.tree.map((branchOrNode) => (
           <LayoutBranchOrNode
             key={branchOrNode.id}
             value={branchOrNode}
             renderNode={(node, isFirstInList) => {
-              const isFocused = node.id === state.nodeId;
+              const isFocused = node.id === selection.nodeId;
 
               node.data = node.data || generateDocumentRegion({});
 
