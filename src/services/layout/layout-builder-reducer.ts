@@ -1,10 +1,12 @@
+import { DocumentRegionData } from "../../types/document/document";
 import {
   Layout,
   LayoutBranchData,
   LayoutBranchOrNodeData,
   LayoutNodeData,
-} from "../../types/layout-service";
+} from "../../types/layout/layout";
 import { deepJSONClone } from "../../utils/object";
+import { flattenLayoutNodesByReference } from "./layout-content";
 import { generateLayoutBranch } from "./layout-generator";
 
 // WARNING: Reducers and passing by reference do not work together.
@@ -47,8 +49,9 @@ type LayoutAction = ActionRequired &
         row: LayoutBranchData;
       }
     | {
-        type: "update";
-        layout: Layout;
+        type: "insert-content";
+        node: LayoutNodeData;
+        data: DocumentRegionData;
       }
   );
 
@@ -115,6 +118,18 @@ export function layoutReducer(oldLayout: Layout, action: LayoutAction): Layout {
       const index = rows.findIndex((r) => r.id === row.id);
 
       rows[index] = row.children[0];
+
+      return { ...oldLayout, tree: rows };
+    }
+    case "insert-content": {
+      const rows = oldLayout.tree;
+      const nodes = flattenLayoutNodesByReference(rows);
+
+      const node = nodes.find((node) => node.id === action.node.id);
+
+      if (node) {
+        node.data = action.data;
+      }
 
       return { ...oldLayout, tree: rows };
     }

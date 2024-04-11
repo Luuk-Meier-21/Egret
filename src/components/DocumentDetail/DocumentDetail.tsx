@@ -2,86 +2,89 @@ import { useLoaderData } from "react-router";
 import { deleteDocumentById } from "../../utils/documents";
 import { Keyword } from "../../types/keywords";
 import { LayoutBranchOrNode } from "../LayoutBranch/LayoutBranch";
-import { ContentfullLayout } from "../../types/layout-service";
-import { DocumentData } from "../../types/document-service";
+import {
+  DocumentData,
+  DocumentRegionData,
+} from "../../types/document/document";
 import { IBlockEditor } from "../../types/block";
 import { useRegisterAction } from "../../services/actions-registry";
 import { useLayoutNavigator } from "../../services/layout/layout-navigation";
 import { generateDocumentRegion } from "../../services/document/document-generator";
-
 import DocumentRegion from "../DocumentRegion/DocumentRegion";
-import { miscPath, useStore } from "../../services/store/store";
+import { pathInDirectory } from "../../services/store/store";
 import { useLayoutState } from "../../services/layout/layout-state";
 import { useLayoutBuilder } from "../../services/layout/layout-builder";
 import { useEffect } from "react";
+import { useStore } from "../../services/store/store-hooks";
+import { keyExplicitAction, keyNavigation } from "../../config/shortcut";
+import { DocumentDirectory } from "../../types/documents";
+import { Layout, LayoutNodeData } from "../../types/layout/layout";
 
 interface DocumentDetailProps {}
 
 function DocumentDetail({}: DocumentDetailProps) {
-  const [staticDocumentData, staticLayout, _] = useLoaderData() as [
+  const [directory, staticDocumentData, staticLayout, _] = useLoaderData() as [
+    DocumentDirectory,
     DocumentData,
-    ContentfullLayout,
+    Layout,
     Keyword[],
   ];
 
   const builder = useLayoutBuilder(staticLayout);
-  const store = useStore(builder.layout, miscPath("layout-test", "json"));
+  const store = useStore(
+    builder.layout,
+    pathInDirectory(directory, `${directory.name}.layout.json`),
+  );
   const selection = useLayoutState(builder.layout);
   const navigator = useLayoutNavigator(selection, builder);
 
-  // const saveLayout = async () => {
-  //   store.set(builder.layout).save();
-  // };
-
   useEffect(() => {}, [builder.layout]);
 
-  //@ts-ignore
-  const handleSave = (region: TextDocumentRegionData, editor: IBlockEditor) => {
-    // setTempViewStorage(getViewWithUpdatedRegion(region));
+  const handleSave = (region: DocumentRegionData, node: LayoutNodeData) => {
+    const affectedNode = builder.insertContent(region, node);
+    console.log(affectedNode);
   };
+  const handleChange = (region: DocumentRegionData, node: LayoutNodeData) => {};
 
-  const handleChange = (
-    //@ts-ignore
-    region: TextDocumentRegionData,
-    //@ts-ignore
-    editor: IBlockEditor,
-  ) => {
-    // console.log(region);
-  };
+  useRegisterAction(
+    "Delete document",
+    keyExplicitAction("backspace"),
+    async () => {
+      await deleteDocumentById(staticDocumentData.id);
+    },
+  );
 
-  useRegisterAction("Delete document", "shift+cmd+backspace", async () => {
-    await deleteDocumentById(staticDocumentData.id);
-  });
-
-  useRegisterAction("Move up", "option+up", async () => {
+  useRegisterAction("Move up", keyNavigation("up"), async () => {
     navigator.focusRowUp();
   });
 
-  useRegisterAction("Move down", "option+down", async () => {
+  useRegisterAction("Move down", keyNavigation("down"), async () => {
     navigator.focusRowDown();
   });
 
-  useRegisterAction("Move right", "option+right", async () => {
+  useRegisterAction("Move right", keyNavigation("right"), async () => {
     navigator.focusColumnRight();
   });
 
-  useRegisterAction("Move left", "option+left", async () => {
+  useRegisterAction("Move left", keyNavigation("left"), async () => {
     navigator.focusColumnLeft();
   });
 
-  useRegisterAction("Delete column", "option+backspace", async () => {
+  useRegisterAction("Delete column", keyNavigation("backspace"), async () => {
     const currentRow = navigator.getCurrentRow();
     const currentNode = navigator.getCurrentNode();
 
-    let availableNode;
-
-    if (currentRow.type === "branch") {
-      availableNode = builder.removeNodeFromRow(currentRow, currentNode);
-    } else {
-      availableNode = builder.removeRow(currentRow);
+    if (currentRow === null || currentNode === null) {
+      return;
     }
 
-    selection.setNodeId(availableNode.id);
+    if (currentRow.type === "branch") {
+      const node = builder.removeNodeFromRow(currentRow, currentNode);
+      selection.setNodeId(node.id);
+    } else {
+      const node = builder.removeRow(currentRow);
+      selection.setNodeId(node.id);
+    }
   });
 
   return (
@@ -125,12 +128,16 @@ function DocumentDetail({}: DocumentDetailProps) {
             renderNode={(node, isFirstInList) => {
               const isFocused = node.id === selection.nodeId;
 
-              node.data = node.data || generateDocumentRegion({});
+              const data = node.data || generateDocumentRegion({});
 
               return (
                 <DocumentRegion
-                  onSave={handleSave}
-                  onChange={handleChange}
+                  onSave={(region, editor) => {
+                    handleSave(region, node);
+                  }}
+                  onChange={(region, editor) => {
+                    handleChange(region, node);
+                  }}
                   isFocused={isFocused}
                   onFocus={() => {
                     navigator.focusColumn(branchOrNode.id, node.id);
@@ -138,7 +145,7 @@ function DocumentDetail({}: DocumentDetailProps) {
                   onBlur={() => {
                     navigator.blurColumn();
                   }}
-                  region={node?.data}
+                  region={data}
                 />
               );
             }}

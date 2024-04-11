@@ -17,5 +17,12 @@ export default defineConfig(async () => ({
       // 3. tell vite to ignore watching `src-tauri`
       ignored: ["**/src-tauri/**"],
     },
+    proxy: {
+      "/api/dummy-text": {
+        target: "https://loripsum.net/api",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
 }));

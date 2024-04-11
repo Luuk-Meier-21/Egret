@@ -2,11 +2,19 @@ import { IBlock } from "./block";
 import { Keyword } from "./keywords";
 
 /**
- * reference to a document file location
+ * @deprecated
  */
 export interface DocumentReference {
   filePath: string;
   fileName: string;
+  name: string;
+  id: string;
+}
+
+export interface DocumentDirectory {
+  filePath: string;
+  fileName: string;
+  pathRelative: string;
   name: string;
   id: string;
 }

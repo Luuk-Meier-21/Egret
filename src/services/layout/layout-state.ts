@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Layout } from "../../types/layout-service";
+import { Layout } from "../../types/layout/layout";
 import { flattenLayoutNodesByReference } from "./layout-content";
 import { deepJSONClone } from "../../utils/object";
 

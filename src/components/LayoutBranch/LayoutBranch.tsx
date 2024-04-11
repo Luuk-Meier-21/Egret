@@ -2,8 +2,9 @@ import { ReactNode } from "react";
 import {
   LayoutBranchData,
   LayoutCommon,
+  LayoutNodeData,
   LayoutTreeTrunk,
-} from "../../types/layout-service";
+} from "../../types/layout/layout";
 
 interface LayoutBranchProps<T extends LayoutCommon = LayoutTreeTrunk> {
   value: T;
@@ -82,7 +83,7 @@ function LayoutNode({
       id={value.id}
       data-layout-level={level}
       data-layout-type="node"
-      className="flex w-full ring-1 ring-white"
+      className="flex w-full ring-1 ring-white/30"
     >
       {renderNode(value, index === 0)}
     </section>

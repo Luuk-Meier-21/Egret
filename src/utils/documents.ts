@@ -62,6 +62,7 @@ export const createDocument = (
 export const saveDocument = async (document: Document): Promise<boolean> => {
   try {
     if (!validate(document.id)) {
+      0;
       return Promise.reject(false);
     }
 

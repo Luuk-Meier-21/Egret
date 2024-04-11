@@ -1,12 +1,33 @@
+import { FileEntry } from "@tauri-apps/api/fs";
 import {
   BlockData,
   DocumentContentData,
   DocumentData,
   DocumentRegionData,
   DocumentViewData,
-} from "../../types/document-service";
-import { DocumentMetaData, LegacyDocumentContent } from "../../types/documents";
-import { v4 as uuidv4 } from "uuid";
+} from "../../types/document/document";
+import {
+  DocumentDirectory,
+  DocumentMetaData,
+  DocumentReference,
+  LegacyDocumentContent,
+} from "../../types/documents";
+import { v4 as uuidv4, validate } from "uuid";
+import { DOCUMENTS } from "../../config/files";
+
+/**
+ * @deprecated
+ */
+export function generateDocumentReference(
+  data: Partial<DocumentReference> & Omit<DocumentReference, "id">,
+): DocumentReference {
+  return {
+    id: data.id || uuidv4(),
+    name: data.name,
+    filePath: data.filePath,
+    fileName: data.name,
+  };
+}
 
 export function generateDocumentData(
   data: Partial<DocumentData> & { name: string },
@@ -81,6 +102,55 @@ export function generateBlocks(blocks: BlockData | undefined): BlockData {
       },
     ] as BlockData)
   );
+}
+
+export function parseFileToDocumentDirectory(
+  file: FileEntry,
+): DocumentDirectory | null {
+  if (file.name === undefined) {
+    return null;
+  }
+
+  const isDirectory = file.children !== undefined;
+  const segments = file.name.split(".");
+  const name = segments[0];
+  const id = segments[1];
+
+  if (!validate(id) || !isDirectory) {
+    return null;
+  }
+
+  return {
+    name,
+    id,
+    pathRelative: DOCUMENTS.source,
+    fileName: file.name,
+    filePath: file.path,
+  };
+}
+
+export function parseFileToDocumentReference(
+  file: FileEntry,
+): DocumentReference | null {
+  if (file.name === undefined) {
+    return null;
+  }
+
+  const segments = file.name.split(".");
+  const name = segments[0];
+  const id = segments[1];
+  const extention = segments[2];
+
+  if (!validate(id) || extention !== "json") {
+    return null;
+  }
+
+  return {
+    name,
+    id,
+    fileName: file.name,
+    filePath: file.path,
+  };
 }
 
 export function parseDocumentContentFromLegacy(

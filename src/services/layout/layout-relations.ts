@@ -1,5 +1,5 @@
-import { DocumentRegionData } from "../../types/document-service";
-import { Layout, LayoutNodeData } from "../../types/layout-service";
+import { DocumentRegionData } from "../../types/document/document";
+import { Layout, LayoutNodeData } from "../../types/layout/layout";
 import { LayoutToDocumentRelation } from "../../types/layout/layout-relations";
 import { slugify } from "../../utils/url";
 

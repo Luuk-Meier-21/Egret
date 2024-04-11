@@ -1,7 +1,7 @@
 // export function
 
-import { DocumentRegionData } from "./document-service";
-import { LayoutToDocumentRelation } from "./layout/layout-relations";
+import { DocumentRegionData, TreeData } from "../document/document";
+import { LayoutToDocumentRelation } from "./layout-relations";
 
 /**
  * Common interface for all layout types
@@ -11,18 +11,17 @@ export type LayoutCommon = {
   type: string;
 };
 
-export type LayoutNodeData<T = unknown> = LayoutCommon & {
+export type LayoutNodeData = LayoutCommon & {
   shortcut?: `cmd+shift+${string}`;
   type: "node";
-  contentfull: boolean;
-  data?: T;
+  data?: DocumentRegionData;
 };
 
 export type LayoutBranchData<T extends LayoutCommon = LayoutNodeData> =
   LayoutCommon & {
     type: "branch";
     children: T[];
-    flow: "horizontal" | "vertical" | "wrap";
+    flow: "horizontal" | "wrap";
   };
 
 /**
@@ -34,18 +33,17 @@ export type LayoutBranchOrNodeData<T extends LayoutCommon = LayoutNodeData> =
 /**
  * Branches out 3 layers extend to nest deeper.
  */
-export type LayoutTreeTrunk<T extends LayoutCommon = LayoutNodeData> =
-  LayoutBranchOrNodeData<LayoutBranchOrNodeData<LayoutBranchOrNodeData<T>>>;
+export type LayoutTreeTrunk = LayoutBranchOrNodeData<LayoutNodeData>;
 
 export type LayoutTree = LayoutTreeTrunk[];
 
-export type Layout<IsDecorated extends boolean = boolean> = {
+export type Layout = {
   id: string;
-  decorated: IsDecorated;
   name: string;
   description: string;
   tree: LayoutTree;
-  relations: LayoutToDocumentRelation[];
 };
 
-export type ContentfullLayout = Layout<true>;
+// export type ContentfullLayout = Layout & {
+//   tree: LayoutTree<DocumentRegionData>;
+// };

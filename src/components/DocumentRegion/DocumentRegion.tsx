@@ -1,5 +1,5 @@
 import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
-import { DocumentRegionData } from "../../types/document-service";
+import { DocumentRegionData } from "../../types/document/document";
 import { schema } from "../../blocks/schema";
 import { shell } from "@tauri-apps/api";
 import { toggleBlock } from "../../utils/block";
@@ -11,6 +11,7 @@ import {
 } from "../../services/actions-registry";
 import { useEffect, useRef } from "react";
 import { deepJSONClone } from "../../utils/object";
+import { keyExplicitAction } from "../../config/shortcut";
 
 interface DocumentRegionProps {
   region: DocumentRegionData;
@@ -93,6 +94,7 @@ function DocumentRegion({
     if (!editor.isFocused()) {
       return;
     }
+
     const selectedBlock = editor.getTextCursorPosition().block;
     editor.insertBlocks(
       [
@@ -101,6 +103,27 @@ function DocumentRegion({
           props: {
             src: "https://letsenhance.io/static/8f5e523ee6b2479e26ecc91b9c25261e/1015f/MainAfter.jpg",
           },
+        },
+      ],
+      selectedBlock,
+    );
+  });
+
+  useRegisterAction("Insert image", keyExplicitAction("'"), async () => {
+    if (!editor.isFocused()) {
+      return;
+    }
+
+    // Proxy of: https://loripsum.net/
+    const response = await fetch("/api/dummy-text/1/plaintext");
+    const text = await response.text();
+
+    const selectedBlock = editor.getTextCursorPosition().block;
+    editor.insertBlocks(
+      [
+        {
+          type: "paragraph",
+          content: text.trim() || "",
         },
       ],
       selectedBlock,

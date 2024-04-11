@@ -6,8 +6,9 @@ import {
   LayoutCommon,
   LayoutNodeData,
   LayoutTreeTrunk,
-} from "../../types/layout-service";
+} from "../../types/layout/layout";
 import { layoutReducer } from "./layout-builder-reducer";
+import { DocumentRegionData } from "../../types/document/document";
 
 export type LayoutBuilderCallback = (layout: Layout) => void;
 
@@ -18,7 +19,14 @@ export function useLayoutBuilder(staticLayout: Layout) {
     handleRowChildrenChange(layout.tree);
   }, [layout]);
 
-  const override = () => {};
+  const insertContent = (
+    data: DocumentRegionData,
+    node: LayoutNodeData,
+  ): LayoutNodeData => {
+    dispatch({ type: "insert-content", node, data });
+
+    return node;
+  };
 
   const handleRowChildrenChange = (rows: LayoutTreeTrunk[]) => {
     for (let row of rows) {
@@ -114,6 +122,7 @@ export function useLayoutBuilder(staticLayout: Layout) {
     addColumnToNodeRow,
     removeRow,
     removeNodeFromRow,
+    insertContent,
     layout,
   } as const;
 }

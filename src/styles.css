@@ -5,5 +5,4 @@
 
 .input-hint .bn-block-content[data-is-empty-and-focused] .bn-inline-content:has(> .ProseMirror-trailingBreak)::before {
   content: "Insert element...";
-  @apply opacity-50;
 }

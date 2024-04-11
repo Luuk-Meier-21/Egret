@@ -2,7 +2,7 @@ import {
   Layout,
   LayoutBranchData,
   LayoutNodeData,
-} from "../../types/layout-service";
+} from "../../types/layout/layout";
 import { v4 as uuidv4 } from "uuid";
 
 export function generateLayoutBranch(
@@ -12,7 +12,7 @@ export function generateLayoutBranch(
     id: data.id || uuidv4(),
     type: "branch",
     children: data.children || [],
-    flow: data.flow || "vertical",
+    flow: data.flow || "horizontal",
   };
 }
 
@@ -21,9 +21,9 @@ export function generateLayoutNode(
 ): LayoutNodeData {
   return {
     id: data.id || uuidv4(),
-    contentfull: data.contentfull || false,
     type: "node",
     shortcut: data.shortcut,
+    data: data.data || undefined,
   };
 }
 
@@ -33,9 +33,7 @@ export function generateLayout(
   return {
     name: data.name,
     id: data.id || uuidv4(),
-    decorated: data.decorated ?? false,
     description: data.description || "",
     tree: data.tree || [],
-    relations: data.relations || [],
   };
 }

@@ -3,7 +3,7 @@ import {
   LayoutBranchData,
   LayoutBranchOrNodeData,
   LayoutNodeData,
-} from "../../types/layout-service";
+} from "../../types/layout/layout";
 import { flattenLayoutNodesByReference } from "./layout-content";
 import { LayoutBuilder } from "./layout-builder";
 import { LayoutState } from "./layout-state";
@@ -28,7 +28,22 @@ export function useLayoutNavigator(
     } else if (row?.type === "node") {
       setNodeId(row.id);
     }
+
+    scrollNodeIntoView();
   }, [rowId, nodeId, builder.layout]);
+
+  const scrollNodeIntoView = () => {
+    const element = document.getElementById(nodeId || "");
+    if (element === null) {
+      return;
+    }
+
+    window.scrollTo({
+      top: element.offsetTop - window.innerHeight / 4,
+      left: element.offsetLeft - window.innerWidth / 4,
+      behavior: "smooth",
+    });
+  };
 
   const getCurrentRow = (): LayoutBranchOrNodeData | null =>
     (rows.find((row) => row.id === rowId) as LayoutBranchOrNodeData) || null;

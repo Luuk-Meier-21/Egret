@@ -95,9 +95,7 @@ function Actions({ children }: ActionsProps) {
         <BackHomeButton />
       </div>
 
-      <div ref={mainRef} className="ring-1 ring-white">
-        {children}
-      </div>
+      <div ref={mainRef}>{children}</div>
       <ul
         aria-label="Actions menu"
         ref={actionsRef}

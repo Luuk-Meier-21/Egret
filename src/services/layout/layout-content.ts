@@ -1,14 +1,14 @@
 import {
   DocumentRegionData,
   DocumentViewData,
-} from "../../types/document-service";
+} from "../../types/document/document";
 import {
   ContentfullLayout,
   Layout,
   LayoutBranchOrNodeData,
   LayoutNodeData,
   LayoutTree,
-} from "../../types/layout-service";
+} from "../../types/layout/layout";
 import { LayoutToDocumentRelation } from "../../types/layout/layout-relations";
 import { deepJSONClone } from "../../utils/object";
 
@@ -94,6 +94,10 @@ export function flattenLayoutNodesByReference(
       }
     }
   };
+
+  if (tree === undefined) {
+    return [];
+  }
 
   traverseBranche(tree as LayoutBranchOrNodeData[]);
 
