@@ -7,6 +7,11 @@ export const FILE = {
   source: BaseDirectory.AppData,
 } as const;
 
+export const DOCUMENTS = {
+  path: "store",
+  source: BaseDirectory.AppData,
+} as const;
+
 export const FILE_BIN = {
   path: ".bin/documents",
   source: BaseDirectory.AppData,

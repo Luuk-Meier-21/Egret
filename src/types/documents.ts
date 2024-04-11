@@ -15,23 +15,28 @@ export type DocumentReferenceWithKeywords = DocumentReference & {
   keywords: Keyword[];
 };
 
-export type DocumentMetaContent = {
+export type DocumentMetaData = {
   lang: ("en" | "nl") & string;
+  version: number;
 };
 
 export type DocumentTextContent = IBlock[];
 
-export type DocumentContent = {
-  meta: Partial<DocumentMetaContent>;
+/**
+ * @deprecated replaced by `RegionDocumentContent`
+ */
+export type LegacyDocumentContent = {
+  meta: Partial<DocumentMetaData>;
   text: DocumentTextContent;
 };
 
 /**
  * document data at file location
+ * @deprecated replaced by `DocumentData`
  */
 export type Document = {
   name: string;
   id: string;
   keywords?: string[];
-  content: DocumentContent;
+  content: LegacyDocumentContent;
 };

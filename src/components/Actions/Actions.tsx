@@ -21,7 +21,7 @@ function Actions({ children }: ActionsProps) {
   const actionsRef = useRef<HTMLUListElement>(null);
 
   const navigate = useNavigate();
-  const { prompt, select } = useContext(DialogContext);
+  const { prompt } = useContext(DialogContext);
 
   const { elementWithShortcut: BackHomeButton } = useRegisterAction(
     "Back to home",

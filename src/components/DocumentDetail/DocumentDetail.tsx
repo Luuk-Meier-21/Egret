@@ -1,156 +1,100 @@
 import { useLoaderData } from "react-router";
-import {
-  BlockNoteView,
-  SuggestionMenuController,
-  getDefaultReactSlashMenuItems,
-  useCreateBlockNote,
-} from "@blocknote/react";
-import { filterSuggestionItems } from "@blocknote/core";
-import { insertTitle } from "../../blocks/Title";
-import { insertAlert } from "../../blocks/Alert";
-import { schema } from "../../blocks/schema";
-import { Document } from "../../types/documents";
-import { useEditorAutosave } from "../../utils/editor";
 import { deleteDocumentById } from "../../utils/documents";
-import { useRegisterAction } from "../../services/actions-registry";
-import { toggleBlock } from "../../utils/block";
-import { shell } from "@tauri-apps/api";
-import {
-  dereferenceKeywordFromDocument,
-  fetchKeywords,
-  keywordHasRelation,
-  referenceKeywordToDocument,
-  saveKeyword,
-} from "../../utils/keywords";
-import { useRef, useState } from "react";
 import { Keyword } from "../../types/keywords";
-import { handleError } from "../../utils/announce";
-import { useTitle } from "../../utils/title";
+import { LayoutBranchOrNode } from "../LayoutBranch/LayoutBranch";
+import { ContentfullLayout } from "../../types/layout-service";
+import { DocumentData } from "../../types/document-service";
+import { IBlockEditor } from "../../types/block";
+import { useRegisterAction } from "../../services/actions-registry";
+import { useLayoutNavigator } from "../../services/layout/layout-navigation";
+import { generateDocumentRegion } from "../../services/document/document-generator";
+
+import DocumentRegion from "../DocumentRegion/DocumentRegion";
+import { miscPath, useStore } from "../../services/store/store";
+import { useLayoutState } from "../../services/layout/layout-state";
+import { useLayoutBuilder } from "../../services/layout/layout-builder";
+import { useEffect } from "react";
 
 interface DocumentDetailProps {}
 
 function DocumentDetail({}: DocumentDetailProps) {
-  const editRef = useRef<HTMLElement>(null);
-
-  const [initialDocument, initialKeywords] = useLoaderData() as [
-    Document,
+  const [staticDocumentData, staticLayout, _] = useLoaderData() as [
+    DocumentData,
+    ContentfullLayout,
     Keyword[],
   ];
 
-  const editor = useCreateBlockNote({
-    schema,
-    initialContent: initialDocument.content.text,
-  });
+  const builder = useLayoutBuilder(staticLayout);
+  const store = useStore(builder.layout, miscPath("layout-test", "json"));
+  const selection = useLayoutState(builder.layout);
+  const navigator = useLayoutNavigator(selection, builder);
 
-  useTitle(initialDocument.name);
+  // const saveLayout = async () => {
+  //   store.set(builder.layout).save();
+  // };
 
-  const [keywords, setKeywords] = useState<Keyword[]>(initialKeywords);
-  const [openSettings, setOpenSettings] = useState(false);
+  useEffect(() => {}, [builder.layout]);
 
-  const setKeywordRelation = async (keyword: Keyword) => {
-    const hasRelation = keywordHasRelation(keyword, initialDocument);
-
-    hasRelation
-      ? await dereferenceKeywordFromDocument(keyword, initialDocument)
-      : await referenceKeywordToDocument(keyword, initialDocument);
-
-    await saveKeyword(keyword);
-
-    const keywords = await fetchKeywords();
-
-    setKeywords(keywords);
+  //@ts-ignore
+  const handleSave = (region: TextDocumentRegionData, editor: IBlockEditor) => {
+    // setTempViewStorage(getViewWithUpdatedRegion(region));
   };
 
-  useEditorAutosave(editor, initialDocument);
-
-  useRegisterAction("Selection to title", "cmd+b", () => {
-    const selectedBlock = editor.getTextCursorPosition().block;
-    toggleBlock(editor, selectedBlock, {
-      type: "title",
-    });
-  });
-
-  useRegisterAction("Open selected url", "cmd+u", () => {
-    const url = editor.getSelectedLinkUrl();
-    console.log(url);
-    if (url === undefined) {
-      return;
-    }
-    shell.open(url);
-  });
-
-  // useRegisterAction("Open selected url", "cmd+y", () => {
-  //   const props = editor.getTextCursorPosition().block.props as {
-  //     documentId?: string;
-  //   };
-  //   const id = props.documentId;
-  //   if (id === undefined) {
-  //     return;
-  //   }
-  //   // Temp fix for: https://github.com/Luuk-Meier-21/contextual-notes/issues/20
-  //   navigate(`/`);
-  //   setTimeout(() => {
-  //     navigate(`/documents/${id}`);
-  //   }, 100);
-  // });
-
-  const { elementWithShortcut: EditSettings } = useRegisterAction(
-    "Edit Keyword",
-    "cmd+k",
-    () => {
-      editRef.current?.querySelector("button")?.focus();
-
-      if (keywords.length <= 0) {
-        handleError("No keywords to edit");
-      }
-
-      setOpenSettings(!openSettings);
-    },
-  );
+  const handleChange = (
+    //@ts-ignore
+    region: TextDocumentRegionData,
+    //@ts-ignore
+    editor: IBlockEditor,
+  ) => {
+    // console.log(region);
+  };
 
   useRegisterAction("Delete document", "shift+cmd+backspace", async () => {
-    await deleteDocumentById(initialDocument.id);
+    await deleteDocumentById(staticDocumentData.id);
   });
 
-  // useRegisterAction("Delete document", "cmd+4", async () => {
-  //   insertOrUpdateBlock(editor, {
-  //     type: "row",
-  //   });
-  // });
+  useRegisterAction("Move up", "option+up", async () => {
+    navigator.focusRowUp();
+  });
 
-  editor.onSelectionChange((editor) => {
-    const { block } = editor.getTextCursorPosition();
-    if (block.type === "title") {
-      return;
+  useRegisterAction("Move down", "option+down", async () => {
+    navigator.focusRowDown();
+  });
+
+  useRegisterAction("Move right", "option+right", async () => {
+    navigator.focusColumnRight();
+  });
+
+  useRegisterAction("Move left", "option+left", async () => {
+    navigator.focusColumnLeft();
+  });
+
+  useRegisterAction("Delete column", "option+backspace", async () => {
+    const currentRow = navigator.getCurrentRow();
+    const currentNode = navigator.getCurrentNode();
+
+    let availableNode;
+
+    if (currentRow.type === "branch") {
+      availableNode = builder.removeNodeFromRow(currentRow, currentNode);
+    } else {
+      availableNode = builder.removeRow(currentRow);
     }
+
+    selection.setNodeId(availableNode.id);
   });
-
-  // Sits in betweed editor and blocknotejs, makes 'freezing blocks' possible
-  // const beforeEditorChange = (
-  //   event: React.KeyboardEvent<HTMLDivElement>,
-  // ): boolean => {
-  //   const { block } = editor.getTextCursorPosition();
-
-  //   if (block.type === "title" && event.key === "Backspace") {
-  //     handleError(block.type, " is frozen");
-  //     event.preventDefault();
-  //   }
-
-  //   return false;
-  // };
 
   return (
     <main
-      aria-labelledby="document-title"
       data-component-name="DocumentDetail"
-      lang={initialDocument.content.meta.lang ?? "en"}
+      lang={staticDocumentData.data.meta.lang ?? "en"}
     >
-      <h1 id="document-title" className="p-4" aria-live="polite">
-        Document: {initialDocument.name}{" "}
-        <span aria-hidden>{initialDocument.id}</span>
-      </h1>
+      {/* <h1 id="document-title" className="p-4" aria-live="polite">
+        Document: {staticDocumentData.name}{" "}
+        <span aria-hidden>{staticDocumentData.id}</span>
+      </h1> */}
 
-      <section
+      {/* <section
         aria-label="Edit document settings"
         ref={editRef}
         className="p-4"
@@ -171,40 +115,101 @@ function DocumentDetail({}: DocumentDetailProps) {
             ))}
           </ul>
         )}
-      </section>
+      </section> */}
 
-      <BlockNoteView
-        aria-label="Document editor"
-        className="max-w-[46em] p-4 text-white ring-1 ring-white [&_a]:underline"
-        editor={editor}
-        autoFocus
-        slashMenu={false}
-        autoCorrect="false"
-        spellCheck="false"
-        onKeyDown={(event) => {
-          if (event.key === "Escape") {
-            editor;
-          }
-        }}
-        sideMenu={false}
-        formattingToolbar={false}
-        hyperlinkToolbar={false}
-      >
-        <SuggestionMenuController
-          triggerCharacter="/"
-          getItems={async (query) =>
-            filterSuggestionItems(
-              [
-                ...getDefaultReactSlashMenuItems(editor),
-                insertTitle(editor),
-                insertAlert(editor),
-              ],
-              query,
-            )
-          }
-        />
-      </BlockNoteView>
+      <main>
+        {builder.layout.tree.map((branchOrNode) => (
+          <LayoutBranchOrNode
+            key={branchOrNode.id}
+            value={branchOrNode}
+            renderNode={(node, isFirstInList) => {
+              const isFocused = node.id === selection.nodeId;
+
+              node.data = node.data || generateDocumentRegion({});
+
+              return (
+                <DocumentRegion
+                  onSave={handleSave}
+                  onChange={handleChange}
+                  isFocused={isFocused}
+                  onFocus={() => {
+                    navigator.focusColumn(branchOrNode.id, node.id);
+                  }}
+                  onBlur={() => {
+                    navigator.blurColumn();
+                  }}
+                  region={node?.data}
+                />
+              );
+            }}
+          />
+        ))}
+      </main>
     </main>
   );
 }
 export default DocumentDetail;
+
+{
+  /* <BlockNoteView
+          aria-label="Document editor"
+          className="max-w-[46em] p-4 text-white ring-1 ring-white [&_a]:underline"
+          editor={editor}
+          autoFocus
+          slashMenu={false}
+          autoCorrect="false"
+          spellCheck="false"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              editor;
+            }
+          }}
+          sideMenu={false}
+          formattingToolbar={false}
+          hyperlinkToolbar={false}
+        >
+          <SuggestionMenuController
+            triggerCharacter="/"
+            getItems={async (query) =>
+              filterSuggestionItems(
+                [
+                  ...getDefaultReactSlashMenuItems(editor),
+                  insertTitle(editor),
+                  insertAlert(editor),
+                ],
+                query,
+              )
+            }
+        />
+      </BlockNoteView> */
+}
+// const [keywords, setKeywords] = useState<Keyword[]>(staticKeywords);
+// const [openSettings, setOpenSettings] = useState(false);
+
+// const setKeywordRelation = async (keyword: Keyword) => {
+//   const hasRelation = keywordHasRelation(keyword, staticDocumentData);
+
+//   hasRelation
+//     ? await dereferenceKeywordFromDocument(keyword, staticDocumentData)
+//     : await referenceKeywordToDocument(keyword, staticDocumentData);
+
+//   await saveKeyword(keyword);
+
+//   const keywords = await fetchKeywords();
+
+//   setKeywords(keywords);
+// };
+
+// const { elementWithShortcut: EditSettings } = useRegisterAction(
+//   "Edit Keyword",
+//   "cmd+k",
+//   () => {
+//     editRef.current?.querySelector("button")?.focus();
+
+//     if (keywords.length <= 0) {
+//       handleError("No keywords to edit");
+//     }
+
+//     setOpenSettings(!openSettings);
+//   },
+// );

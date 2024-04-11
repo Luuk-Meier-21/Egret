@@ -13,7 +13,7 @@ function DialogSelect({
   onSubmit = () => {},
   onCancel = () => {},
 }: DialogSelectProps) {
-  const { ref, onChange, onKeyDown } = useDialogHandlers<string>({
+  const { ref, onChange } = useDialogHandlers<string>({
     onSubmit,
     onCancel,
   });

@@ -1,6 +1,4 @@
-import { DocumentContent } from "../types/documents";
-
-export const ONBOARDING_CONTENT: DocumentContent = {
+export const ONBOARDING_CONTENT: any = {
   meta: {},
   text: [
     {
