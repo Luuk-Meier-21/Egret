@@ -4,64 +4,16 @@ import { KEYWORD_FILE } from "../config/files";
 import { slugify } from "./url";
 import { requireFile } from "./filesystem";
 import { Keyword } from "../types/keywords";
-import { Document, DocumentReference } from "../types/documents";
-
-export function parseKeyword(
-  label: string,
-  slug: string,
-  id: string,
-  documentRelations?: string[],
-): Keyword {
-  return {
-    label,
-    slug,
-    id,
-    documentRelations: documentRelations ?? [],
-  };
-}
-
-export function createKeyword(label: string): Keyword {
-  return parseKeyword(label, slugify(label), uuidv4());
-}
-
-export async function fetchKeywords(): Promise<Keyword[]> {
-  await requireFile(KEYWORD_FILE.filename, [], {
-    dir: KEYWORD_FILE.source,
-  });
-
-  const text = await readTextFile(KEYWORD_FILE.filename, {
-    dir: KEYWORD_FILE.source,
-  });
-
-  return JSON.parse(text) as Keyword[];
-}
-
-export async function saveKeyword(keywordToSave: Keyword): Promise<void> {
-  const keywords = await fetchKeywords();
-  const keywordIndex = keywords.findIndex(
-    (keyword) =>
-      keyword.id === keywordToSave.id || keyword.slug === keywordToSave.slug,
-  );
-
-  if (keywordIndex < 0) {
-    // Not saved
-    keywords.push(keywordToSave);
-  } else {
-    // Saved, copy over relations
-    const prevSavedKeyword = keywords[keywordIndex];
-
-    prevSavedKeyword.documentRelations = keywordToSave.documentRelations;
-    keywords[keywordIndex] = prevSavedKeyword;
-  }
-
-  await writeTextFile(KEYWORD_FILE.filename, JSON.stringify(keywords), {
-    dir: KEYWORD_FILE.source,
-  });
-}
+import {
+  Document,
+  DocumentDirectory,
+  DocumentReference,
+} from "../types/documents";
+import { DocumentData } from "../types/document/document";
 
 export function keywordHasRelation(
   keyword: Keyword,
-  document: Document | DocumentReference,
+  document: DocumentData | DocumentDirectory,
 ): boolean {
   return !!keyword.documentRelations.find(
     (relation) => relation === document.id,
@@ -70,7 +22,7 @@ export function keywordHasRelation(
 
 export async function referenceKeywordToDocument(
   keyword: Keyword,
-  document: Document | DocumentReference,
+  document: DocumentData | DocumentDirectory,
 ) {
   const hasRelation = keywordHasRelation(keyword, document);
 

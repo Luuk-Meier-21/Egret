@@ -1,7 +1,6 @@
 // export function
 
-import { DocumentRegionData, TreeData } from "../document/document";
-import { LayoutToDocumentRelation } from "./layout-relations";
+import { DocumentRegionData } from "../document/document";
 
 /**
  * Common interface for all layout types

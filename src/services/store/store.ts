@@ -11,12 +11,25 @@ export interface Store<T> {
   load: () => Promise<T>;
 }
 
+/**
+ * @deprecated
+ * @param reference
+ * @returns
+ */
 export function documentPath(reference: DocumentReference): string {
   return `${DOCUMENTS.path}/${formatDocumentName(reference.name, reference.id)}`;
 }
 
+export function pathOfDocumentsDirectory(path: string): string {
+  return `${DOCUMENTS.path}/${path}`;
+}
+
 export function pathInDirectory(dir: DocumentDirectory, path: string): string {
-  return `${DOCUMENTS.path}/${dir.fileName}/${path}`;
+  return pathOfDocumentsDirectory(`${dir.fileName}/${path}`);
+}
+
+export function pathOfDirectory(dir: DocumentDirectory): string {
+  return pathOfDocumentsDirectory(dir.fileName);
 }
 
 export function miscPath(name: string, extension: string = "json"): string {

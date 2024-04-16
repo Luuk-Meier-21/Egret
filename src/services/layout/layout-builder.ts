@@ -9,6 +9,7 @@ import {
 } from "../../types/layout/layout";
 import { layoutReducer } from "./layout-builder-reducer";
 import { DocumentRegionData } from "../../types/document/document";
+import { systemSound } from "../../bindings";
 
 export type LayoutBuilderCallback = (layout: Layout) => void;
 
@@ -18,6 +19,18 @@ export function useLayoutBuilder(staticLayout: Layout) {
   useEffect(() => {
     handleRowChildrenChange(layout.tree);
   }, [layout]);
+
+  const announceCreation = () => {
+    systemSound("Frog", 1.5, 1, 0.1);
+  };
+
+  const announceDeletion = () => {
+    systemSound("Pop", 1.5, 1.5, 0.2);
+  };
+
+  const handleError = () => {
+    systemSound("Basso", 3, 1.5, 0.2);
+  };
 
   const insertContent = (
     data: DocumentRegionData,
@@ -50,6 +63,7 @@ export function useLayoutBuilder(staticLayout: Layout) {
   const addRow = (position: "before" | "after"): LayoutNodeData => {
     const newRow = generateLayoutNode({});
     dispatch({ type: "add-row", position, newRow });
+    announceCreation();
 
     return newRow;
   };
@@ -65,6 +79,7 @@ export function useLayoutBuilder(staticLayout: Layout) {
       row,
       newColumn: newColumn,
     });
+    announceCreation();
 
     return newColumn;
   };
@@ -81,6 +96,7 @@ export function useLayoutBuilder(staticLayout: Layout) {
       newColumn: newColumn,
       position: position,
     });
+    announceCreation();
 
     return newColumn;
   };
@@ -89,7 +105,7 @@ export function useLayoutBuilder(staticLayout: Layout) {
     const index = layout.tree.indexOf(row);
 
     dispatch({ type: "remove-row", row });
-    // For some reason state is not updated here yet.
+    announceDeletion();
 
     const futureRow =
       layout.tree[index + 1] || layout.tree[index - 1] || layout.tree[0];
@@ -108,6 +124,7 @@ export function useLayoutBuilder(staticLayout: Layout) {
     const nodeIndex = row.children.indexOf(column);
 
     dispatch({ type: "remove-column-from-row", row, column });
+    announceDeletion();
 
     return (
       row.children[nodeIndex + 1] ||

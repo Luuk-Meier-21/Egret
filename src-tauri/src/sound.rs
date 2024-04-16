@@ -1,7 +1,9 @@
 use std::default;
 
-#[derive(strum_macros::Display, serde::Deserialize)]
-enum MacOSSystemSound {
+// sounds found at: /System/Library/Sounds/
+
+#[derive(strum_macros::Display, serde::Deserialize, specta::Type)]
+pub enum MacOSSystemSound {
     Basso,
     Blow,
     Bottle,
@@ -18,7 +20,15 @@ enum MacOSSystemSound {
     Tink,
 }
 
+impl MacOSSystemSound {
+    pub fn as_path(self) -> String {
+        format!("/System/Library/Sounds/{}.aiff", self.to_string())
+    }
+}
+
+#[derive(strum_macros::Display, serde::Deserialize, specta::Type)]
 pub enum SystemSound {
+    Select,
     Fail,
     Blocked,
     Error,
@@ -26,13 +36,12 @@ pub enum SystemSound {
     SuccesLarge,
 }
 
-// pub fn getMacOSSystemSoundPath(sound: MacOSSystemSound) -> &'static str {
-//     format!("/System/Library/Sounds/{}.aiff", sound.to_string()).as_str()
-// }
-
-// pub fn getSystemSound(sound: SystemSound) -> MacOSSystemSound {
-//     match sound {
-//         Fail => MacOSSystemSound::Basso,
-//         _ => MacOSSystemSound::Basso,
-//     }
-// }
+impl SystemSound {
+    pub fn to_macos_sound(self) -> MacOSSystemSound {
+        match self {
+            self::SystemSound::Fail => MacOSSystemSound::Basso,
+            self::SystemSound::Select => MacOSSystemSound::Frog,
+            _ => MacOSSystemSound::Basso,
+        }
+    }
+}

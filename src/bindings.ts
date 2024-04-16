@@ -14,4 +14,8 @@ export function greet(name: string) {
     return invoke()<string>("greet", { name })
 }
 
+export function systemSound(sound: MacOSSystemSound, speed: number, volume: number, time: number) {
+    return invoke()<null>("system_sound", { sound,speed,volume,time })
+}
 
+export type MacOSSystemSound = "Basso" | "Blow" | "Bottle" | "Frog" | "Funk" | "Glass" | "Hero" | "Morse" | "Ping" | "Pop" | "Purr" | "Sosumi" | "Submarine" | "Tink"

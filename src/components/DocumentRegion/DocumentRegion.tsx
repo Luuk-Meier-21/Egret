@@ -1,4 +1,3 @@
-import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
 import { DocumentRegionData } from "../../types/document/document";
 import { schema } from "../../blocks/schema";
 import { shell } from "@tauri-apps/api";
@@ -8,15 +7,17 @@ import { IBlockEditor } from "../../types/block";
 import {
   useRegisterAction,
   useRegisterEditorAction,
-} from "../../services/actions-registry";
-import { useEffect, useRef } from "react";
-import { deepJSONClone } from "../../utils/object";
+} from "../../services/actions/actions-registry";
+import { useEffect, useRef, useState } from "react";
 import { keyExplicitAction } from "../../config/shortcut";
+import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
+import { useScopedAction } from "../../services/actions/actions-hook";
 
 interface DocumentRegionProps {
   region: DocumentRegionData;
   onSave: (region: DocumentRegionData, editor: IBlockEditor) => void;
   onChange: (region: DocumentRegionData, editor: IBlockEditor) => void;
+  onExport: (region: DocumentRegionData, editor: IBlockEditor) => void;
   onFocus: (region: DocumentRegionData, editor: IBlockEditor) => void;
   onBlur: (region: DocumentRegionData, editor: IBlockEditor) => void;
   isFocused: boolean;
@@ -29,8 +30,12 @@ function DocumentRegion({
   isFocused = false,
   onFocus,
   onBlur,
+  onExport,
 }: DocumentRegionProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const [editing, setEditing] = useState(false);
+
+  const focusRef = useRef<HTMLInputElement>(null);
 
   const editor = useCreateBlockNote({
     schema,
@@ -54,12 +59,30 @@ function DocumentRegion({
     }
   };
 
+  useEffect(() => {}, [editing]);
+
   useEffect(() => {
     editor._tiptapEditor.on("create", () => {
       if (isFocused) {
         focus();
       }
     });
+
+    const setNavigation = (event: globalThis.KeyboardEvent) => {
+      if (event.altKey) {
+        setEditing(false);
+      } else {
+        setEditing(true);
+      }
+    };
+
+    window.addEventListener("keydown", setNavigation);
+    window.addEventListener("keyup", setNavigation);
+
+    return () => {
+      window.removeEventListener("keydown", setNavigation);
+      window.addEventListener("keyup", setNavigation);
+    };
   }, []);
 
   useEffect(() => {
@@ -82,7 +105,7 @@ function DocumentRegion({
     });
   });
 
-  useRegisterAction("Open selected url", "cmd+u", () => {
+  useScopedAction("Open selected url", "cmd+u", () => {
     const url = editor.getSelectedLinkUrl();
     if (url === undefined) {
       return;
@@ -90,7 +113,7 @@ function DocumentRegion({
     shell.open(url);
   });
 
-  useRegisterAction("Insert image", "cmd+o", () => {
+  useScopedAction("Insert image", "cmd+o", () => {
     if (!editor.isFocused()) {
       return;
     }
@@ -109,7 +132,7 @@ function DocumentRegion({
     );
   });
 
-  useRegisterAction("Insert image", keyExplicitAction("'"), async () => {
+  useScopedAction("Insert dummy text", keyExplicitAction("'"), async () => {
     if (!editor.isFocused()) {
       return;
     }
@@ -130,14 +153,19 @@ function DocumentRegion({
     );
   });
 
+  useScopedAction("Export", keyExplicitAction("p"), async () => {
+    onExport(region, editor);
+  });
+
   return (
     <section
-      aria-label={`Region: ${region.label || ""}`}
       data-component-name="DocumentDetail"
+      aria-current="page"
       data-focused={isFocused || undefined}
       ref={ref}
-      className="input-hint w-full p-4 text-white data-[focused]:bg-white data-[focused]:text-black"
+      className="input-hint relative w-full p-4 text-white data-[focused]:bg-white data-[focused]:text-black"
     >
+      <h1>test</h1>
       <BlockNoteView
         id={region.id}
         data-editor
@@ -147,22 +175,27 @@ function DocumentRegion({
         onBlur={() => {
           onBlur(region, editor);
         }}
-        role="document"
-        aria-label={`field, ${region.label}`}
         className="mx-auto w-full max-w-[46em] [&_a]:underline"
         editor={editor}
-        aria-placeholder="test"
-        // editable={false}
         slashMenu={false}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
             editor;
           }
         }}
+        aria-hidden="true"
         sideMenu={false}
         formattingToolbar={false}
         hyperlinkToolbar={false}
-      />
+      >
+        {/* <h2
+          className="absolute inset-0"
+          aria-relevant="additions text"
+          role="alert"
+        >
+          Test
+        </h2> */}
+      </BlockNoteView>
     </section>
   );
 }

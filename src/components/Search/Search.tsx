@@ -1,10 +1,11 @@
 import Fuse, { FuseOptionKey, IFuseOptions } from "fuse.js";
 import { useEffect, useRef, useState } from "react";
-import { useRegisterAction } from "../../services/actions-registry";
+import { useRegisterAction } from "../../services/actions/actions-registry";
 
 interface SearchProps<T> {
   list: ReadonlyArray<T>;
   keys: FuseOptionKey<T>;
+  label: string;
   onResult?: (results: T[], query: string) => void;
   onConfirm?: () => void;
 }
@@ -12,6 +13,7 @@ interface SearchProps<T> {
 function Search<T>({
   list,
   keys,
+  label,
   onResult = () => {},
   onConfirm = () => {},
 }: SearchProps<T>) {
@@ -75,7 +77,7 @@ function Search<T>({
     >
       <DeleteButton />
       <label id="search" htmlFor="search-query">
-        Search documents
+        {label}
       </label>
       <input
         id="search-query"

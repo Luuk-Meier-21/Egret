@@ -6,7 +6,7 @@ import Search from "../Search/Search";
 import { ReactNode, useRef, useState } from "react";
 import { Keyword } from "../../types/keywords";
 import { includeKeywordsInDocuments } from "../../utils/keywords";
-import { useRegisterAction } from "../../services/actions-registry";
+import { useRegisterAction } from "../../services/actions/actions-registry";
 import { writeText } from "@tauri-apps/api/clipboard";
 import { useTitle } from "../../utils/title";
 
@@ -32,12 +32,9 @@ function DocumentsOverview({
     useState<DocumentReference | null>(null);
 
   const selectDocument = (document: DocumentReference | null) => {
-    console.log(document);
     setSelectedDocument(document);
     onDocumentSelection(document);
   };
-
-  useTitle("Documents");
 
   useRegisterAction("Copy selected document id", "cmd+c", async () => {
     if (selectedDocument === null) {
@@ -53,17 +50,6 @@ function DocumentsOverview({
 
   return (
     <div data-component-name="DocumentsOverview" aria-live="polite">
-      <Search
-        list={includeKeywordsInDocuments(documentReferences, keywords)}
-        keys={["name", "keywords.label"]}
-        onConfirm={() => {
-          documentsRef.current?.querySelector("button")?.focus();
-        }}
-        onResult={(searchResults) => {
-          // Currently all documents go tru search, this might not be the best idea
-          setFilteredDocuments(searchResults);
-        }}
-      />
       <section
         id="documents"
         aria-label="Documents"
@@ -104,6 +90,18 @@ function DocumentsOverview({
         )}
       </section>
       {children}
+      <Search
+        label="Search document"
+        list={includeKeywordsInDocuments(documentReferences, keywords)}
+        keys={["name", "keywords.label"]}
+        onConfirm={() => {
+          documentsRef.current?.querySelector("button")?.focus();
+        }}
+        onResult={(searchResults) => {
+          // Currently all documents go tru search, this might not be the best idea
+          setFilteredDocuments(searchResults);
+        }}
+      />
     </div>
   );
 }

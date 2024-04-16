@@ -4,6 +4,7 @@
 mod sound;
 
 use serde_json::Number;
+use sound::{MacOSSystemSound, SystemSound};
 use specta::collect_types;
 use std::process::Command;
 use tauri_specta::{self, ts};
@@ -20,23 +21,27 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
-// #[tauri::command]
-// #[specta::specta]
-// fn system_sound(sound: SystemSound, speed: Number) -> () {
-//     let _ = Command::new("afplay")
-//         .args(vec![
-//             getMacOSSystemSoundPath(getSystemSound(sound)),
-//             "-r",
-//             format!("{}", speed).as_str(),
-//         ])
-//         .spawn();
-// }
+#[tauri::command]
+#[specta::specta]
+fn system_sound(sound: MacOSSystemSound, speed: f32, volume: f64, time: f64) -> () {
+    let _ = Command::new("afplay")
+        .args(vec![
+            sound.as_path().as_str(),
+            "-r",
+            format!("{}", speed).as_str(),
+            "-v",
+            format!("{}", volume).as_str(),
+            "-t",
+            format!("{}", time).as_str(),
+        ])
+        .spawn();
+}
 
 fn main() {
-    ts::export(collect_types![greet], "../src/bindings.ts").unwrap();
+    ts::export(collect_types![greet, system_sound], "../src/bindings.ts").unwrap();
 
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![greet, system_sound])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

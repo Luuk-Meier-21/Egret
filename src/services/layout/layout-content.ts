@@ -3,7 +3,6 @@ import {
   DocumentViewData,
 } from "../../types/document/document";
 import {
-  ContentfullLayout,
   Layout,
   LayoutBranchOrNodeData,
   LayoutNodeData,
@@ -12,13 +11,31 @@ import {
 import { LayoutToDocumentRelation } from "../../types/layout/layout-relations";
 import { deepJSONClone } from "../../utils/object";
 
+export function generateLayoutWithContent(
+  layout: Layout,
+  content: DocumentRegionData[],
+): Layout {
+  const layoutClone = deepJSONClone(layout);
+  const nodes = flattenLayoutNodesByReference(layoutClone.tree);
+  for (let [index, region] of content.entries()) {
+    const node = nodes[index];
+
+    node.data = region;
+  }
+
+  return layoutClone;
+}
+
+/**
+ * @deprecated
+ * @param documentView
+ * @param layout
+ * @returns
+ */
 export function generateContentfullLayout(
   documentView: DocumentViewData,
   layout: Layout,
 ): ContentfullLayout {
-  if (layout.decorated === true) {
-    return layout as ContentfullLayout;
-  }
   const newLayout: ContentfullLayout = deepJSONClone({
     ...layout,
     decorated: true,

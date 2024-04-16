@@ -13,7 +13,6 @@ import {
   LegacyDocumentContent,
 } from "../../types/documents";
 import { v4 as uuidv4, validate } from "uuid";
-import { DOCUMENTS } from "../../config/files";
 
 /**
  * @deprecated
@@ -27,6 +26,10 @@ export function generateDocumentReference(
     filePath: data.filePath,
     fileName: data.name,
   };
+}
+
+export function generateDirectoryName(name: string, id?: string) {
+  return `${name}.${id || uuidv4()}`;
 }
 
 export function generateDocumentData(
@@ -123,7 +126,7 @@ export function parseFileToDocumentDirectory(
   return {
     name,
     id,
-    pathRelative: DOCUMENTS.source,
+    pathRelative: "/",
     fileName: file.name,
     filePath: file.path,
   };

@@ -8,6 +8,7 @@ interface DialogPromptProps extends Partial<DialogImplementationProps<string>> {
 function DialogPrompt({
   onSubmit = () => {},
   onCancel = () => {},
+  label,
 }: DialogPromptProps) {
   const { ref, onChange, onKeyDown } = useDialogHandlers<string>({
     onSubmit,
@@ -15,7 +16,7 @@ function DialogPrompt({
   });
 
   return (
-    <Dialog ref={ref} label="Test dialog prompt">
+    <Dialog ref={ref} label={label}>
       <input
         aria-labelledby="dialog"
         autoFocus

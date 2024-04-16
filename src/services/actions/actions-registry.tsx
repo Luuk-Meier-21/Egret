@@ -2,10 +2,10 @@
 // https://stackoverflow.com/questions/47098643/implementing-a-type-safe-service-registry-in-typescript
 
 import { ComponentPropsWithoutRef, useEffect } from "react";
-import { ObjectRegistry } from "../utils/object";
-import { useHotkeys } from "../utils/hotkeys";
-import { formatShortcutsForSpeech } from "../utils/speech";
-import { IBlockEditor } from "../types/block";
+import { ObjectRegistry } from "../../utils/object";
+import { useHotkeys } from "../../utils/hotkeys";
+import { formatShortcutsForSpeech } from "../../utils/speech";
+import { IBlockEditor } from "../../types/block";
 
 export type ActionCallback = () => void;
 
@@ -13,6 +13,7 @@ export interface ActionConfiguration {
   label: string;
   shortcut: string;
   callback: ActionCallback;
+  hidden: boolean;
 }
 
 class ActionsRegistry {

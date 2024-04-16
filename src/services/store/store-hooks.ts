@@ -4,25 +4,23 @@ import { DOCUMENTS } from "../../config/files";
 import { useEffect } from "react";
 import { requireDir } from "../../utils/filesystem";
 
-export function useStore<T>(
-  value: T,
+export function useStateStore<T>(
+  state: T,
   path: string,
   options: FsOptions = {
     dir: DOCUMENTS.source,
   },
 ) {
-  const store: Store<T> = _createStore(value, path, options);
+  const store: Store<T> = _createStore(state, path, options);
 
   useEffect(() => {
     store
-      .set(value)
+      .set(state)
       .save()
       .then(() => {
         console.log("saved");
       });
-  }, [value]);
-
-  return store as Readonly<Store<T>>;
+  }, [state]);
 }
 
 export function useAbstractStore() {
@@ -60,10 +58,39 @@ export function useAbstractStore() {
     return entries.map(transform).filter((value) => value !== null) as T[];
   };
 
+  const createDirectory = async <T>(
+    path: string,
+    transform: (file: FileEntry) => T | null,
+    options: FsOptions = {
+      dir: DOCUMENTS.source,
+    },
+  ) => {
+    await requireDir(path, options);
+
+    const segments = path.split("/");
+    const filename = segments.pop();
+
+    const entries = await readDir(segments.join("/"), options);
+    const directory = entries.find((file) => file.name === filename);
+
+    if (directory === undefined) {
+      return Promise.reject();
+    }
+
+    const data = transform(directory);
+
+    if (data === null) {
+      return Promise.reject();
+    }
+
+    return data;
+  };
+
   return {
     createStore,
     loadStore,
     searchDirectory,
+    createDirectory,
   } as const;
 }
 

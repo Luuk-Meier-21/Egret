@@ -1,114 +1,146 @@
-import { ReactNode, useContext, useRef } from "react";
 import {
-  createDocument,
-  fetchDocumentsReferences,
-  saveDocument,
-} from "../../utils/documents";
+  ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useReducer,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router";
-import { Document } from "../../types/documents";
-import { useRegisterAction } from "../../services/actions-registry";
-import { createKeyword, saveKeyword } from "../../utils/keywords";
+import {
+  ActionConfiguration,
+  action,
+  renderActionWithShortcut,
+  useRegisterAction,
+} from "../../services/actions/actions-registry";
 import { handleError, handleSucces } from "../../utils/announce";
-import { ONBOARDING_CONTENT } from "../../config/onboarding";
 import { DialogContext } from "../Dialog/DialogProvider";
+import { useAbstractStore } from "../../services/store/store-hooks";
+import { pathOfDocumentsDirectory } from "../../services/store/store";
+import {
+  generateDirectoryName,
+  parseFileToDocumentDirectory,
+} from "../../services/document/document-generator";
+import {
+  keywordsRecordOptions,
+  keywordsRecordPath,
+} from "../../config/keywords";
+import { Keyword } from "../../types/keywords";
+import { generateKeyword } from "../../services/keyword/keyword-generator";
+import { slugify } from "../../utils/url";
+import {
+  ActionReducerAction,
+  actionsReducer,
+} from "../../services/actions/actions-reducer";
+import {
+  useInjectedAction,
+  useScopedAction,
+} from "../../services/actions/actions-hook";
+import SearchList from "../SearchList/SearchList";
 
 interface ActionsProps {
   children: ReactNode | ReactNode[];
 }
 
+export const ActionsContext = createContext<
+  [ActionConfiguration[], React.Dispatch<ActionReducerAction>]
+>([[], () => {}]);
+
 function Actions({ children }: ActionsProps) {
   const mainRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLUListElement>(null);
 
+  const store = useAbstractStore();
+
+  const [actions, dispatch] = useReducer(actionsReducer, []);
+
   const navigate = useNavigate();
   const { prompt } = useContext(DialogContext);
 
-  const { elementWithShortcut: BackHomeButton } = useRegisterAction(
-    "Back to home",
-    "cmd+1",
-    async () => {
-      navigate("/");
-    },
-  );
-
-  useRegisterAction("Focus first action", "cmd+2", async () => {
-    (
-      mainRef.current?.querySelector("#documents > button") as HTMLButtonElement
-    )?.focus();
+  useInjectedAction(dispatch, "Back to home", "cmd+1", async () => {
+    navigate("/");
   });
 
-  useRegisterAction("Focus first action", "cmd+3", async () => {
-    actionsRef.current?.querySelector("button")?.focus();
+  useInjectedAction(dispatch, "New document", "cmd+n", async () => {
+    try {
+      const name = await prompt("Project name?");
+      const path = pathOfDocumentsDirectory(generateDirectoryName(name));
+
+      const directory = await store.createDirectory(
+        path,
+        parseFileToDocumentDirectory,
+      );
+
+      // TODO: share succes state
+      setTimeout(() => {
+        navigate(`/`);
+        handleSucces();
+        navigate(`/documents/${directory.id}`);
+      }, 100);
+    } catch (error) {
+      handleError("Failed to create document: ", error);
+    }
   });
 
-  const { elementWithShortcut: NewDocumentButton } = useRegisterAction(
-    "New document",
-    "cmd+n",
-    async () => {
-      try {
-        const documents = await fetchDocumentsReferences();
-        const name = await prompt("What will the document be called?");
+  useInjectedAction(dispatch, "New keyword", "cmd+m", async () => {
+    try {
+      const keywordStore = await store.loadStore(
+        keywordsRecordPath,
+        [] as Keyword[],
+        keywordsRecordOptions,
+      );
 
-        const introductionContent =
-          documents.length <= 0 ? ONBOARDING_CONTENT : undefined;
+      const keywords = await keywordStore.load();
+      const label = await prompt("Keyword name?");
+      const matchingKeyword = keywords.find(
+        (keyword) => keyword.slug === slugify(label),
+      );
 
-        const document: Document = createDocument(name, introductionContent);
-        await saveDocument(document);
-        console.log(name);
-
-        // TODO: share succes state
-        setTimeout(() => {
-          navigate(`/`);
-          handleSucces();
-          navigate(`/documents/${document.id}`);
-        }, 100);
-      } catch (error) {
-        handleError("Failed to create document: ", error);
-      }
-    },
-  );
-
-  const { elementWithShortcut: NewKeywordButton } = useRegisterAction(
-    "New keyword",
-    "cmd+m",
-    async () => {
-      try {
-        const label = await prompt("What will the keyword be called?");
-        const keyword = await createKeyword(label);
-
-        await saveKeyword(keyword);
-      } catch (error) {
-        handleError("Failed to create keyword: ", error);
+      if (matchingKeyword) {
+        throw Error("Keyword of name found");
       }
 
-      handleSucces();
+      const keyword = generateKeyword({ label });
+
+      keywordStore.set([...keywords, keyword]).save();
+    } catch (error) {
+      handleError("Failed to create keyword: ", error);
+    }
+
+    handleSucces();
+  });
+
+  useInjectedAction(
+    dispatch,
+    "Open actions panel",
+    "cmd+g",
+    () => {
+      actionsRef?.current?.focus();
     },
+    true,
   );
 
-  useRegisterAction("Focus main content", "control+space", () => {
-    actionsRef?.current?.focus();
-  });
+  useEffect(() => {
+    console.log(actions);
+  }, [actions]);
 
   return (
-    <div data-component-name="Actions menu" className="flex flex-col">
-      <div className="p-4">
-        <BackHomeButton />
-      </div>
-
-      <div ref={mainRef}>{children}</div>
-      <ul
-        aria-label="Actions menu"
-        ref={actionsRef}
-        className=" p-4"
-        role="menu"
-      >
-        <li role="menuitem">
-          <NewDocumentButton />
-        </li>
-        <li role="menuitem">
-          <NewKeywordButton />
-        </li>
-      </ul>
+    <div data-component-name="Actions" className="flex flex-col p-4">
+      <ActionsContext.Provider value={[actions, dispatch]}>
+        <div ref={mainRef}>{children}</div>
+        <ul aria-label="Actions" ref={actionsRef} className="p-4" role="menu">
+          {actions
+            .filter((action) => !action.hidden)
+            .map((action) => renderActionWithShortcut(action))}
+        </ul>
+        {/* <SearchList
+          label="Search actions"
+          list={actions}
+          searchKeys={["label", "shortcut"]}
+          renderItem={(action) => renderActionWithShortcut(action)}
+          onSearchConfirm={function (): void {}}
+        /> */}
+      </ActionsContext.Provider>
     </div>
   );
 }

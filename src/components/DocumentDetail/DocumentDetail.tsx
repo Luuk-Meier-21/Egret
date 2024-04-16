@@ -6,47 +6,65 @@ import {
   DocumentData,
   DocumentRegionData,
 } from "../../types/document/document";
-import { IBlockEditor } from "../../types/block";
-import { useRegisterAction } from "../../services/actions-registry";
 import { useLayoutNavigator } from "../../services/layout/layout-navigation";
 import { generateDocumentRegion } from "../../services/document/document-generator";
-import DocumentRegion from "../DocumentRegion/DocumentRegion";
-import { pathInDirectory } from "../../services/store/store";
 import { useLayoutState } from "../../services/layout/layout-state";
 import { useLayoutBuilder } from "../../services/layout/layout-builder";
-import { useEffect } from "react";
-import { useStore } from "../../services/store/store-hooks";
+import { useEffect, useState } from "react";
 import { keyExplicitAction, keyNavigation } from "../../config/shortcut";
 import { DocumentDirectory } from "../../types/documents";
 import { Layout, LayoutNodeData } from "../../types/layout/layout";
+import {
+  useAbstractStore,
+  useStateStore,
+} from "../../services/store/store-hooks";
+import { pathInDirectory } from "../../services/store/store";
+import DocumentRegion from "../DocumentRegion/DocumentRegion";
+import { useScopedAction } from "../../services/actions/actions-hook";
+import { IBlockEditor } from "../../types/block";
 
 interface DocumentDetailProps {}
 
+let editorReferences: Record<string, IBlockEditor> = {};
+
 function DocumentDetail({}: DocumentDetailProps) {
-  const [directory, staticDocumentData, staticLayout, _] = useLoaderData() as [
-    DocumentDirectory,
-    DocumentData,
-    Layout,
-    Keyword[],
-  ];
+  const [directory, staticDocumentData, staticLayout, staticKeywords] =
+    useLoaderData() as [DocumentDirectory, DocumentData, Layout, Keyword[]];
 
   const builder = useLayoutBuilder(staticLayout);
-  const store = useStore(
-    builder.layout,
-    pathInDirectory(directory, `${directory.name}.layout.json`),
-  );
+
+  const store = useAbstractStore();
   const selection = useLayoutState(builder.layout);
   const navigator = useLayoutNavigator(selection, builder);
 
-  useEffect(() => {}, [builder.layout]);
+  useStateStore(
+    builder.layout,
+    pathInDirectory(directory, `${directory.name}.layout.json`),
+  );
+
+  useEffect(() => {
+    return () => {
+      editorReferences = {};
+    };
+  }, []);
+
+  // const [keywords, setKeywords] = useState<Keyword[]>(staticKeywords);
+
+  // useStateStore(keywords, keywordsRecordPath, keywordsRecordOptions);
 
   const handleSave = (region: DocumentRegionData, node: LayoutNodeData) => {
     const affectedNode = builder.insertContent(region, node);
-    console.log(affectedNode);
   };
   const handleChange = (region: DocumentRegionData, node: LayoutNodeData) => {};
 
-  useRegisterAction(
+  const handleExport = async (
+    region: DocumentRegionData,
+    editor: IBlockEditor,
+  ) => {
+    console.log(await editor.blocksToHTMLLossy(region.blocks as any));
+  };
+
+  useScopedAction(
     "Delete document",
     keyExplicitAction("backspace"),
     async () => {
@@ -54,104 +72,124 @@ function DocumentDetail({}: DocumentDetailProps) {
     },
   );
 
-  useRegisterAction("Move up", keyNavigation("up"), async () => {
-    navigator.focusRowUp();
-  });
+  useScopedAction(
+    "Move up",
+    keyNavigation("up"),
+    async () => {
+      navigator.focusRowUp();
+    },
+    true,
+  );
 
-  useRegisterAction("Move down", keyNavigation("down"), async () => {
-    navigator.focusRowDown();
-  });
+  useScopedAction(
+    "Move down",
+    keyNavigation("down"),
+    async () => {
+      navigator.focusRowDown();
+    },
+    true,
+  );
 
-  useRegisterAction("Move right", keyNavigation("right"), async () => {
-    navigator.focusColumnRight();
-  });
+  useScopedAction(
+    "Move right",
+    keyNavigation("right"),
+    async () => {
+      navigator.focusColumnRight();
+    },
+    true,
+  );
 
-  useRegisterAction("Move left", keyNavigation("left"), async () => {
-    navigator.focusColumnLeft();
-  });
+  useScopedAction(
+    "Delete column",
+    keyNavigation("backspace"),
+    async () => {
+      const currentRow = navigator.getCurrentRow();
+      const currentNode = navigator.getCurrentNode();
 
-  useRegisterAction("Delete column", keyNavigation("backspace"), async () => {
-    const currentRow = navigator.getCurrentRow();
-    const currentNode = navigator.getCurrentNode();
+      if (currentRow === null || currentNode === null) {
+        return;
+      }
 
-    if (currentRow === null || currentNode === null) {
-      return;
-    }
+      if (currentRow.type === "branch") {
+        const node = builder.removeNodeFromRow(currentRow, currentNode);
+        selection.setNodeId(node.id);
+      } else {
+        const node = builder.removeRow(currentRow);
+        selection.setNodeId(node.id);
+      }
+    },
+    true,
+  );
 
-    if (currentRow.type === "branch") {
-      const node = builder.removeNodeFromRow(currentRow, currentNode);
-      selection.setNodeId(node.id);
-    } else {
-      const node = builder.removeRow(currentRow);
-      selection.setNodeId(node.id);
-    }
-  });
+  useScopedAction(
+    "Move left",
+    keyNavigation("left"),
+    async () => {
+      navigator.focusColumnLeft();
+    },
+    true,
+  );
+
+  useScopedAction("Export to HTML", keyExplicitAction("p"), async () => {});
+
+  const [openSettings, setOpenSettings] = useState(false);
+
+  const setKeywordRelation = async (keyword: Keyword) => {
+    // const newKeywords = keywords;
+    // const hasRelation = keywordHasRelation(keyword, staticDocumentData);
+    // if (hasRelation) {
+    //   keywords.find((k) =>)
+    // }
+    // hasRelation
+    //   ? await dereferenceKeywordFromDocument(keyword, staticDocumentData)
+    //   : await referenceKeywordToDocument(keyword, staticDocumentData);
+    // await saveKeyword(keyword);
+    // const keywords = await fetchKeywords();
+    // setKeywords(keywords);
+  };
 
   return (
     <main
       data-component-name="DocumentDetail"
       lang={staticDocumentData.data.meta.lang ?? "en"}
+      aria-live="assertive"
+      aria-atomic="true"
     >
-      {/* <h1 id="document-title" className="p-4" aria-live="polite">
-        Document: {staticDocumentData.name}{" "}
-        <span aria-hidden>{staticDocumentData.id}</span>
-      </h1> */}
+      {builder.layout.tree.map((branchOrNode) => (
+        <LayoutBranchOrNode
+          key={branchOrNode.id}
+          value={branchOrNode}
+          renderNode={(node, isFirstInList) => {
+            const isFocused = node.id === selection.nodeId;
 
-      {/* <section
-        aria-label="Edit document settings"
-        ref={editRef}
-        className="p-4"
-      >
-        <EditSettings aria-expanded={openSettings} />
-        {openSettings && (
-          <ul>
-            {keywords.map((keyword) => (
-              <li key={keyword.id}>
-                <input
-                  id={keyword.id}
-                  type="checkbox"
-                  checked={keywordHasRelation(keyword, initialDocument)}
-                  onChange={() => setKeywordRelation(keyword)}
-                />
-                <label htmlFor={keyword.id}>{keyword.label}</label>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section> */}
+            const data = node.data || generateDocumentRegion({});
 
-      <main>
-        {builder.layout.tree.map((branchOrNode) => (
-          <LayoutBranchOrNode
-            key={branchOrNode.id}
-            value={branchOrNode}
-            renderNode={(node, isFirstInList) => {
-              const isFocused = node.id === selection.nodeId;
+            return (
+              <DocumentRegion
+                onSave={(region, editor) => {
+                  handleSave(region, node);
 
-              const data = node.data || generateDocumentRegion({});
-
-              return (
-                <DocumentRegion
-                  onSave={(region, editor) => {
-                    handleSave(region, node);
-                  }}
-                  onChange={(region, editor) => {
-                    handleChange(region, node);
-                  }}
-                  isFocused={isFocused}
-                  onFocus={() => {
-                    navigator.focusColumn(branchOrNode.id, node.id);
-                  }}
-                  onBlur={() => {
-                    navigator.blurColumn();
-                  }}
-                  region={data}
-                />
-              );
-            }}
-          />
-        ))}
-      </main>
+                  editorReferences[node.id] = editor;
+                }}
+                onChange={(region, editor) => {
+                  handleChange(region, node);
+                }}
+                onExport={(region, editor) => {
+                  handleExport(region, editor);
+                }}
+                isFocused={isFocused}
+                onFocus={() => {
+                  navigator.focusColumn(branchOrNode.id, node.id);
+                }}
+                onBlur={() => {
+                  navigator.blurColumn();
+                }}
+                region={data}
+              />
+            );
+          }}
+        />
+      ))}
     </main>
   );
 }

@@ -1,4 +1,5 @@
-import { BlockData } from "../types/document/document";
+import { generateDocumentRegion } from "../services/document/document-generator";
+import { BlockData, DocumentRegionData } from "../types/document/document";
 
 export const ONBOARDING_BLOCKS: BlockData = [
   {
@@ -56,7 +57,6 @@ export const ONBOARDING_BLOCKS: BlockData = [
   },
 ];
 
-export const ONBOARDING_CONTENT: any = {
-  meta: {},
-  text: ONBOARDING_BLOCKS,
-};
+export const ONBOARDING_CONTENT = generateDocumentRegion({
+  blocks: ONBOARDING_BLOCKS,
+});

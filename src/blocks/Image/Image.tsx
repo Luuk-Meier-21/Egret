@@ -63,17 +63,22 @@ function rowComponent({
   contentRef,
   editor,
 }: BlockComponentProps<typeof imageConfig, "image">): ReactNode {
-  const alt = block.props.alt;
   const src = block.props.src;
+  // @ts-ignore
+  const alt = block.content.length > 0 ? block.content[0].text : "/n";
 
   return (
-    <figure data-block="Image" className="w-full max-w-[600px]">
+    <figure
+      data-block="Image"
+      className="inline-content inline-block w-full max-w-[600px]"
+    >
       <img
+        contentEditable={false}
         className="object-cover"
-        src={block.props.src}
-        alt={block.props.alt}
+        src={src}
+        alt={alt}
       />
-      <figcaption className=" font- text-sm" ref={contentRef} />
+      <p aria-label="alt" className="inline-content text-sm" ref={contentRef} />
     </figure>
   );
 }
