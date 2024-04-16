@@ -10,7 +10,7 @@ import { useLayoutNavigator } from "../../services/layout/layout-navigation";
 import { generateDocumentRegion } from "../../services/document/document-generator";
 import { useLayoutState } from "../../services/layout/layout-state";
 import { useLayoutBuilder } from "../../services/layout/layout-builder";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { keyExplicitAction, keyNavigation } from "../../config/shortcut";
 import { DocumentDirectory } from "../../types/documents";
 import { Layout, LayoutNodeData } from "../../types/layout/layout";
@@ -130,8 +130,6 @@ function DocumentDetail({}: DocumentDetailProps) {
     true,
   );
 
-  useScopedAction("Export to HTML", keyExplicitAction("p"), async () => {});
-
   const [openSettings, setOpenSettings] = useState(false);
 
   const setKeywordRelation = async (keyword: Keyword) => {
@@ -152,8 +150,6 @@ function DocumentDetail({}: DocumentDetailProps) {
     <main
       data-component-name="DocumentDetail"
       lang={staticDocumentData.data.meta.lang ?? "en"}
-      aria-live="assertive"
-      aria-atomic="true"
     >
       {builder.layout.tree.map((branchOrNode) => (
         <LayoutBranchOrNode

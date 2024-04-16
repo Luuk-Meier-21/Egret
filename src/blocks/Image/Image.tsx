@@ -1,7 +1,7 @@
 import { insertOrUpdateBlock } from "@blocknote/core";
 import { createReactBlockSpec } from "@blocknote/react";
 import { schema } from "../../blocks/schema";
-import { ReactNode, useContext } from "react";
+import { ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { BlockComponentProps, IBlockEditor } from "../../types/block";
 import { DialogContext } from "../../components/Dialog/DialogProvider";
 
@@ -64,8 +64,32 @@ function rowComponent({
   editor,
 }: BlockComponentProps<typeof imageConfig, "image">): ReactNode {
   const src = block.props.src;
+  const label = "Image alt text";
+
+  const hasSelectedBlock = () =>
+    editor.getTextCursorPosition().block.id === block.id;
+
+  const [isEditing, setEditing] = useState(hasSelectedBlock());
+
+  const ref = useRef<HTMLElement>(null);
+  const shadowRef = useRef<HTMLElement>(null);
+
   // @ts-ignore
   const alt = block.content.length > 0 ? block.content[0].text : "/n";
+
+  useEffect(() => {
+    // contentRef(ref.current);
+
+    const element = ref.current?.querySelector("* > div");
+
+    // element?.setAttribute("aria-lalde", "Alt test");
+
+    editor.onSelectionChange(() => {
+      setEditing(hasSelectedBlock());
+    });
+  }, []);
+
+  useEffect(() => {}, [isEditing]);
 
   return (
     <figure
@@ -78,7 +102,17 @@ function rowComponent({
         src={src}
         alt={alt}
       />
-      <p aria-label="alt" className="inline-content text-sm" ref={contentRef} />
+      <figcaption className="inline-content flex text-sm">
+        <legend
+          // aria-label="label"
+          // aria-description="description"
+          // aria-placeholder="placeholder"
+          id="caption"
+          className="isolate"
+          role="textbox"
+          ref={contentRef}
+        />
+      </figcaption>
     </figure>
   );
 }

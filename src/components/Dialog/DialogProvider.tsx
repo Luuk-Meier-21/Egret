@@ -1,6 +1,7 @@
 import { ReactNode, createContext, useEffect, useRef, useState } from "react";
 import DialogPrompt from "../DialogPrompt/DialogPrompt";
 import DialogSelect, { SelectOption } from "../DialogSelect/DialogSelect";
+import DialogAnnounce from "../DialogAnnounce/DialogAnnounce";
 
 interface DialogProviderProps {
   children: ReactNode | ReactNode[];
@@ -12,6 +13,7 @@ interface DialogContextProps {
     label: string,
     options: { value: string; label: string }[],
   ) => Promise<string>;
+  announce: (message: string) => Promise<void>;
 }
 
 export const DialogContext = createContext<DialogContextProps>(
@@ -21,6 +23,7 @@ export const DialogContext = createContext<DialogContextProps>(
 const DIALOG_COMPONENTS = {
   prompt: DialogPrompt,
   select: DialogSelect,
+  announce: DialogAnnounce,
 };
 
 function DialogProvider({ children }: DialogProviderProps) {
@@ -54,6 +57,12 @@ function DialogProvider({ children }: DialogProviderProps) {
     setProps({ options: options });
 
     return dialog("select", label);
+  };
+
+  const announce = async (message: string): Promise<void> => {
+    setProps({ message: message });
+
+    dialog("announce", label);
   };
 
   const reset = () => {
@@ -96,7 +105,7 @@ function DialogProvider({ children }: DialogProviderProps) {
     <>
       {open && renderDialogOfType()}
 
-      <DialogContext.Provider value={{ prompt, select }}>
+      <DialogContext.Provider value={{ prompt, select, announce }}>
         {children}
       </DialogContext.Provider>
     </>

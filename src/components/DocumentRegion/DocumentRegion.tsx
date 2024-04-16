@@ -8,10 +8,13 @@ import {
   useRegisterAction,
   useRegisterEditorAction,
 } from "../../services/actions/actions-registry";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { keyExplicitAction } from "../../config/shortcut";
 import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
 import { useScopedAction } from "../../services/actions/actions-hook";
+import { insertOrUpdateBlock } from "@blocknote/core";
+import { DialogContext } from "../Dialog/DialogProvider";
+import { clearMocks } from "@tauri-apps/api/mocks";
 
 interface DocumentRegionProps {
   region: DocumentRegionData;
@@ -34,6 +37,8 @@ function DocumentRegion({
 }: DocumentRegionProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [editing, setEditing] = useState(false);
+
+  const { announce } = useContext(DialogContext);
 
   const focusRef = useRef<HTMLInputElement>(null);
 
@@ -118,18 +123,12 @@ function DocumentRegion({
       return;
     }
 
-    const selectedBlock = editor.getTextCursorPosition().block;
-    editor.insertBlocks(
-      [
-        {
-          type: "image",
-          props: {
-            src: "https://letsenhance.io/static/8f5e523ee6b2479e26ecc91b9c25261e/1015f/MainAfter.jpg",
-          },
-        },
-      ],
-      selectedBlock,
-    );
+    insertOrUpdateBlock(editor, {
+      type: "image",
+      props: {
+        src: "https://letsenhance.io/static/8f5e523ee6b2479e26ecc91b9c25261e/1015f/MainAfter.jpg",
+      },
+    });
   });
 
   useScopedAction("Insert dummy text", keyExplicitAction("'"), async () => {
@@ -153,8 +152,19 @@ function DocumentRegion({
     );
   });
 
-  useScopedAction("Export", keyExplicitAction("p"), async () => {
-    onExport(region, editor);
+  const refa = useRef<HTMLButtonElement>(null);
+
+  useScopedAction("Export to HTML", "p", async () => {
+    if (isFocused) {
+      refa.current?.focus();
+
+      setTimeout(() => {
+        editor.focus();
+      }, 1000);
+    }
+    // const element = refa.current?.querySelector("* > div");
+    // element?.setAttribute("role", "alert");
+    // console.log(element);
   });
 
   return (
@@ -165,10 +175,11 @@ function DocumentRegion({
       ref={ref}
       className="input-hint relative w-full p-4 text-white data-[focused]:bg-white data-[focused]:text-black"
     >
-      <h1>test</h1>
+      <button ref={refa}>Some announcement</button>
       <BlockNoteView
         id={region.id}
         data-editor
+        aria-hidden="true"
         onFocus={() => {
           onFocus(region, editor);
         }}
@@ -183,19 +194,10 @@ function DocumentRegion({
             editor;
           }
         }}
-        aria-hidden="true"
         sideMenu={false}
         formattingToolbar={false}
         hyperlinkToolbar={false}
-      >
-        {/* <h2
-          className="absolute inset-0"
-          aria-relevant="additions text"
-          role="alert"
-        >
-          Test
-        </h2> */}
-      </BlockNoteView>
+      ></BlockNoteView>
     </section>
   );
 }

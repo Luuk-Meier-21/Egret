@@ -25,24 +25,18 @@ export const Title = createReactBlockSpec(
   },
   {
     render: (props) => {
-      //@ts-ignore
-      const labelText = props.block.content?.[0]?.text || null;
-      const label = labelText ? `Title, ${labelText}` : undefined;
-
       const ref = useRef<HTMLHeadingElement>(null);
 
       useEffect(() => {
         props.contentRef(ref.current);
 
         const content = ref.current?.querySelector("* > div");
-        content?.setAttribute("aria-label", "heading");
       }, []);
 
       return (
         <h2
           role="heading"
-          // aria-roledescription="Test"
-          // aria-level={1}
+          aria-label="Test label"
           className="flex text-xl font-bold"
           ref={ref}
         />
