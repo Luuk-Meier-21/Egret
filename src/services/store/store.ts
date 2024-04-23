@@ -4,13 +4,6 @@ import { DOCUMENTS } from "../../config/files";
 import { DocumentDirectory, DocumentReference } from "../../types/documents";
 import { requireDir, requireFile } from "../../utils/filesystem";
 
-export interface Store<T> {
-  data: T;
-  set: (data: T) => Store<T>;
-  save: () => Promise<T | null>;
-  load: () => Promise<T>;
-}
-
 /**
  * @deprecated
  * @param reference
@@ -47,51 +40,104 @@ export function documentsPath(
   return `${DOCUMENTS.path}/${filePath}.${extension}`;
 }
 
-export async function _loadStore<T>(
-  path: string,
-  option: FsOptions,
-  fallbackContent: Record<string, any> = {},
-): Promise<Store<T>> {
-  await requireFile(path, fallbackContent, option);
+export interface Storea<T> {
+  data: T;
+  set: (data: T) => Store<T>;
+  save: () => Promise<T | null>;
+  load: () => Promise<T>;
+}
+export class Store<T> {
+  options: FsOptions = {
+    dir: DOCUMENTS.source,
+  };
 
-  const store = _createStore<T>(undefined as any, path, option);
+  constructor(
+    public data: T,
+    public path: string,
+    public encode: (input: T) => string,
+    public decode: (input: string) => T,
+  ) {}
 
-  await store.load();
+  setOptions = (options: FsOptions) => {
+    this.options = options;
+    return this;
+  };
 
-  return store;
+  set = (value: T) => {
+    this.data = value;
+    return this;
+  };
+
+  save = async () => {
+    await requireDir(DOCUMENTS.path, {
+      dir: DOCUMENTS.source,
+    });
+
+    await writeTextFile(this.path, this.encode(this.data), this.options);
+
+    return this.data;
+  };
+  load = async () => {
+    const json = await readTextFile(this.path, this.options);
+    this.data = this.decode(json);
+
+    return this.data;
+  };
+
+  static async load<T>(
+    path: string,
+    option: FsOptions,
+    encode: (input: T) => string,
+    decode: (input: string) => T,
+    fallbackContent: Record<string, any> = {},
+  ) {
+    await requireFile(path, fallbackContent, option);
+
+    const store = new Store<T>(undefined as any, path, encode, decode);
+
+    await store.load();
+
+    return store;
+  }
 }
 
-export function _createStore<T>(value: T, path: string, options: FsOptions) {
-  const encode = <T>(data: T): string => {
-    return JSON.stringify(data);
-  };
+export const encodeJSON = <T>(data: T): string => {
+  return JSON.stringify(data);
+};
 
-  const decode = <T>(json: string): T => {
-    return JSON.parse(json);
-  };
+export const decodeJSON = <T>(json: string): T => {
+  return JSON.parse(json);
+};
 
-  const store: Store<T> = {
-    data: value,
-    set: (value: T) => {
-      store.data = value;
-      return store;
-    },
-    save: async () => {
-      await requireDir(DOCUMENTS.path, {
-        dir: DOCUMENTS.source,
-      });
+// export function _createStore<T>(
+//   value: T,
+//   path: string,
+//   options: FsOptions,
+//   encode: (input: T) => string,
+//   decode: (input: string) => T,
+// ) {
+//   const store: Store<T> = {
+//     data: value,
+//     set: (value: T) => {
+//       store.data = value;
+//       return store;
+//     },
+//     save: async () => {
+//       await requireDir(DOCUMENTS.path, {
+//         dir: DOCUMENTS.source,
+//       });
 
-      await writeTextFile(path, encode(store.data), options);
+//       await writeTextFile(path, encode(store.data), options);
 
-      return store.data;
-    },
-    load: async () => {
-      const json = await readTextFile(path, options);
-      store.data = decode(json);
+//       return store.data;
+//     },
+//     load: async () => {
+//       const json = await readTextFile(path, options);
+//       store.data = decode(json);
 
-      return store.data;
-    },
-  };
+//       return store.data;
+//     },
+//   };
 
-  return store;
-}
+//   return store;
+// }

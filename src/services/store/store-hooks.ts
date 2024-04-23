@@ -1,5 +1,5 @@
 import { FileEntry, FsOptions, readDir } from "@tauri-apps/api/fs";
-import { Store, _createStore, _loadStore } from "./store";
+import { Store, decodeJSON, encodeJSON } from "./store";
 import { DOCUMENTS } from "../../config/files";
 import { useEffect } from "react";
 import { requireDir } from "../../utils/filesystem";
@@ -10,17 +10,28 @@ export function useStateStore<T>(
   options: FsOptions = {
     dir: DOCUMENTS.source,
   },
-) {
-  const store: Store<T> = _createStore(state, path, options);
+): () => Promise<void> {
+  const store: Store<T> = new Store(
+    state,
+    path,
+    encodeJSON,
+    decodeJSON,
+  ).setOptions(options);
 
-  useEffect(() => {
-    store
+  const forceSave = async () => {
+    return store
       .set(state)
       .save()
       .then(() => {
-        console.log("saved");
+        console.info("💾 ~ store saved to: ", path);
       });
+  };
+
+  useEffect(() => {
+    forceSave();
   }, [state]);
+
+  return forceSave;
 }
 
 export function useAbstractStore() {
@@ -31,7 +42,7 @@ export function useAbstractStore() {
       dir: DOCUMENTS.source,
     },
   ): Store<T> => {
-    return _createStore(value, path, options);
+    return new Store(value, path, encodeJSON, decodeJSON).setOptions(options);
   };
 
   const loadStore = <T>(
@@ -41,7 +52,13 @@ export function useAbstractStore() {
       dir: DOCUMENTS.source,
     },
   ): Promise<Store<T>> => {
-    return _loadStore(path, options, fallbackContent as Record<string, any>);
+    return Store.load<T>(
+      path,
+      options,
+      encodeJSON,
+      decodeJSON,
+      fallbackContent as Record<string, any>,
+    );
   };
 
   const searchDirectory = async <T>(

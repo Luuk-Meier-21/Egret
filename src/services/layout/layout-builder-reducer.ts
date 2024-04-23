@@ -80,7 +80,6 @@ export function layoutReducer(oldLayout: Layout, action: LayoutAction): Layout {
     case "add-column-to-node": {
       const rows = deepJSONClone(oldLayout.tree);
       const row = deepJSONClone(action.row);
-      console.log("row: ", action);
       const children =
         action.position === "before"
           ? [action.newColumn, row]
@@ -88,6 +87,7 @@ export function layoutReducer(oldLayout: Layout, action: LayoutAction): Layout {
       const index = rows.findIndex((r) => r.id === row.id);
 
       rows[index] = generateLayoutBranch({
+        id: row.id,
         flow: "horizontal",
         children,
       });
@@ -117,6 +117,7 @@ export function layoutReducer(oldLayout: Layout, action: LayoutAction): Layout {
       const row = deepJSONClone(action.row);
       const index = rows.findIndex((r) => r.id === row.id);
 
+      row.children[0].id = row.id;
       rows[index] = row.children[0];
 
       return { ...oldLayout, tree: rows };

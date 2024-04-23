@@ -31,7 +31,7 @@
         "confirm": false,
         "message": false,
         "open": false,
-        "save": false
+        "save": true
       },
       "fs": {
         "scope": ["$APPDATA/**/*", "$APPDATA/.bin/**/*", "$RESOURCE/audio/*"],

@@ -3,10 +3,12 @@ import {
   LayoutBranchData,
   LayoutBranchOrNodeData,
   LayoutNodeData,
+  LayoutTreeTrunk,
 } from "../../types/layout/layout";
 import { flattenLayoutNodesByReference } from "./layout-content";
 import { LayoutBuilder } from "./layout-builder";
 import { LayoutState } from "./layout-state";
+import { delay, playSound } from "../../utils/sound";
 
 export function useLayoutNavigator(
   { rowId, setRowId, nodeId, setNodeId }: LayoutState,
@@ -14,6 +16,20 @@ export function useLayoutNavigator(
 ) {
   const rows = builder.layout.tree;
   const nodes = flattenLayoutNodesByReference(builder.layout.tree);
+
+  const playSoundRows = async (row: LayoutTreeTrunk) => {
+    const recursivePlay = async (count: number, index: number = 0) => {
+      if (index < count) {
+        playSound("Purr", { speed: 2.5, volume: 1, time: 0.25 });
+        await delay(150);
+        recursivePlay(count, index + 1);
+      }
+    };
+
+    playSound("Blow", { speed: 2.5, volume: 1, time: 0.5 });
+    await delay(300);
+    recursivePlay(row.type === "branch" ? row.children.length : 1);
+  };
 
   useEffect(() => {
     const row = rows.find((row) => row.id === rowId);
@@ -56,6 +72,7 @@ export function useLayoutNavigator(
     const previousRow = rows[index - 1];
     if (previousRow) {
       setRowId(previousRow.id);
+      playSoundRows(previousRow);
     } else {
       const newRow = builder.addRow("before");
       setRowId(newRow.id);
@@ -67,6 +84,7 @@ export function useLayoutNavigator(
     const nextRow = rows[index + 1];
     if (nextRow) {
       setRowId(nextRow.id);
+      playSoundRows(nextRow);
     } else {
       const newRow = builder.addRow("after");
       setRowId(newRow.id);
@@ -75,15 +93,20 @@ export function useLayoutNavigator(
 
   const focusColumnLeft = () => {
     const rowIndex = rows.findIndex((row) => row.id === rowId);
+
+    if (rowIndex < 0) {
+      return;
+    }
+
     const row = rows[rowIndex];
     if (row?.type === "branch") {
       const index = row.children.findIndex((column) => column.id === nodeId);
       const previousColumn = row.children[index - 1];
       if (previousColumn) {
         setNodeId(previousColumn.id);
+        playSound("Purr", { speed: 1.5, volume: 1, time: 0.5 });
       } else {
-        const newColumn = builder.addColumn(row as LayoutBranchData, "before");
-
+        const newColumn = builder.addColumn(row, "before");
         setNodeId(newColumn.id);
       }
     } else {
@@ -95,14 +118,20 @@ export function useLayoutNavigator(
 
   const focusColumnRight = () => {
     const rowIndex = rows.findIndex((row) => row.id === rowId);
+
+    if (rowIndex < 0) {
+      return;
+    }
+
     const row = rows[rowIndex];
     if (row?.type === "branch") {
       const index = row.children.findIndex((column) => column.id === nodeId);
       const nextColumn = row.children[index + 1];
       if (nextColumn) {
         setNodeId(nextColumn.id);
+        playSound("Purr", { speed: 2.5, volume: 1, time: 0.5 });
       } else {
-        const newColumn = builder.addColumn(row as LayoutBranchData, "after");
+        const newColumn = builder.addColumn(row, "after");
 
         setNodeId(newColumn.id);
       }

@@ -1,25 +1,34 @@
 import {
+  BlockConfig,
   BlockFromConfig,
   BlockNoteEditor,
   BlockSchemaWithBlock,
   CustomBlockConfig,
+  InlineContentConfig,
   InlineContentSchema,
   PartialBlock,
+  StyleConfig,
   StyleSchema,
 } from "@blocknote/core";
 import { schema } from "../blocks/schema";
 
-export type IBlock = PartialBlock<
-  typeof schema.blockSchema,
-  typeof schema.inlineContentSchema,
-  typeof schema.styleSchema
->;
+export type IBlock<
+  ST extends Record<string, BlockConfig> = typeof schema.blockSchema,
+  IT extends Record<
+    string,
+    InlineContentConfig
+  > = typeof schema.inlineContentSchema,
+  SST extends Record<string, StyleConfig> = typeof schema.styleSchema,
+> = PartialBlock<ST, IT, SST>;
 
-export type IBlockEditor = BlockNoteEditor<
-  typeof schema.blockSchema,
-  typeof schema.inlineContentSchema,
-  typeof schema.styleSchema
->;
+export type IBlockEditor<
+  ST extends Record<string, BlockConfig> = typeof schema.blockSchema,
+  IT extends Record<
+    string,
+    InlineContentConfig
+  > = typeof schema.inlineContentSchema,
+  SST extends Record<string, StyleConfig> = typeof schema.styleSchema,
+> = BlockNoteEditor<ST, IT, SST>;
 
 export interface BlockComponentProps<
   T extends CustomBlockConfig,

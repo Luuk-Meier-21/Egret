@@ -2,25 +2,22 @@ import { DocumentRegionData } from "../../types/document/document";
 import { schema } from "../../blocks/schema";
 import { shell } from "@tauri-apps/api";
 import { toggleBlock } from "../../utils/block";
-import { useEditorOnSave } from "../../utils/editor";
+import { useEditorAutoSaveHandle } from "../../utils/editor";
 import { IBlockEditor } from "../../types/block";
-import {
-  useRegisterAction,
-  useRegisterEditorAction,
-} from "../../services/actions/actions-registry";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useRegisterEditorAction } from "../../services/actions/actions-registry";
+import { useEffect, useRef } from "react";
 import { keyExplicitAction } from "../../config/shortcut";
 import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
-import { useScopedAction } from "../../services/actions/actions-hook";
+import {
+  useConditionalAction,
+  useScopedAction,
+} from "../../services/actions/actions-hook";
 import { insertOrUpdateBlock } from "@blocknote/core";
-import { DialogContext } from "../Dialog/DialogProvider";
-import { clearMocks } from "@tauri-apps/api/mocks";
 
 interface DocumentRegionProps {
   region: DocumentRegionData;
-  onSave: (region: DocumentRegionData, editor: IBlockEditor) => void;
-  onChange: (region: DocumentRegionData, editor: IBlockEditor) => void;
-  onExport: (region: DocumentRegionData, editor: IBlockEditor) => void;
+  onSave?: (region: DocumentRegionData, editor: IBlockEditor) => void;
+  onChange?: (region: DocumentRegionData, editor: IBlockEditor) => void;
   onFocus: (region: DocumentRegionData, editor: IBlockEditor) => void;
   onBlur: (region: DocumentRegionData, editor: IBlockEditor) => void;
   isFocused: boolean;
@@ -28,19 +25,13 @@ interface DocumentRegionProps {
 
 function DocumentRegion({
   region,
-  onSave,
-  onChange,
+  onSave = () => {},
+  onChange = () => {},
   isFocused = false,
   onFocus,
   onBlur,
-  onExport,
 }: DocumentRegionProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [editing, setEditing] = useState(false);
-
-  const { announce } = useContext(DialogContext);
-
-  const focusRef = useRef<HTMLInputElement>(null);
 
   const editor = useCreateBlockNote({
     schema,
@@ -52,7 +43,7 @@ function DocumentRegion({
     blocks: editor.document,
   });
 
-  useEditorOnSave(editor, () => {
+  useEditorAutoSaveHandle(editor, () => {
     onSave(regionWithCurrentBlock(), editor);
   });
 
@@ -64,32 +55,6 @@ function DocumentRegion({
     }
   };
 
-  useEffect(() => {}, [editing]);
-
-  useEffect(() => {
-    editor._tiptapEditor.on("create", () => {
-      if (isFocused) {
-        focus();
-      }
-    });
-
-    const setNavigation = (event: globalThis.KeyboardEvent) => {
-      if (event.altKey) {
-        setEditing(false);
-      } else {
-        setEditing(true);
-      }
-    };
-
-    window.addEventListener("keydown", setNavigation);
-    window.addEventListener("keyup", setNavigation);
-
-    return () => {
-      window.removeEventListener("keydown", setNavigation);
-      window.addEventListener("keyup", setNavigation);
-    };
-  }, []);
-
   useEffect(() => {
     if (isFocused) {
       focus();
@@ -100,7 +65,7 @@ function DocumentRegion({
     onChange(regionWithCurrentBlock(), editor);
   });
 
-  useRegisterEditorAction(editor, "Selection to title", "cmd+b", () => {
+  useConditionalAction("Selection to title", "cmd+b", isFocused, () => {
     if (!editor.isFocused()) {
       return;
     }
@@ -110,7 +75,7 @@ function DocumentRegion({
     });
   });
 
-  useScopedAction("Open selected url", "cmd+u", () => {
+  useConditionalAction("Open selected url", "cmd+u", isFocused, () => {
     const url = editor.getSelectedLinkUrl();
     if (url === undefined) {
       return;
@@ -118,7 +83,7 @@ function DocumentRegion({
     shell.open(url);
   });
 
-  useScopedAction("Insert image", "cmd+o", () => {
+  useConditionalAction("Insert image", "cmd+o", isFocused, () => {
     if (!editor.isFocused()) {
       return;
     }
@@ -131,41 +96,31 @@ function DocumentRegion({
     });
   });
 
-  useScopedAction("Insert dummy text", keyExplicitAction("'"), async () => {
-    if (!editor.isFocused()) {
-      return;
-    }
+  useConditionalAction(
+    "Insert dummy text",
+    keyExplicitAction("'"),
+    isFocused,
+    async () => {
+      if (!editor.isFocused()) {
+        return;
+      }
 
-    // Proxy of: https://loripsum.net/
-    const response = await fetch("/api/dummy-text/1/plaintext");
-    const text = await response.text();
+      // Proxy of: https://loripsum.net/
+      const response = await fetch("/api/dummy-text/1/plaintext");
+      const text = await response.text();
 
-    const selectedBlock = editor.getTextCursorPosition().block;
-    editor.insertBlocks(
-      [
-        {
-          type: "paragraph",
-          content: text.trim() || "",
-        },
-      ],
-      selectedBlock,
-    );
-  });
-
-  const refa = useRef<HTMLButtonElement>(null);
-
-  useScopedAction("Export to HTML", "p", async () => {
-    if (isFocused) {
-      refa.current?.focus();
-
-      setTimeout(() => {
-        editor.focus();
-      }, 1000);
-    }
-    // const element = refa.current?.querySelector("* > div");
-    // element?.setAttribute("role", "alert");
-    // console.log(element);
-  });
+      const selectedBlock = editor.getTextCursorPosition().block;
+      editor.insertBlocks(
+        [
+          {
+            type: "paragraph",
+            content: text.trim() || "",
+          },
+        ],
+        selectedBlock,
+      );
+    },
+  );
 
   return (
     <section
@@ -175,11 +130,9 @@ function DocumentRegion({
       ref={ref}
       className="input-hint relative w-full p-4 text-white data-[focused]:bg-white data-[focused]:text-black"
     >
-      <button ref={refa}>Some announcement</button>
       <BlockNoteView
         id={region.id}
         data-editor
-        aria-hidden="true"
         onFocus={() => {
           onFocus(region, editor);
         }}
@@ -197,7 +150,7 @@ function DocumentRegion({
         sideMenu={false}
         formattingToolbar={false}
         hyperlinkToolbar={false}
-      ></BlockNoteView>
+      />
     </section>
   );
 }

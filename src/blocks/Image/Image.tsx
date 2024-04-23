@@ -4,6 +4,10 @@ import { schema } from "../../blocks/schema";
 import { ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { BlockComponentProps, IBlockEditor } from "../../types/block";
 import { DialogContext } from "../../components/Dialog/DialogProvider";
+import { useBlockSelection } from "../../utils/block";
+import { voiceSay } from "../../bindings";
+import { useOverrideScreenreader } from "../../utils/speech";
+import { useConditionalAction } from "../../services/actions/actions-hook";
 
 // const updateAltAsync = async (
 //   src: string,
@@ -63,55 +67,28 @@ function rowComponent({
   contentRef,
   editor,
 }: BlockComponentProps<typeof imageConfig, "image">): ReactNode {
+  const label = "Alt";
   const src = block.props.src;
-  const label = "Image alt text";
-
-  const hasSelectedBlock = () =>
-    editor.getTextCursorPosition().block.id === block.id;
-
-  const [isEditing, setEditing] = useState(hasSelectedBlock());
-
-  const ref = useRef<HTMLElement>(null);
-  const shadowRef = useRef<HTMLElement>(null);
-
-  // @ts-ignore
+  // @ts-expect-error
   const alt = block.content.length > 0 ? block.content[0].text : "/n";
 
+  const ref = useRef<HTMLElement>(null);
+  const isSelected = useBlockSelection(editor, block);
+
   useEffect(() => {
-    // contentRef(ref.current);
-
-    const element = ref.current?.querySelector("* > div");
-
-    // element?.setAttribute("aria-lalde", "Alt test");
-
-    editor.onSelectionChange(() => {
-      setEditing(hasSelectedBlock());
-    });
+    contentRef(ref.current);
   }, []);
 
-  useEffect(() => {}, [isEditing]);
+  useOverrideScreenreader(`${label}, ${alt}`, isSelected);
+  useConditionalAction("Read out label", "cmd+shift+/", isSelected, () => {
+    voiceSay(label);
+  });
 
   return (
-    <figure
-      data-block="Image"
-      className="inline-content inline-block w-full max-w-[600px]"
-    >
-      <img
-        contentEditable={false}
-        className="object-cover"
-        src={src}
-        alt={alt}
-      />
+    <figure className="inline-content inline-block w-full max-w-[600px]">
+      <img className="object-cover" src={src} alt={alt} />
       <figcaption className="inline-content flex text-sm">
-        <legend
-          // aria-label="label"
-          // aria-description="description"
-          // aria-placeholder="placeholder"
-          id="caption"
-          className="isolate"
-          role="textbox"
-          ref={contentRef}
-        />
+        <span id="caption" role="textbox" ref={ref} contentEditable={true} />
       </figcaption>
     </figure>
   );

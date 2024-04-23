@@ -5,6 +5,7 @@ import {
   useEffect,
   useReducer,
   useRef,
+  useState,
 } from "react";
 import { useNavigate } from "react-router";
 import {
@@ -120,26 +121,20 @@ function Actions({ children }: ActionsProps) {
     true,
   );
 
-  useEffect(() => {
-    console.log(actions);
-  }, [actions]);
-
   return (
     <div data-component-name="Actions" className="flex flex-col p-4">
       <ActionsContext.Provider value={[actions, dispatch]}>
         <div ref={mainRef}>{children}</div>
-        <ul aria-label="Actions" ref={actionsRef} className="p-4" role="menu">
-          {actions
-            .filter((action) => !action.hidden)
-            .map((action) => renderActionWithShortcut(action))}
+        <ul
+          aria-label="Actions"
+          ref={actionsRef}
+          className="flex flex-col items-start p-4"
+          role="menu"
+        >
+          {actions.map((action) => (
+            <button className="block">{action.label}</button>
+          ))}
         </ul>
-        {/* <SearchList
-          label="Search actions"
-          list={actions}
-          searchKeys={["label", "shortcut"]}
-          renderItem={(action) => renderActionWithShortcut(action)}
-          onSearchConfirm={function (): void {}}
-        /> */}
       </ActionsContext.Provider>
     </div>
   );

@@ -43,27 +43,31 @@ export function useScopedAction(
 }
 
 export function useConditionalAction(
-  condition: boolean,
   label: string,
   shortcut: string,
+  condition: boolean,
   callback: ActionCallback,
-  hidden: boolean = false,
+  hidden: boolean = true,
 ) {
   const [actions, dispatch] = useContext(ActionsContext);
+  const wrappedCallback = () => {
+    if (condition) {
+      callback();
+    }
+  };
+
   const action: ActionConfiguration = {
     label,
     shortcut,
-    callback,
+    callback: wrappedCallback,
     hidden,
   };
 
-  useHotkeys(shortcut, callback);
+  useHotkeys(shortcut, wrappedCallback);
 
   useEffect(() => {
     if (condition) {
       dispatch({ type: "register", action });
-    } else {
-      dispatch({ type: "unscope", action });
     }
 
     return () => {

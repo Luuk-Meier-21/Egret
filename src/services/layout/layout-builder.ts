@@ -28,7 +28,7 @@ export function useLayoutBuilder(staticLayout: Layout) {
     systemSound("Pop", 1.5, 1.5, 0.2);
   };
 
-  const handleError = () => {
+  const announceError = () => {
     systemSound("Basso", 3, 1.5, 0.2);
   };
 
@@ -104,6 +104,11 @@ export function useLayoutBuilder(staticLayout: Layout) {
   const removeRow = (row: LayoutNodeData): LayoutNodeData => {
     const index = layout.tree.indexOf(row);
 
+    if (layout.tree.length <= 1 && layout.tree[0].type === "node") {
+      announceError();
+      return layout.tree[0];
+    }
+
     dispatch({ type: "remove-row", row });
     announceDeletion();
 
@@ -111,7 +116,7 @@ export function useLayoutBuilder(staticLayout: Layout) {
       layout.tree[index + 1] || layout.tree[index - 1] || layout.tree[0];
 
     if (futureRow.type === "branch") {
-      return futureRow.children[0] as LayoutNodeData;
+      return futureRow.children[0];
     } else {
       return futureRow;
     }

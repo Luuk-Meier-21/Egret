@@ -18,4 +18,8 @@ export function systemSound(sound: MacOSSystemSound, speed: number, volume: numb
     return invoke()<null>("system_sound", { sound,speed,volume,time })
 }
 
+export function voiceSay(message: string) {
+    return invoke()<null>("voice_say", { message })
+}
+
 export type MacOSSystemSound = "Basso" | "Blow" | "Bottle" | "Frog" | "Funk" | "Glass" | "Hero" | "Morse" | "Ping" | "Pop" | "Purr" | "Sosumi" | "Submarine" | "Tink"

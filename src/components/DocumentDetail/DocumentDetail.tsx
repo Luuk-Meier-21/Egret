@@ -11,7 +11,11 @@ import { generateDocumentRegion } from "../../services/document/document-generat
 import { useLayoutState } from "../../services/layout/layout-state";
 import { useLayoutBuilder } from "../../services/layout/layout-builder";
 import { useEffect, useRef, useState } from "react";
-import { keyExplicitAction, keyNavigation } from "../../config/shortcut";
+import {
+  keyAction,
+  keyExplicitAction,
+  keyNavigation,
+} from "../../config/shortcut";
 import { DocumentDirectory } from "../../types/documents";
 import { Layout, LayoutNodeData } from "../../types/layout/layout";
 import {
@@ -21,48 +25,48 @@ import {
 import { pathInDirectory } from "../../services/store/store";
 import DocumentRegion from "../DocumentRegion/DocumentRegion";
 import { useScopedAction } from "../../services/actions/actions-hook";
-import { IBlockEditor } from "../../types/block";
+import { systemSound } from "../../bindings";
+import { useLayoutHTMLExporter } from "../../services/layout/layout-export";
 
 interface DocumentDetailProps {}
-
-let editorReferences: Record<string, IBlockEditor> = {};
 
 function DocumentDetail({}: DocumentDetailProps) {
   const [directory, staticDocumentData, staticLayout, staticKeywords] =
     useLoaderData() as [DocumentDirectory, DocumentData, Layout, Keyword[]];
 
-  const builder = useLayoutBuilder(staticLayout);
-
   const store = useAbstractStore();
-  const selection = useLayoutState(builder.layout);
+  const builder = useLayoutBuilder(staticLayout);
+  const selection = useLayoutState(builder);
   const navigator = useLayoutNavigator(selection, builder);
 
-  useStateStore(
+  const saveDocument = useStateStore(
     builder.layout,
     pathInDirectory(directory, `${directory.name}.layout.json`),
   );
 
-  useEffect(() => {
-    return () => {
-      editorReferences = {};
-    };
-  }, []);
+  const exportToHtml = useLayoutHTMLExporter();
 
   // const [keywords, setKeywords] = useState<Keyword[]>(staticKeywords);
 
   // useStateStore(keywords, keywordsRecordPath, keywordsRecordOptions);
 
   const handleSave = (region: DocumentRegionData, node: LayoutNodeData) => {
-    const affectedNode = builder.insertContent(region, node);
+    builder.insertContent(region, node);
   };
-  const handleChange = (region: DocumentRegionData, node: LayoutNodeData) => {};
 
-  const handleExport = async (
-    region: DocumentRegionData,
-    editor: IBlockEditor,
-  ) => {
-    console.log(await editor.blocksToHTMLLossy(region.blocks as any));
+  const handleChange = (region: DocumentRegionData, node: LayoutNodeData) => {
+    // builder.insertContent(region, node);
   };
+
+  useScopedAction("Save document", keyAction("s"), async () => {
+    await saveDocument();
+    systemSound("Glass", 1, 1, 1);
+  });
+
+  useScopedAction("Export document", keyAction("e"), async () => {
+    await exportToHtml(builder.layout);
+    systemSound("Glass", 1, 1, 1);
+  });
 
   useScopedAction(
     "Delete document",
@@ -164,14 +168,9 @@ function DocumentDetail({}: DocumentDetailProps) {
               <DocumentRegion
                 onSave={(region, editor) => {
                   handleSave(region, node);
-
-                  editorReferences[node.id] = editor;
                 }}
                 onChange={(region, editor) => {
                   handleChange(region, node);
-                }}
-                onExport={(region, editor) => {
-                  handleExport(region, editor);
                 }}
                 isFocused={isFocused}
                 onFocus={() => {
@@ -190,67 +189,3 @@ function DocumentDetail({}: DocumentDetailProps) {
   );
 }
 export default DocumentDetail;
-
-{
-  /* <BlockNoteView
-          aria-label="Document editor"
-          className="max-w-[46em] p-4 text-white ring-1 ring-white [&_a]:underline"
-          editor={editor}
-          autoFocus
-          slashMenu={false}
-          autoCorrect="false"
-          spellCheck="false"
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              editor;
-            }
-          }}
-          sideMenu={false}
-          formattingToolbar={false}
-          hyperlinkToolbar={false}
-        >
-          <SuggestionMenuController
-            triggerCharacter="/"
-            getItems={async (query) =>
-              filterSuggestionItems(
-                [
-                  ...getDefaultReactSlashMenuItems(editor),
-                  insertTitle(editor),
-                  insertAlert(editor),
-                ],
-                query,
-              )
-            }
-        />
-      </BlockNoteView> */
-}
-// const [keywords, setKeywords] = useState<Keyword[]>(staticKeywords);
-// const [openSettings, setOpenSettings] = useState(false);
-
-// const setKeywordRelation = async (keyword: Keyword) => {
-//   const hasRelation = keywordHasRelation(keyword, staticDocumentData);
-
-//   hasRelation
-//     ? await dereferenceKeywordFromDocument(keyword, staticDocumentData)
-//     : await referenceKeywordToDocument(keyword, staticDocumentData);
-
-//   await saveKeyword(keyword);
-
-//   const keywords = await fetchKeywords();
-
-//   setKeywords(keywords);
-// };
-
-// const { elementWithShortcut: EditSettings } = useRegisterAction(
-//   "Edit Keyword",
-//   "cmd+k",
-//   () => {
-//     editRef.current?.querySelector("button")?.focus();
-
-//     if (keywords.length <= 0) {
-//       handleError("No keywords to edit");
-//     }
-
-//     setOpenSettings(!openSettings);
-//   },
-// );
