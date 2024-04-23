@@ -38,6 +38,8 @@ import {
   useScopedAction,
 } from "../../services/actions/actions-hook";
 import SearchList from "../SearchList/SearchList";
+import { keyAction } from "../../config/shortcut";
+import { formatShortcutsForSpeech } from "../../utils/speech";
 
 interface ActionsProps {
   children: ReactNode | ReactNode[];
@@ -58,11 +60,11 @@ function Actions({ children }: ActionsProps) {
   const navigate = useNavigate();
   const { prompt } = useContext(DialogContext);
 
-  useInjectedAction(dispatch, "Back to home", "cmd+1", async () => {
+  useInjectedAction(dispatch, "Back to home", keyAction("1"), async () => {
     navigate("/");
   });
 
-  useInjectedAction(dispatch, "New document", "cmd+n", async () => {
+  useInjectedAction(dispatch, "New document", keyAction("n"), async () => {
     try {
       const name = await prompt("Project name?");
       const path = pathOfDocumentsDirectory(generateDirectoryName(name));
@@ -83,7 +85,7 @@ function Actions({ children }: ActionsProps) {
     }
   });
 
-  useInjectedAction(dispatch, "New keyword", "cmd+m", async () => {
+  useInjectedAction(dispatch, "New keyword", keyAction("m"), async () => {
     try {
       const keywordStore = await store.loadStore(
         keywordsRecordPath,
@@ -114,9 +116,9 @@ function Actions({ children }: ActionsProps) {
   useInjectedAction(
     dispatch,
     "Open actions panel",
-    "cmd+g",
+    keyAction("g"),
     () => {
-      actionsRef?.current?.focus();
+      actionsRef?.current?.querySelector("button")?.focus();
     },
     true,
   );
@@ -132,7 +134,21 @@ function Actions({ children }: ActionsProps) {
           role="menu"
         >
           {actions.map((action) => (
-            <button className="block">{action.label}</button>
+            <button
+              className="block"
+              onClick={() => {
+                action.callback();
+              }}
+            >
+              {action.label}{" "}
+              <em className="text-white/40">
+                (
+                {formatShortcutsForSpeech(action.shortcut.split("+")).join(
+                  ", ",
+                )}
+                )
+              </em>
+            </button>
           ))}
         </ul>
       </ActionsContext.Provider>
