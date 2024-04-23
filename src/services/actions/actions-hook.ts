@@ -98,6 +98,8 @@ export function useInjectedAction(
     hidden,
   };
 
+  useHotkeys(shortcut, callback);
+
   useEffect(() => {
     dispatch({ type: "register", action });
 
