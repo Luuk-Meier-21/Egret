@@ -101,7 +101,7 @@ function Actions({ children }: ActionsProps) {
 
       if (matchingKeyword) {
         throw Error("Keyword of name found");
-      }
+      } // merge
 
       const keyword = generateKeyword({ label });
 
