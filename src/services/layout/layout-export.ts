@@ -19,7 +19,7 @@ export function useLayoutHTMLExporter(config: Partial<HTMLExportConfig> = {}) {
   });
 
   const setSettings = (
-    htmlDocument: Document,
+    _: Document,
     element: HTMLElement,
     nodeOrBranch: LayoutBranchOrNodeData,
   ) => {

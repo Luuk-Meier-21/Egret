@@ -4,13 +4,10 @@ import {
   BlockIdentifier,
   BlockSchemaWithBlock,
   InlineContentConfig,
-  InlineContentFromConfig,
   StyleConfig,
-  TableContent,
 } from "@blocknote/core";
 import { IBlock, IBlockEditor } from "../types/block";
 import { useEffect, useState } from "react";
-import { voiceSay } from "../bindings";
 
 export function createBlock(): IBlock {
   return {};

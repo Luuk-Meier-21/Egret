@@ -1,9 +1,8 @@
 import { insertOrUpdateBlock } from "@blocknote/core";
 import { createReactBlockSpec } from "@blocknote/react";
 import { schema } from "../../blocks/schema";
-import { ReactNode, useContext, useEffect, useRef, useState } from "react";
-import { BlockComponentProps, IBlockEditor } from "../../types/block";
-import { DialogContext } from "../../components/Dialog/DialogProvider";
+import { ReactNode, useEffect, useRef } from "react";
+import { BlockComponentProps } from "../../types/block";
 import { useBlockSelection } from "../../utils/block";
 import { voiceSay } from "../../bindings";
 import { useOverrideScreenreader } from "../../utils/speech";

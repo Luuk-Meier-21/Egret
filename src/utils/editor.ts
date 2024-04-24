@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { IBlockEditor } from "../types/block";
 import { Document } from "../types/documents";
 import {

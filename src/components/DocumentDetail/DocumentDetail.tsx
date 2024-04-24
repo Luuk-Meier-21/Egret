@@ -10,7 +10,6 @@ import { useLayoutNavigator } from "../../services/layout/layout-navigation";
 import { generateDocumentRegion } from "../../services/document/document-generator";
 import { useLayoutState } from "../../services/layout/layout-state";
 import { useLayoutBuilder } from "../../services/layout/layout-builder";
-import { useEffect, useRef, useState } from "react";
 import {
   keyAction,
   keyExplicitAction,
@@ -18,23 +17,24 @@ import {
 } from "../../config/shortcut";
 import { DocumentDirectory } from "../../types/documents";
 import { Layout, LayoutNodeData } from "../../types/layout/layout";
-import {
-  useAbstractStore,
-  useStateStore,
-} from "../../services/store/store-hooks";
+import { useStateStore } from "../../services/store/store-hooks";
 import { pathInDirectory } from "../../services/store/store";
 import DocumentRegion from "../DocumentRegion/DocumentRegion";
 import { useScopedAction } from "../../services/actions/actions-hook";
-import { systemSound } from "../../bindings";
+import { startCompanionMode, systemSound } from "../../bindings";
 import { useLayoutHTMLExporter } from "../../services/layout/layout-export";
 
 interface DocumentDetailProps {}
 
 function DocumentDetail({}: DocumentDetailProps) {
-  const [directory, staticDocumentData, staticLayout, staticKeywords] =
-    useLoaderData() as [DocumentDirectory, DocumentData, Layout, Keyword[]];
+  const [directory, staticDocumentData, staticLayout, _] = useLoaderData() as [
+    DocumentDirectory,
+    DocumentData,
+    Layout,
+    Keyword[],
+  ];
 
-  const store = useAbstractStore();
+  // const store = useAbstractStore();
   const builder = useLayoutBuilder(staticLayout);
   const selection = useLayoutState(builder);
   const navigator = useLayoutNavigator(selection, builder);
@@ -54,9 +54,9 @@ function DocumentDetail({}: DocumentDetailProps) {
     builder.insertContent(region, node);
   };
 
-  const handleChange = (region: DocumentRegionData, node: LayoutNodeData) => {
-    // builder.insertContent(region, node);
-  };
+  // const handleChange = (region: DocumentRegionData, node: LayoutNodeData) => {
+  //   // builder.insertContent(region, node);
+  // };
 
   useScopedAction("Save document", keyAction("s"), async () => {
     await saveDocument();
@@ -134,21 +134,28 @@ function DocumentDetail({}: DocumentDetailProps) {
     true,
   );
 
-  const [openSettings, setOpenSettings] = useState(false);
+  useScopedAction(
+    "Start companion mode",
+    keyExplicitAction("="),
+    async () => {
+      startCompanionMode();
+    },
+    true,
+  );
 
-  const setKeywordRelation = async (keyword: Keyword) => {
-    // const newKeywords = keywords;
-    // const hasRelation = keywordHasRelation(keyword, staticDocumentData);
-    // if (hasRelation) {
-    //   keywords.find((k) =>)
-    // }
-    // hasRelation
-    //   ? await dereferenceKeywordFromDocument(keyword, staticDocumentData)
-    //   : await referenceKeywordToDocument(keyword, staticDocumentData);
-    // await saveKeyword(keyword);
-    // const keywords = await fetchKeywords();
-    // setKeywords(keywords);
-  };
+  // const setKeywordRelation = async (keyword: Keyword) => {
+  // const newKeywords = keywords;
+  // const hasRelation = keywordHasRelation(keyword, staticDocumentData);
+  // if (hasRelation) {
+  //   keywords.find((k) =>)
+  // }
+  // hasRelation
+  //   ? await dereferenceKeywordFromDocument(keyword, staticDocumentData)
+  //   : await referenceKeywordToDocument(keyword, staticDocumentData);
+  // await saveKeyword(keyword);
+  // const keywords = await fetchKeywords();
+  // setKeywords(keywords);
+  // };
 
   return (
     <main
@@ -159,18 +166,18 @@ function DocumentDetail({}: DocumentDetailProps) {
         <LayoutBranchOrNode
           key={branchOrNode.id}
           value={branchOrNode}
-          renderNode={(node, isFirstInList) => {
+          renderNode={(node) => {
             const isFocused = node.id === selection.nodeId;
 
             const data = node.data || generateDocumentRegion({});
 
             return (
               <DocumentRegion
-                onSave={(region, editor) => {
+                onSave={(region) => {
                   handleSave(region, node);
                 }}
-                onChange={(region, editor) => {
-                  handleChange(region, node);
+                onChange={() => {
+                  // handleChange(region, node);
                 }}
                 isFocused={isFocused}
                 onFocus={() => {

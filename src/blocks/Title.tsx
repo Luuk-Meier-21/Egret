@@ -29,8 +29,6 @@ export const Title = createReactBlockSpec(
 
       useEffect(() => {
         props.contentRef(ref.current);
-
-        const content = ref.current?.querySelector("* > div");
       }, []);
 
       return (

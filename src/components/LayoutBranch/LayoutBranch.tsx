@@ -43,7 +43,6 @@ export function LayoutBranchOrNode({
 function LayoutBranch({
   value,
   level,
-  index,
   renderNode,
 }: LayoutBranchProps<LayoutBranchData<LayoutTreeTrunk>>) {
   return (

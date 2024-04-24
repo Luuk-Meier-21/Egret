@@ -134,5 +134,6 @@ export function action(
     label,
     shortcut,
     callback,
+    hidden: false,
   };
 }

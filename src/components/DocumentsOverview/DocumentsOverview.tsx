@@ -1,14 +1,10 @@
-import {
-  DocumentReference,
-  DocumentReferenceWithKeywords,
-} from "../../types/documents";
+import { DocumentDirectory, DocumentReference } from "../../types/documents";
 import Search from "../Search/Search";
 import { ReactNode, useRef, useState } from "react";
 import { Keyword } from "../../types/keywords";
-import { includeKeywordsInDocuments } from "../../utils/keywords";
+// import { includeKeywordsInDocuments } from "../../utils/keywords";
 import { useRegisterAction } from "../../services/actions/actions-registry";
 import { writeText } from "@tauri-apps/api/clipboard";
-import { useTitle } from "../../utils/title";
 
 interface DocumentsOverviewProps {
   // Documents overview could be uses as a document selector, wrapped in a dialog component. Callbacks resolve promise like prompt handles this
@@ -23,7 +19,6 @@ function DocumentsOverview({
   onDocumentClick,
   onDocumentSelection = () => {},
   documentReferences,
-  keywords,
   children,
 }: DocumentsOverviewProps) {
   const documentsRef = useRef<HTMLUListElement>(null);
@@ -44,9 +39,9 @@ function DocumentsOverview({
     await writeText(selectedDocument.id);
   });
 
-  const [filteredDocuments, setFilteredDocuments] = useState<
-    DocumentReferenceWithKeywords[]
-  >(includeKeywordsInDocuments(documentReferences, keywords));
+  const [filteredDocuments, setFilteredDocuments] =
+    //@ts-ignore
+    useState<DocumentDirectory[]>(documentReferences);
 
   return (
     <div data-component-name="DocumentsOverview" aria-live="polite">
@@ -71,14 +66,14 @@ function DocumentsOverview({
                   className="underline"
                 >
                   {document.name}
-                  {document.keywords.length > 0 && (
+                  {/* {document.keywords.length > 0 && (
                     <span>
                       , Keywords:{" "}
                       {document.keywords
                         .map((keywords) => keywords.label)
                         .join(", ")}
                     </span>
-                  )}
+                  )} */}
                 </button>
               </li>
             ))}
@@ -92,13 +87,14 @@ function DocumentsOverview({
       {children}
       <Search
         label="Search document"
-        list={includeKeywordsInDocuments(documentReferences, keywords)}
+        list={documentReferences}
         keys={["name", "keywords.label"]}
         onConfirm={() => {
           documentsRef.current?.querySelector("button")?.focus();
         }}
         onResult={(searchResults) => {
           // Currently all documents go tru search, this might not be the best idea
+          //@ts-ignore
           setFilteredDocuments(searchResults);
         }}
       />

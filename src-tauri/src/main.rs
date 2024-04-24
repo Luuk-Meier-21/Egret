@@ -2,16 +2,17 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod sound;
+mod websocket;
 
-use serde_json::Number;
-use sound::{MacOSSystemSound, SystemSound};
+use sound::MacOSSystemSound;
 use specta::collect_types;
 use std::{
-    os::{macos::raw::stat, unix::process},
+    fs,
     process::{Child, Command},
 };
-use tauri::{async_runtime::Mutex, State};
+use tauri::async_runtime::Mutex;
 use tauri_specta::{self, ts};
+use websocket::start_companion_mode;
 
 #[derive(Clone, serde::Serialize)]
 struct Payload {
@@ -59,16 +60,32 @@ fn system_sound(sound: MacOSSystemSound, speed: f32, volume: f64, time: f64) -> 
 
 pub struct SoundEffect(Mutex<Option<Child>>);
 
-fn main() {
+#[tokio::main]
+async fn main() {
+    std::panic::set_hook(Box::new(|info| {
+        println!("Panic!");
+        let data = format!("{:?}", info);
+        fs::write("/tmp/foo", data).expect("Unable to write file");
+    }));
+
+    #[cfg(debug_assertions)]
     ts::export(
-        collect_types![greet, system_sound, voice_say],
+        collect_types![greet, system_sound, voice_say, start_companion_mode],
         "../src/bindings.ts",
     )
     .unwrap();
 
+    #[cfg(debug_assertions)]
+    println!("DEV MODE");
+
     tauri::Builder::default()
         .manage(SoundEffect(Default::default()))
-        .invoke_handler(tauri::generate_handler![greet, system_sound, voice_say])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            system_sound,
+            voice_say,
+            start_companion_mode
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -18,12 +18,12 @@ export function generateLayoutToDocumentRelation(
   };
 }
 
-export function addRelationsToLayout(
-  layout: Layout,
-  relations: LayoutToDocumentRelation[],
-): Layout {
-  const newLayout = { ...layout };
-  newLayout.relations = relations;
+// export function addRelationsToLayout(
+//   layout: Layout,
+//   relations: LayoutToDocumentRelation[],
+// ): Layout {
+//   const newLayout = { ...layout };
+//   newLayout.relations = relations;
 
-  return newLayout;
-}
+//   return newLayout;
+// }

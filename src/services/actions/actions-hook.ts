@@ -15,7 +15,7 @@ export function useScopedAction(
   callback: ActionCallback,
   hidden: boolean = false,
 ) {
-  const [actions, dispatch] = useContext(ActionsContext);
+  const [_, dispatch] = useContext(ActionsContext);
   const action: ActionConfiguration = {
     label,
     shortcut,
@@ -49,7 +49,7 @@ export function useConditionalAction(
   callback: ActionCallback,
   hidden: boolean = true,
 ) {
-  const [actions, dispatch] = useContext(ActionsContext);
+  const [_, dispatch] = useContext(ActionsContext);
   const wrappedCallback = () => {
     if (condition) {
       callback();

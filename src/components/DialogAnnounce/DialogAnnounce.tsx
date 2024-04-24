@@ -13,7 +13,7 @@ function DialogAnnounce({
   label,
   message,
 }: DialogAnnounceProps) {
-  const { ref, onChange, onKeyDown } = useDialogHandlers<string>({
+  const { ref } = useDialogHandlers<string>({
     onSubmit,
     onCancel,
   });

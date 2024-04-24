@@ -2,18 +2,11 @@ import {
   ReactNode,
   createContext,
   useContext,
-  useEffect,
   useReducer,
   useRef,
-  useState,
 } from "react";
 import { useNavigate } from "react-router";
-import {
-  ActionConfiguration,
-  action,
-  renderActionWithShortcut,
-  useRegisterAction,
-} from "../../services/actions/actions-registry";
+import { ActionConfiguration } from "../../services/actions/actions-registry";
 import { handleError, handleSucces } from "../../utils/announce";
 import { DialogContext } from "../Dialog/DialogProvider";
 import { useAbstractStore } from "../../services/store/store-hooks";
@@ -33,11 +26,7 @@ import {
   ActionReducerAction,
   actionsReducer,
 } from "../../services/actions/actions-reducer";
-import {
-  useInjectedAction,
-  useScopedAction,
-} from "../../services/actions/actions-hook";
-import SearchList from "../SearchList/SearchList";
+import { useInjectedAction } from "../../services/actions/actions-hook";
 import { keyAction } from "../../config/shortcut";
 import { formatShortcutsForSpeech } from "../../utils/speech";
 

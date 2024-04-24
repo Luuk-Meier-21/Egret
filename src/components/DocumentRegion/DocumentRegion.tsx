@@ -4,14 +4,10 @@ import { shell } from "@tauri-apps/api";
 import { toggleBlock } from "../../utils/block";
 import { useEditorAutoSaveHandle } from "../../utils/editor";
 import { IBlockEditor } from "../../types/block";
-import { useRegisterEditorAction } from "../../services/actions/actions-registry";
 import { useEffect, useRef } from "react";
 import { keyExplicitAction } from "../../config/shortcut";
 import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
-import {
-  useConditionalAction,
-  useScopedAction,
-} from "../../services/actions/actions-hook";
+import { useConditionalAction } from "../../services/actions/actions-hook";
 import { insertOrUpdateBlock } from "@blocknote/core";
 
 interface DocumentRegionProps {

@@ -22,4 +22,8 @@ export function voiceSay(message: string) {
     return invoke()<null>("voice_say", { message })
 }
 
+export function startCompanionMode() {
+    return invoke()<null>("start_companion_mode")
+}
+
 export type MacOSSystemSound = "Basso" | "Blow" | "Bottle" | "Frog" | "Funk" | "Glass" | "Hero" | "Morse" | "Ping" | "Pop" | "Purr" | "Sosumi" | "Submarine" | "Tink"

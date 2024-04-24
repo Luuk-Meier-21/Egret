@@ -1,14 +1,10 @@
-import {
-  DocumentRegionData,
-  DocumentViewData,
-} from "../../types/document/document";
+import { DocumentRegionData } from "../../types/document/document";
 import {
   Layout,
   LayoutBranchOrNodeData,
   LayoutNodeData,
   LayoutTree,
 } from "../../types/layout/layout";
-import { LayoutToDocumentRelation } from "../../types/layout/layout-relations";
 import { deepJSONClone } from "../../utils/object";
 
 export function generateLayoutWithContent(
@@ -32,65 +28,64 @@ export function generateLayoutWithContent(
  * @param layout
  * @returns
  */
-export function generateContentfullLayout(
-  documentView: DocumentViewData,
-  layout: Layout,
-): ContentfullLayout {
-  const newLayout: ContentfullLayout = deepJSONClone({
-    ...layout,
-    decorated: true,
-  });
+// export function generateContentfullLayout(
+//   documentView: DocumentViewData,
+//   layout: Layout,
+// ): Layout {
+//   const newLayout: Layout = deepJSONClone({
+//     ...layout,
+//     decorated: true,
+//   });
 
-  const regions = documentView.content.slice();
-  const relations = layout.relations.slice();
-  const nodes = flattenLayoutNodesByReference(newLayout.tree);
+//   const regions = documentView.content.slice();
+//   const nodes = flattenLayoutNodesByReference(newLayout.tree);
 
-  let availableRegions = regions.slice();
+//   let availableRegions = regions.slice();
 
-  const findAndShiftRegion = (
-    relation: LayoutToDocumentRelation | undefined,
-  ): DocumentRegionData | undefined => {
-    const targetRegion = availableRegions.find(
-      (region) => region.id === relation?.regionId,
-    );
+//   const findAndShiftRegion = (
+//     relation: LayoutToDocumentRelation | undefined,
+//   ): DocumentRegionData | undefined => {
+//     const targetRegion = availableRegions.find(
+//       (region) => region.id === relation?.regionId,
+//     );
 
-    if (targetRegion === undefined) {
-      return;
-    }
+//     if (targetRegion === undefined) {
+//       return;
+//     }
 
-    availableRegions = availableRegions.filter(
-      (region) => region.id !== targetRegion?.id,
-    );
+//     availableRegions = availableRegions.filter(
+//       (region) => region.id !== targetRegion?.id,
+//     );
 
-    return targetRegion;
-  };
+//     return targetRegion;
+//   };
 
-  // First do relations
-  for (const relation of relations) {
-    const nodeIndex = nodes.findIndex(
-      (node) => node.id === relation.layoutNodeId,
-    );
-    const region = findAndShiftRegion(relation);
+//   // First do relations
+//   for (const relation of relations) {
+//     const nodeIndex = nodes.findIndex(
+//       (node) => node.id === relation.layoutNodeId,
+//     );
+//     const region = findAndShiftRegion(relation);
 
-    if (region && nodeIndex !== -1) {
-      nodes[nodeIndex].data = { ...region };
-    }
-  }
+//     if (region && nodeIndex !== -1) {
+//       nodes[nodeIndex].data = { ...region };
+//     }
+//   }
 
-  // Give leftover regions a spot
-  for (const node of nodes) {
-    if (node.contentfull === false) {
-      const region = availableRegions.shift();
+//   // Give leftover regions a spot
+//   for (const node of nodes) {
+//     if (node.contentfull === false) {
+//       const region = availableRegions.shift();
 
-      if (region) {
-        node.data = region;
-        node.contentfull = true;
-      }
-    }
-  }
+//       if (region) {
+//         node.data = region;
+//         node.contentfull = true;
+//       }
+//     }
+//   }
 
-  return newLayout;
-}
+//   return newLayout;
+// }
 
 export function flattenLayoutNodesByReference(
   tree: LayoutTree,
