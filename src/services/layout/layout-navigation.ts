@@ -117,6 +117,7 @@ export function useLayoutNavigator(
 
   const focusColumnRight = () => {
     const rowIndex = rows.findIndex((row) => row.id === rowId);
+    console.log(rowIndex);
 
     if (rowIndex < 0) {
       return;

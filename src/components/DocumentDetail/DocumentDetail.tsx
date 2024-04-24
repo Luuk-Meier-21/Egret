@@ -20,9 +20,15 @@ import { Layout, LayoutNodeData } from "../../types/layout/layout";
 import { useStateStore } from "../../services/store/store-hooks";
 import { pathInDirectory } from "../../services/store/store";
 import DocumentRegion from "../DocumentRegion/DocumentRegion";
-import { useScopedAction } from "../../services/actions/actions-hook";
+import {
+  useConditionalAction,
+  useScopedAction,
+} from "../../services/actions/actions-hook";
 import { startCompanionMode, systemSound } from "../../bindings";
 import { useLayoutHTMLExporter } from "../../services/layout/layout-export";
+import { useEffect, useState } from "react";
+import { listen } from "@tauri-apps/api/event";
+import { flattenLayoutNodesByReference } from "../../services/layout/layout-content";
 
 interface DocumentDetailProps {}
 
@@ -38,6 +44,8 @@ function DocumentDetail({}: DocumentDetailProps) {
   const builder = useLayoutBuilder(staticLayout);
   const selection = useLayoutState(builder);
   const navigator = useLayoutNavigator(selection, builder);
+
+  const [isInCompanionMode, setCompanionMode] = useState(false);
 
   const saveDocument = useStateStore(
     builder.layout,
@@ -57,6 +65,25 @@ function DocumentDetail({}: DocumentDetailProps) {
   // const handleChange = (region: DocumentRegionData, node: LayoutNodeData) => {
   //   // builder.insertContent(region, node);
   // };
+
+  const getNavigator = () => navigator;
+
+  // Companion Events:
+  useEffect(() => {
+    const unlistenConnect = listen("ws-connect", (e) => {
+      console.log(e.payload);
+    });
+
+    const unlistenMessage = listen("action-focus", (e) => {
+      console.log(selection);
+      getNavigator().focusColumnRight();
+    });
+
+    return () => {
+      unlistenConnect.then((f) => f());
+      unlistenMessage.then((f) => f());
+    };
+  }, []);
 
   useScopedAction("Save document", keyAction("s"), async () => {
     await saveDocument();
@@ -134,14 +161,29 @@ function DocumentDetail({}: DocumentDetailProps) {
     true,
   );
 
-  useScopedAction(
+  const callback = async () => {
+    const isActive = await startCompanionMode();
+    console.log(isActive);
+    setCompanionMode(isActive);
+  };
+
+  useConditionalAction(
     "Start companion mode",
     keyExplicitAction("="),
-    async () => {
-      startCompanionMode();
-    },
+    isInCompanionMode === false,
+    callback,
     true,
   );
+
+  useConditionalAction(
+    "Stop companion mode",
+    keyExplicitAction("="),
+    isInCompanionMode === true,
+    callback,
+    true,
+  );
+
+  // const listener = useRef(false);
 
   // const setKeywordRelation = async (keyword: Keyword) => {
   // const newKeywords = keywords;

@@ -1,92 +1,119 @@
-use std::fs;
+use std::{fs, future, sync::Mutex};
 
-use futures_util::{SinkExt, StreamExt};
-use tauri::{Error, Manager};
+use futures_util::{future::Join, Future, SinkExt, StreamExt};
+use tauri::{Error, Manager, State};
+use tokio::task::JoinHandle;
 use warp::{
     filters::ws::{Message, WebSocket},
+    reply::Reply,
     Filter,
 };
 
-#[derive(Clone, serde::Serialize)]
-struct Payload {
+#[derive(Clone, serde::Serialize, serde::Deserialize, specta::Type)]
+struct WsEvent {
     message: String,
+}
+
+pub struct CompanionProcess(pub Mutex<Option<JoinHandle<()>>>);
+
+impl CompanionProcess {
+    fn new(handle: JoinHandle<()>) -> CompanionProcess {
+        CompanionProcess(Mutex::new(Some(handle)))
+    }
 }
 
 #[specta::specta]
 #[tauri::command]
-pub async fn start_companion_mode(app: tauri::AppHandle) -> Result<(), Error> {
-    fs::write("/tmp/foo", "hi test").expect("Unable to write file");
-    println!("starting companion mode");
+pub async fn start_companion_mode(
+    app: tauri::AppHandle,
+    state: State<'_, CompanionProcess>,
+) -> Result<bool, Error> {
+    let mut companion_state = state.0.lock().unwrap();
+
+    let is_active = match &mut *companion_state {
+        Some(data) => {
+            data.abort();
+            *companion_state = None;
+            false
+        }
+        None => {
+            *companion_state = Some(serve_companion_mode(app));
+            true
+        }
+    };
+
+    Ok(is_active)
+}
+
+fn serve_companion_mode(app: tauri::AppHandle) -> JoinHandle<()> {
     tokio::spawn(async move {
-        // let app_ref = Arc::new(Mutex::new(app));
         let routes = warp::path("echo")
-            // The `ws()` filter will prepare the Websocket handshake.
             .and(warp::ws())
             .map(move |ws: warp::ws::Ws| {
                 let app = app.clone();
-                // let a = Mutex::new(app.clone());
-                app.emit_all(
-                    "ws-connect",
-                    Payload {
-                        message: "Tauri is awesome!".into(),
-                    },
-                )
-                .unwrap();
-                // if let Ok(result) = app.lock() {
-                //     result
-                //         .emit_all(
-                //             "ws-connection",
-                //             Payload {
-                //                 message: "Tauri is awesome!".into(),
-                //             },
-                //         )
-                //         .unwrap();
-                // }
-                // And then our closure will be called when it  completes...
-                ws.on_upgrade(move |websocket| {
-                    app.emit_all(
-                        "ws-upgrade",
-                        Payload {
-                            message: "Tauri is awesome!".into(),
-                        },
-                    )
-                    .unwrap();
-                    // if let Ok(result) = app {
-                    //     result
-                    //         .emit_all(
-                    //             "ws-upgrate",
-                    //             Payload {
-                    //                 message: "Tauri is awesome!".into(),
-                    //             },
-                    //         )
-                    //         .unwrap();
-                    // }
-                    handle_message(websocket)
-                })
+                handle_ws_connect(ws, app)
             });
 
         warp::serve(routes).try_bind(([0, 0, 0, 0], 2000)).await;
-    });
-
-    Ok(())
+    })
 }
 
-async fn handle_message(websocket: WebSocket) {
-    let mut counter = 0;
+fn handle_ws_connect(ws: warp::ws::Ws, app: tauri::AppHandle) -> impl Reply {
+    app.emit_all(
+        "ws-connect",
+        WsEvent {
+            message: "Tauri is awesome!".into(),
+        },
+    )
+    .unwrap();
 
+    ws.on_upgrade(move |websocket| {
+        app.emit_all(
+            "ws-upgrade",
+            WsEvent {
+                message: "Tauri is awesome!".into(),
+            },
+        )
+        .unwrap();
+        handle_message(websocket, app)
+    })
+}
+
+async fn handle_message(websocket: WebSocket, app: tauri::AppHandle) {
     let (mut ws_out, mut ws_in) = websocket.split();
 
     while let Some(result) = ws_in.next().await {
         if let Ok(message) = result {
             let data = message.to_str().unwrap_or("No value found");
-            let tag = "Server: ";
-            counter += 1;
 
-            println!("Message: {}", data);
+            let mut dataSplit = data.split(":");
 
-            let return_message = Message::text(format!("{tag}{}{data}", counter));
+            let message_type = dataSplit.next().unwrap_or("none");
+            let message_content = dataSplit.next().unwrap_or("none");
 
-            let _ = ws_out.send(return_message).await;
+            println!("{} - {}", message_type, message_content);
+
+            let _ = match message_type {
+                "focus" => handle_action_focus(app.clone(), message_content),
+                _ => Ok(()),
+            };
         }
     }
 }
+
+fn handle_action_focus(app: tauri::AppHandle, contents: &str) -> Result<(), Error> {
+    app.emit_all(
+        "action-focus",
+        WsEvent {
+            message: contents.into(),
+        },
+    )
+    .unwrap();
+
+    Ok(())
+}
+
+// let return_message = Message::text(format!("Application: {data}"));
+// println!("message");
+
+// let _ = ws_out.send(return_message).await;

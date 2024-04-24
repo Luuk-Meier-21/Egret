@@ -14,6 +14,8 @@ use tauri::async_runtime::Mutex;
 use tauri_specta::{self, ts};
 use websocket::start_companion_mode;
 
+use crate::websocket::CompanionProcess;
+
 #[derive(Clone, serde::Serialize)]
 struct Payload {
     message: String,
@@ -79,7 +81,7 @@ async fn main() {
     println!("DEV MODE");
 
     tauri::Builder::default()
-        .manage(SoundEffect(Default::default()))
+        .manage(CompanionProcess(Default::default()))
         .invoke_handler(tauri::generate_handler![
             greet,
             system_sound,
