@@ -8,7 +8,12 @@
   </head>
 
   <body class="bg-black text-white">
-    <div id="root"></div>
+    <div
+      data-tauri-drag-region
+      aria-hidden="true"
+      class="fixed left-24 right-4 top-1 h-5 cursor-move ring-1 ring-transparent hover:ring-white/30"
+    ></div>
+    <div id="root" class="pt-5"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

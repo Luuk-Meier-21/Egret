@@ -85,7 +85,13 @@ function rowComponent({
 
   return (
     <figure className="inline-content inline-block w-full max-w-[600px]">
-      <img className="object-cover" src={src} alt={alt} />
+      <img
+        className="object-cover"
+        tabIndex={0}
+        contentEditable={false}
+        src={src}
+        alt={alt}
+      />
       <figcaption className="inline-content flex text-sm">
         <span id="caption" role="textbox" ref={ref} contentEditable={true} />
       </figcaption>
