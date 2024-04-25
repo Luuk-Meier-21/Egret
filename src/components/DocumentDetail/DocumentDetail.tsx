@@ -13,6 +13,7 @@ import { useLayoutBuilder } from "../../services/layout/layout-builder";
 import {
   keyAction,
   keyExplicitAction,
+  keyExplicitNavigation,
   keyNavigation,
 } from "../../config/shortcut";
 import { DocumentDirectory } from "../../types/documents";
@@ -103,24 +104,37 @@ function DocumentDetail({}: DocumentDetailProps) {
     true,
   );
 
+  const deleteNode = (force: boolean = false) => {
+    const currentRow = navigator.getCurrentRow();
+    const currentNode = navigator.getCurrentNode();
+
+    if (currentRow === null || currentNode === null) {
+      return;
+    }
+
+    if (currentRow.type === "branch") {
+      const node = builder.removeNodeFromRow(currentRow, currentNode, force);
+      selection.setNodeId(node.id);
+    } else {
+      const node = builder.removeRow(currentRow, force);
+      selection.setNodeId(node.id);
+    }
+  };
+
   useScopedAction(
-    "Delete column",
+    "Delete node",
     keyNavigation("backspace"),
     async () => {
-      const currentRow = navigator.getCurrentRow();
-      const currentNode = navigator.getCurrentNode();
+      deleteNode();
+    },
+    true,
+  );
 
-      if (currentRow === null || currentNode === null) {
-        return;
-      }
-
-      if (currentRow.type === "branch") {
-        const node = builder.removeNodeFromRow(currentRow, currentNode);
-        selection.setNodeId(node.id);
-      } else {
-        const node = builder.removeRow(currentRow);
-        selection.setNodeId(node.id);
-      }
+  useScopedAction(
+    "Force delete node",
+    keyExplicitNavigation("backspace"),
+    async () => {
+      deleteNode(true);
     },
     true,
   );
@@ -130,6 +144,15 @@ function DocumentDetail({}: DocumentDetailProps) {
     keyNavigation("left"),
     async () => {
       navigator.focusColumnLeft();
+    },
+    true,
+  );
+
+  useScopedAction(
+    "Escape focus",
+    "Escape",
+    async () => {
+      navigator.blurColumn();
     },
     true,
   );

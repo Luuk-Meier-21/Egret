@@ -57,6 +57,14 @@ function DocumentRegion({
     }
   }, [isFocused]);
 
+  useEffect(() => {
+    editor._tiptapEditor.on("create", () => {
+      if (isFocused) {
+        focus();
+      }
+    });
+  });
+
   editor.onEditorContentChange(() => {
     onChange(regionWithCurrentBlock(), editor);
   });
@@ -135,7 +143,7 @@ function DocumentRegion({
         onBlur={() => {
           onBlur(region, editor);
         }}
-        className="mx-auto w-full max-w-[46em] [&_a]:underline"
+        className="mx-auto flex h-full w-full max-w-[46em] [&_a]:underline"
         editor={editor}
         slashMenu={false}
         onKeyDown={(event) => {

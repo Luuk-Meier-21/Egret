@@ -22,12 +22,12 @@ export function generateLayoutWithContent(
   return layoutClone;
 }
 
-/**
- * @deprecated
- * @param documentView
- * @param layout
- * @returns
- */
+// /**
+//  * @deprecated
+//  * @param documentView
+//  * @param layout
+//  * @returns
+//  */
 // export function generateContentfullLayout(
 //   documentView: DocumentViewData,
 //   layout: Layout,

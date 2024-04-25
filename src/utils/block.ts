@@ -37,6 +37,17 @@ export function isBlockInSelection<
   return editor.getTextCursorPosition().block.id === block.id;
 }
 
+export function blocksHaveContent<
+  ST extends Record<string, BlockConfig>,
+  IT extends Record<string, InlineContentConfig>,
+  SST extends Record<string, StyleConfig>,
+>(blocks: IBlock<ST, IT, SST>[]): boolean {
+  return blocks.some(
+    //@ts-expect-error
+    (block) => block?.content?.length > 0 || block?.children?.length > 0,
+  );
+}
+
 // export function getInlineContentText<
 //   ST extends BlockConfig,
 //   IT extends InlineContentConfig,

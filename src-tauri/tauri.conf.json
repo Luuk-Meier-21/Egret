@@ -6,8 +6,8 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "Contextual Notes",
-    "version": "1.0.0"
+    "productName": "Contextual Notes V2",
+    "version": "2.0.0"
   },
 
   "tauri": {
@@ -90,7 +90,7 @@
     },
     "windows": [
       {
-        "title": "Contextual Notes",
+        "title": "Contextual Notes V2",
         "focus": true,
         "titleBarStyle": "Overlay",
         "width": 1080,

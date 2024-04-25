@@ -1,4 +1,4 @@
-import { ReactNode, useRef, useState } from "react";
+import { ForwardedRef, ReactNode, forwardRef, useRef, useState } from "react";
 import Search from "../Search/Search";
 
 interface SearchListProps<T> {
@@ -9,19 +9,17 @@ interface SearchListProps<T> {
   onSearchConfirm?: () => void;
 }
 
-function SearchList<T>({
-  list,
-  label,
-  searchKeys,
-  renderItem,
-}: SearchListProps<T>) {
+function SearchListInner<T>(
+  { list, label, searchKeys, renderItem }: SearchListProps<T>,
+  ref: ForwardedRef<HTMLInputElement>,
+) {
   const [filteredList, setFiltered] = useState(list);
-  const ref = useRef<HTMLUListElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
 
   return (
     <div data-component-name="SearchList" className="p-4 ring-1 ring-white">
       <section>
-        <ul ref={ref} className="pb-4" role="menu">
+        <ul ref={listRef} className="pb-4" role="menu">
           {filteredList.map((item, index) => (
             <li key={index}>{renderItem(item)}</li>
           ))}
@@ -30,9 +28,10 @@ function SearchList<T>({
       <Search
         label={label}
         list={list}
+        ref={ref}
         keys={searchKeys}
         onConfirm={() => {
-          ref.current?.querySelector("button")?.focus();
+          listRef?.current?.querySelector("button")?.focus();
         }}
         onResult={(results) => {
           // Currently all documents go tru search, this might not be the best idea
@@ -42,4 +41,9 @@ function SearchList<T>({
     </div>
   );
 }
+
+const SearchList = forwardRef(SearchListInner) as <T>(
+  props: SearchListProps<T> & { ref?: ForwardedRef<HTMLInputElement> },
+) => ReturnType<typeof SearchListInner>;
+
 export default SearchList;

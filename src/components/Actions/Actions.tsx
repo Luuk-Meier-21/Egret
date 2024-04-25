@@ -40,7 +40,7 @@ export const ActionsContext = createContext<
 
 function Actions({ children }: ActionsProps) {
   const mainRef = useRef<HTMLDivElement>(null);
-  const actionsRef = useRef<HTMLUListElement>(null);
+  const actionsRef = useRef<HTMLInputElement>(null);
 
   const store = useAbstractStore();
 
@@ -107,7 +107,7 @@ function Actions({ children }: ActionsProps) {
     "Open actions panel",
     keyAction("g"),
     () => {
-      actionsRef?.current?.querySelector("button")?.focus();
+      actionsRef?.current?.focus();
     },
     true,
   );
@@ -116,9 +116,31 @@ function Actions({ children }: ActionsProps) {
     <div data-component-name="Actions" className="flex flex-col p-4">
       <ActionsContext.Provider value={[actions, dispatch]}>
         <div ref={mainRef}>{children}</div>
+        {/* <SearchList
+          list={actions.filter((action) => !action.hidden)}
+          label={"Search Available Actions"}
+          searchKeys={["label", "shortcut"]}
+          ref={actionsRef}
+          renderItem={(action): ReactNode => (
+            <button
+              className="block"
+              onClick={() => {
+                action.callback();
+              }}
+            >
+              {action.label}{" "}
+              <em className="text-white/40">
+                (
+                {formatShortcutsForSpeech(action.shortcut.split("+")).join(
+                  ", ",
+                )}
+                )
+              </em>
+            </button>
+          )}
+        /> */}
         <ul
           aria-label="Actions"
-          ref={actionsRef}
           className="flex flex-col items-start p-4"
           role="menu"
         >

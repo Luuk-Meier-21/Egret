@@ -1,5 +1,5 @@
 import Fuse, { FuseOptionKey, IFuseOptions } from "fuse.js";
-import { useEffect, useRef, useState } from "react";
+import { ForwardedRef, forwardRef, useEffect, useState } from "react";
 import { useRegisterAction } from "../../services/actions/actions-registry";
 
 interface SearchProps<T> {
@@ -10,23 +10,26 @@ interface SearchProps<T> {
   onConfirm?: () => void;
 }
 
-function Search<T>({
-  list,
-  keys,
-  label,
-  onResult = () => {},
-  onConfirm = () => {},
-}: SearchProps<T>) {
-  const ref = useRef(null);
+function SearchInner<T>(
+  {
+    list,
+    keys,
+    label,
+    onResult = () => {},
+    onConfirm = () => {},
+  }: SearchProps<T>,
+  ref: ForwardedRef<HTMLInputElement>,
+) {
   const [query, setQuery] = useState<string | null>(null);
   const [key, setKey] = useState<FuseOptionKey<T> | null>(null);
 
   const focusSearch = () => {
-    if (ref.current === null) {
+    // @ts-expect-error
+    const element = ref.current as HTMLInputElement;
+
+    if (element === null) {
       return;
     }
-
-    const element = ref.current as HTMLDivElement;
 
     element.focus();
   };
@@ -103,5 +106,9 @@ function Search<T>({
     </div>
   );
 }
+
+export const Search = forwardRef(SearchInner) as <T>(
+  props: SearchProps<T> & { ref?: ForwardedRef<HTMLInputElement> },
+) => ReturnType<typeof SearchInner>;
 
 export default Search;
