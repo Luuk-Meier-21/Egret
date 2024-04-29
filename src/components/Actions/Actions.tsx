@@ -29,6 +29,7 @@ import {
 import { useInjectedAction } from "../../services/actions/actions-hook";
 import { keyAction } from "../../config/shortcut";
 import { formatShortcutsForSpeech } from "../../utils/speech";
+import { prompt } from "../../services/window/window-manager";
 
 interface ActionsProps {
   children: ReactNode | ReactNode[];
@@ -40,14 +41,13 @@ export const ActionsContext = createContext<
 
 function Actions({ children }: ActionsProps) {
   const mainRef = useRef<HTMLDivElement>(null);
-  const actionsRef = useRef<HTMLInputElement>(null);
+  const actionsRef = useRef<HTMLUListElement>(null);
 
   const store = useAbstractStore();
 
   const [actions, dispatch] = useReducer(actionsReducer, []);
 
   const navigate = useNavigate();
-  const { prompt } = useContext(DialogContext);
 
   useInjectedAction(dispatch, "Back to home", keyAction("1"), async () => {
     navigate("/");
@@ -107,7 +107,8 @@ function Actions({ children }: ActionsProps) {
     "Open actions panel",
     keyAction("g"),
     () => {
-      actionsRef?.current?.focus();
+      console.log(actionsRef?.current);
+      actionsRef?.current?.querySelector("button")?.focus();
     },
     true,
   );
@@ -141,8 +142,9 @@ function Actions({ children }: ActionsProps) {
         /> */}
         <ul
           aria-label="Actions"
-          className="flex flex-col items-start p-4"
+          className="flex flex-col items-start p-4 opacity-50 focus-within:opacity-100  "
           role="menu"
+          ref={actionsRef}
         >
           {actions.map((action) => (
             <button

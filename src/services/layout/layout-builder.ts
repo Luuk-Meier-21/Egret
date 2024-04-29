@@ -11,6 +11,7 @@ import { layoutReducer } from "./layout-builder-reducer";
 import { DocumentRegionData } from "../../types/document/document";
 import { systemSound } from "../../bindings";
 import { blocksHaveContent } from "../../utils/block";
+import { announceError } from "../../utils/error";
 
 export type LayoutBuilderCallback = (layout: Layout) => void;
 
@@ -27,10 +28,6 @@ export function useLayoutBuilder(staticLayout: Layout) {
 
   const announceDeletion = () => {
     systemSound("Pop", 1.5, 1.5, 0.2);
-  };
-
-  const announceError = () => {
-    systemSound("Basso", 3, 1.5, 0.2);
   };
 
   const insertContent = (

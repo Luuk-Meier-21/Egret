@@ -42,10 +42,18 @@ export function blocksHaveContent<
   IT extends Record<string, InlineContentConfig>,
   SST extends Record<string, StyleConfig>,
 >(blocks: IBlock<ST, IT, SST>[]): boolean {
-  return blocks.some(
+  console.log(blocks);
+  const a = blocks.some((block) => {
     //@ts-expect-error
-    (block) => block?.content?.length > 0 || block?.children?.length > 0,
-  );
+    if (block.content[0]?.text === "-") {
+      return false;
+    }
+
+    //@ts-expect-error
+    return block?.content?.length > 0 || block?.children?.length > 0;
+  });
+  console.log(a);
+  return a;
 }
 
 // export function getInlineContentText<

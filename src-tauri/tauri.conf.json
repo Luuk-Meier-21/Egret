@@ -9,7 +9,6 @@
     "productName": "Contextual Notes V2",
     "version": "2.0.0"
   },
-
   "tauri": {
     "allowlist": {
       "all": false,
@@ -30,7 +29,7 @@
         "ask": false,
         "confirm": false,
         "message": false,
-        "open": false,
+        "open": true,
         "save": true
       },
       "fs": {
@@ -52,16 +51,16 @@
         "writeText": true
       },
       "window": {
-        "all": false,
+        "all": true,
         "center": false,
-        "close": false,
-        "create": false,
+        "close": true,
+        "create": true,
         "hide": false,
         "maximize": false,
         "minimize": false,
         "print": false,
         "requestUserAttention": false,
-        "setAlwaysOnTop": false,
+        "setAlwaysOnTop": true,
         "setClosable": false,
         "setContentProtected": false,
         "setCursorGrab": false,

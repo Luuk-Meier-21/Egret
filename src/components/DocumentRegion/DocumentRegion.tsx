@@ -9,12 +9,22 @@ import { keyExplicitAction } from "../../config/shortcut";
 import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
 import { useConditionalAction } from "../../services/actions/actions-hook";
 import { insertOrUpdateBlock } from "@blocknote/core";
+import { open } from "@tauri-apps/api/dialog";
+import { voiceSay } from "../../bindings";
 
 interface DocumentRegionProps {
   region: DocumentRegionData;
   onSave?: (region: DocumentRegionData, editor: IBlockEditor) => void;
   onChange?: (region: DocumentRegionData, editor: IBlockEditor) => void;
   onFocus: (region: DocumentRegionData, editor: IBlockEditor) => void;
+  onImplicitAnnounce?: (
+    region: DocumentRegionData,
+    editor: IBlockEditor,
+  ) => string | null;
+  onExplicitAnnounce?: (
+    region: DocumentRegionData,
+    editor: IBlockEditor,
+  ) => string | null;
   onBlur: (region: DocumentRegionData, editor: IBlockEditor) => void;
   isFocused: boolean;
 }
@@ -23,6 +33,8 @@ function DocumentRegion({
   region,
   onSave = () => {},
   onChange = () => {},
+  onImplicitAnnounce = () => null,
+  onExplicitAnnounce = () => null,
   isFocused = false,
   onFocus,
   onBlur,
@@ -46,6 +58,7 @@ function DocumentRegion({
   const focus = () => {
     try {
       editor.focus();
+      onImplicitAnnounce(region, editor);
     } catch (error) {
       console.info(`Unable to focus: (${region.label || region.id})`);
     }
@@ -87,15 +100,35 @@ function DocumentRegion({
     shell.open(url);
   });
 
-  useConditionalAction("Insert image", "cmd+o", isFocused, () => {
+  useConditionalAction("Insert image", "cmd+o", isFocused, async () => {
     if (!editor.isFocused()) {
       return;
     }
 
+    const targetImage = await open({
+      title: "Image to insert",
+      directory: false,
+      multiple: false,
+      filters: [
+        {
+          name: "Image",
+          extensions: ["png", "jpg", "jpeg", "pdf"],
+        },
+      ],
+    });
+
+    if (targetImage === null) {
+      return;
+    }
+
+    const src = `file:/${Array.isArray(targetImage) ? targetImage[0] : targetImage}`;
+
+    console.log(src);
+
     insertOrUpdateBlock(editor, {
       type: "image",
       props: {
-        src: "https://letsenhance.io/static/8f5e523ee6b2479e26ecc91b9c25261e/1015f/MainAfter.jpg",
+        src,
       },
     });
   });
@@ -126,6 +159,25 @@ function DocumentRegion({
     },
   );
 
+  useConditionalAction(
+    "Speak current position",
+    keyExplicitAction("i"),
+    isFocused,
+    async () => {
+      if (!editor.isFocused()) {
+        return;
+      }
+
+      const voiceLine = onExplicitAnnounce(region, editor);
+
+      if (voiceLine === null) {
+        return;
+      }
+
+      voiceSay(voiceLine);
+    },
+  );
+
   return (
     <section
       data-component-name="DocumentDetail"
@@ -143,7 +195,7 @@ function DocumentRegion({
         onBlur={() => {
           onBlur(region, editor);
         }}
-        className="mx-auto flex h-full w-full max-w-[46em] [&_a]:underline"
+        className="mx-auto flex h-full w-full max-w-[46em] "
         editor={editor}
         slashMenu={false}
         onKeyDown={(event) => {

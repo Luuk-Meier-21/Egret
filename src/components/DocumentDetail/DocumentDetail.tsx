@@ -22,9 +22,12 @@ import { useStateStore } from "../../services/store/store-hooks";
 import { pathInDirectory } from "../../services/store/store";
 import DocumentRegion from "../DocumentRegion/DocumentRegion";
 import { useScopedAction } from "../../services/actions/actions-hook";
-import { startCompanionMode, systemSound } from "../../bindings";
+import { systemSound } from "../../bindings";
 import { useLayoutHTMLExporter } from "../../services/layout/layout-export";
-
+import { WebviewWindow } from "@tauri-apps/api/window";
+import { useEffect } from "react";
+import { listen } from "@tauri-apps/api/event";
+import { promiseWindow } from "../../services/window/window-manager";
 interface DocumentDetailProps {}
 
 function DocumentDetail({}: DocumentDetailProps) {
@@ -149,6 +152,24 @@ function DocumentDetail({}: DocumentDetailProps) {
   );
 
   useScopedAction(
+    "Move to first column",
+    keyExplicitNavigation("left"),
+    async () => {
+      navigator.focusColumnStart();
+    },
+    true,
+  );
+
+  useScopedAction(
+    "Move to last column",
+    keyExplicitNavigation("right"),
+    async () => {
+      navigator.focusColumnEnd();
+    },
+    true,
+  );
+
+  useScopedAction(
     "Escape focus",
     "Escape",
     async () => {
@@ -158,10 +179,11 @@ function DocumentDetail({}: DocumentDetailProps) {
   );
 
   useScopedAction(
-    "Start companion mode",
-    keyExplicitAction("="),
+    "Open window",
+    "8",
     async () => {
-      startCompanionMode();
+      const a = await promiseWindow("Test title");
+      console.log(a);
     },
     true,
   );
@@ -180,16 +202,22 @@ function DocumentDetail({}: DocumentDetailProps) {
   // setKeywords(keywords);
   // };
 
+  // const classes = clsx("", {
+  //   " prose": true,
+  // });
+
   return (
     <main
       data-component-name="DocumentDetail"
       lang={staticDocumentData.data.meta.lang ?? "en"}
+      // className={classes}
+      className="font-serif text-base text-white [&_a]:text-indigo-500 [&_a]:underline"
     >
-      {builder.layout.tree.map((branchOrNode) => (
+      {builder.layout.tree.map((branchOrNode, rowIndex) => (
         <LayoutBranchOrNode
           key={branchOrNode.id}
           value={branchOrNode}
-          renderNode={(node) => {
+          renderNode={(node, columnIndex) => {
             const isFocused = node.id === selection.nodeId;
 
             const data = node.data || generateDocumentRegion({});
@@ -198,6 +226,12 @@ function DocumentDetail({}: DocumentDetailProps) {
               <DocumentRegion
                 onSave={(region) => {
                   handleSave(region, node);
+                }}
+                onExplicitAnnounce={() => {
+                  return `Item ${columnIndex + 1} of Row ${rowIndex + 1} from the top`;
+                }}
+                onImplicitAnnounce={() => {
+                  return null;
                 }}
                 onChange={() => {
                   // handleChange(region, node);

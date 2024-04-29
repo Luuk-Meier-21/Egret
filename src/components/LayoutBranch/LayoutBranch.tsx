@@ -10,7 +10,7 @@ interface LayoutBranchProps<T extends LayoutCommon = LayoutTreeTrunk> {
   value: T;
   level?: "row" | "column" | "unknown";
   index?: number;
-  renderNode: (data: LayoutNodeData, firstInList: boolean) => ReactNode;
+  renderNode: (data: LayoutNodeData, index: number) => ReactNode;
 }
 
 export function LayoutBranchOrNode({
@@ -84,7 +84,7 @@ function LayoutNode({
       data-layout-type="node"
       className="flex w-full ring-1 ring-white/30"
     >
-      {renderNode(value, index === 0)}
+      {renderNode(value, index || -1)}
     </section>
   );
 }
