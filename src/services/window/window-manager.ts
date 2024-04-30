@@ -1,20 +1,43 @@
 import { listen } from "@tauri-apps/api/event";
-import { WebviewWindow } from "@tauri-apps/api/window";
+import { WebviewWindow, WindowOptions } from "@tauri-apps/api/window";
+import { slugify } from "../../utils/url";
 
-export function promiseWindow(title: string): Promise<string> {
+export type PromiseWindowData = {
+  type: string;
+} & (
+  | {
+      type: "input";
+      label: string;
+    }
+  | {
+      type: "select";
+      label: string;
+      options: string[];
+    }
+);
+
+// Currently Tauri has no good way of sharing data between windows: https://github.com/tauri-apps/tauri/issues/5979
+export function promiseWindow(
+  title: string,
+  data: PromiseWindowData,
+  options: WindowOptions = {},
+): Promise<string> {
   let resolve = (_: any) => {};
   let reject = () => {};
   let windowLabel: string;
 
-  const webview = new WebviewWindow("prompt-a", {
-    url: "windows/prompt/index.html",
+  const params = new URLSearchParams(data as Record<string, any>);
+
+  const webview = new WebviewWindow(slugify(title), {
+    url: `windows/prompt/index.html?${params.toString()}`,
     focus: true,
     alwaysOnTop: true,
     resizable: false,
     minimizable: false,
-    width: 300,
-    height: 100,
     title,
+    width: options.width || 300,
+    height: options.height || 300,
+    ...options,
   });
 
   webview.once("tauri://created", (event) => {
@@ -24,6 +47,7 @@ export function promiseWindow(title: string): Promise<string> {
   webview.once("tauri://error", (e) => {
     console.error(e);
     reject();
+    webview.close();
   });
 
   webview.once("tauri://close-requested", () => {
@@ -55,6 +79,28 @@ export function promiseWindow(title: string): Promise<string> {
   });
 }
 
-export function prompt(prompt: string) {
-  return promiseWindow(prompt);
+export function prompt(prompt: string, promptDescription: string) {
+  return promiseWindow(prompt, {
+    type: "input",
+    label: promptDescription,
+  });
+}
+
+export function selectSingle(
+  prompt: string,
+  promptDescription: string,
+  options: string[],
+) {
+  return promiseWindow(
+    prompt,
+    {
+      type: "select",
+      label: promptDescription,
+      options: options,
+    },
+    {
+      width: 600,
+      minHeight: 500,
+    },
+  );
 }

@@ -13,7 +13,10 @@ interface HTMLExportConfig {
   includeIds: boolean;
 }
 
-export function useLayoutHTMLExporter(config: Partial<HTMLExportConfig> = {}) {
+export function useLayoutHTMLExporter(
+  name: string,
+  config: Partial<HTMLExportConfig> = {},
+) {
   const globalEditor = useCreateBlockNote({
     schema,
   });
@@ -76,7 +79,7 @@ export function useLayoutHTMLExporter(config: Partial<HTMLExportConfig> = {}) {
   const exporter = async (layout: Readonly<Layout>) => {
     const path = await save({
       title: "Save document as",
-      defaultPath: "~/Documents/Untitled export",
+      defaultPath: `~/Documents/${name}`,
       filters: [
         {
           name: "Image",

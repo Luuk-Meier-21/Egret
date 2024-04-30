@@ -5,12 +5,17 @@ import { toggleBlock } from "../../utils/block";
 import { useEditorAutoSaveHandle } from "../../utils/editor";
 import { IBlockEditor } from "../../types/block";
 import { useEffect, useRef } from "react";
-import { keyExplicitAction } from "../../config/shortcut";
+import { keyAction, keyExplicitAction } from "../../config/shortcut";
 import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
 import { useConditionalAction } from "../../services/actions/actions-hook";
 import { insertOrUpdateBlock } from "@blocknote/core";
 import { open } from "@tauri-apps/api/dialog";
 import { voiceSay } from "../../bindings";
+import { convertFileSrc } from "@tauri-apps/api/tauri";
+import { toDataURL } from "../../utils/url";
+import { announceError } from "../../utils/error";
+import { copyFile } from "@tauri-apps/api/fs";
+import { ASSETS, DOCUMENTS } from "../../config/files";
 
 interface DocumentRegionProps {
   region: DocumentRegionData;
@@ -100,11 +105,7 @@ function DocumentRegion({
     shell.open(url);
   });
 
-  useConditionalAction("Insert image", "cmd+o", isFocused, async () => {
-    if (!editor.isFocused()) {
-      return;
-    }
-
+  const pickImage = async () => {
     const targetImage = await open({
       title: "Image to insert",
       directory: false,
@@ -112,26 +113,70 @@ function DocumentRegion({
       filters: [
         {
           name: "Image",
-          extensions: ["png", "jpg", "jpeg", "pdf"],
+          extensions: ["png", "jpg", "jpeg", "pdf", "svg"],
         },
       ],
     });
 
-    if (targetImage === null) {
-      return;
-    }
+    const src = `${Array.isArray(targetImage) ? targetImage[0] : targetImage}`;
 
-    const src = `file:/${Array.isArray(targetImage) ? targetImage[0] : targetImage}`;
+    return convertFileSrc(src);
+  };
 
-    console.log(src);
+  useConditionalAction(
+    "Insert image by url",
+    keyAction("o"),
+    isFocused,
+    async () => {
+      if (!editor.isFocused()) {
+        return;
+      }
 
-    insertOrUpdateBlock(editor, {
-      type: "image",
-      props: {
-        src,
-      },
-    });
-  });
+      try {
+        const url = await pickImage();
+
+        insertOrUpdateBlock(editor, {
+          type: "image",
+          props: {
+            src: url,
+          },
+        });
+
+        editor.focus();
+      } catch (error) {
+        announceError();
+        console.error(error);
+      }
+    },
+  );
+
+  useConditionalAction(
+    "Insert image as embed",
+    keyExplicitAction("o"),
+    isFocused,
+    async () => {
+      if (!editor.isFocused()) {
+        return;
+      }
+
+      try {
+        const url = await pickImage();
+        const dataUrl = await toDataURL(url);
+
+        insertOrUpdateBlock(editor, {
+          type: "image",
+          props: {
+            src: dataUrl,
+          },
+        });
+
+        editor.focus();
+      } catch (error) {
+        announceError();
+        console.error(error);
+      }
+    },
+  );
 
   useConditionalAction(
     "Insert dummy text",
@@ -184,7 +229,7 @@ function DocumentRegion({
       aria-current="page"
       data-focused={isFocused || undefined}
       ref={ref}
-      className="input-hint relative w-full p-4 text-white data-[focused]:bg-white data-[focused]:text-black"
+      className="input-hint relative  w-full p-4 text-white outline-none data-[focused]:bg-white data-[focused]:text-black"
     >
       <BlockNoteView
         id={region.id}
@@ -195,7 +240,7 @@ function DocumentRegion({
         onBlur={() => {
           onBlur(region, editor);
         }}
-        className="mx-auto flex h-full w-full max-w-[46em] "
+        className="mx-auto flex h-full w-full max-w-[46em] outline-none focus:outline-none [&_*]:outline-none"
         editor={editor}
         slashMenu={false}
         onKeyDown={(event) => {

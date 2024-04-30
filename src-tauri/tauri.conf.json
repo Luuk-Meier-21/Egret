@@ -22,7 +22,7 @@
       "protocol": {
         "all": true,
         "asset": true,
-        "assetScope": ["**"]
+        "assetScope": ["**/*"]
       },
       "dialog": {
         "all": false,
@@ -33,7 +33,12 @@
         "save": true
       },
       "fs": {
-        "scope": ["$APPDATA/**/*", "$APPDATA/.bin/**/*", "$RESOURCE/audio/*"],
+        "scope": [
+          "$APPDATA/**/*",
+          "$APPDATA/.bin/**/*",
+          "$RESOURCE/audio/*",
+          "**"
+        ],
         "all": true,
         "readFile": false,
         "writeFile": false,
@@ -97,7 +102,7 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost"
     },
     "bundle": {
       "active": true,

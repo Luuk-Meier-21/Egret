@@ -5,6 +5,7 @@ import { Keyword } from "../../types/keywords";
 // import { includeKeywordsInDocuments } from "../../utils/keywords";
 import { useRegisterAction } from "../../services/actions/actions-registry";
 import { writeText } from "@tauri-apps/api/clipboard";
+import { useHotkeyOverride } from "../../utils/hotkeys";
 
 interface DocumentsOverviewProps {
   // Documents overview could be uses as a document selector, wrapped in a dialog component. Callbacks resolve promise like prompt handles this

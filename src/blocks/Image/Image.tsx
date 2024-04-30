@@ -1,40 +1,12 @@
 import { insertOrUpdateBlock } from "@blocknote/core";
 import { createReactBlockSpec } from "@blocknote/react";
 import { schema } from "../../blocks/schema";
-import { ReactNode, useEffect, useRef } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { BlockComponentProps } from "../../types/block";
 import { useBlockSelection } from "../../utils/block";
 import { voiceSay } from "../../bindings";
 import { useOverrideScreenreader } from "../../utils/speech";
 import { useConditionalAction } from "../../services/actions/actions-hook";
-
-// const updateAltAsync = async (
-//   src: string,
-//   editor: IBlockEditor,
-//   block: any,
-// ) => {
-//   try {
-//     const { prompt } = useContext(DialogContext);
-
-//     const alt = await prompt("Image alt text");
-
-//     if (alt === null) {
-//       // editor.remove(editor.getTextCursorPosition().block, {});
-//       return;
-//     }
-
-//     // editor.updateBlock(editor.getTextCursorPosition().block, {
-//     //   type: "image",
-//     //   props: {
-//     //     src,
-//     //     alt,
-//     //   },
-//     // });
-//   } catch (error) {
-//     console.log("unable to parse image");
-//     return;
-//   }
-// };
 
 export const insertRow = (editor: typeof schema.BlockNoteEditor) => ({
   title: "Image",
@@ -87,7 +59,6 @@ function rowComponent({
     <figure className="inline-content inline-block w-full max-w-[600px]">
       <img
         className="object-cover"
-        tabIndex={0}
         contentEditable={false}
         src={src}
         alt={alt}

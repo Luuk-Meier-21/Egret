@@ -1,12 +1,20 @@
 import Fuse, { FuseOptionKey, IFuseOptions } from "fuse.js";
-import { ForwardedRef, forwardRef, useEffect, useState } from "react";
+import {
+  ForwardedRef,
+  KeyboardEvent,
+  forwardRef,
+  useEffect,
+  useState,
+} from "react";
 import { useRegisterAction } from "../../services/actions/actions-registry";
+import { useHotkeyOverride } from "../../utils/hotkeys";
 
 interface SearchProps<T> {
   list: ReadonlyArray<T>;
   keys: FuseOptionKey<T>;
   label: string;
   onResult?: (results: T[], query: string) => void;
+  onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
   onConfirm?: () => void;
 }
 
@@ -16,6 +24,7 @@ function SearchInner<T>(
     keys,
     label,
     onResult = () => {},
+    onKeyDown = () => {},
     onConfirm = () => {},
   }: SearchProps<T>,
   ref: ForwardedRef<HTMLInputElement>,
@@ -70,31 +79,36 @@ function SearchInner<T>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, key]);
 
+  useHotkeyOverride();
+
   return (
     <div
       data-testid="Search"
       data-component-name="Search"
-      aria-labelledby="search"
       id="search-box"
+      aria-labelledby="search"
       className="gap-2 p-4 ring-1 ring-white"
     >
-      <DeleteButton />
       <label id="search" htmlFor="search-query">
         {label}
       </label>
       <input
         id="search-query"
         ref={ref}
-        type="text"
+        type="search"
+        autoFocus
         spellCheck="false"
         autoCorrect="false"
         className="bg-transparent"
         onKeyDown={(event) => {
+          onKeyDown(event);
+
           if (event.code !== "Enter") {
             return true;
           }
           onConfirm();
           event.preventDefault();
+          return false;
         }}
         value={query || ""}
         onChange={(event) => {

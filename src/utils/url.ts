@@ -16,3 +16,22 @@ export function slugify(str: string) {
     .replace(/\s+/g, "-") // replace spaces with hyphens
     .replace(/-+/g, "-"); // remove consecutive hyphens
 }
+
+export async function toDataURL(url: string): Promise<string> {
+  const response = await fetch(url);
+  const blob = await response.blob();
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      if (reader.result === null) {
+        return reject();
+      }
+
+      resolve(reader.result.toString());
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
