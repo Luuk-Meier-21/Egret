@@ -12,7 +12,6 @@ use std::{
 };
 use tauri::async_runtime::Mutex;
 use tauri_specta::{self, ts};
-use websocket::start_companion_mode;
 
 use crate::websocket::CompanionProcess;
 
@@ -67,12 +66,12 @@ async fn main() {
     std::panic::set_hook(Box::new(|info| {
         println!("Panic!");
         let data = format!("{:?}", info);
-        fs::write("/tmp/foo", data).expect("Unable to write file");
+        fs::write("/tmp/contextual-notes-panic-log", data).expect("Unable to write file");
     }));
 
     #[cfg(debug_assertions)]
     ts::export(
-        collect_types![greet, system_sound, voice_say, start_companion_mode],
+        collect_types![greet, system_sound, voice_say],
         "../src/bindings.ts",
     )
     .unwrap();

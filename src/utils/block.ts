@@ -37,6 +37,25 @@ export function isBlockInSelection<
   return editor.getTextCursorPosition().block.id === block.id;
 }
 
+export function blocksHaveContent<
+  ST extends Record<string, BlockConfig>,
+  IT extends Record<string, InlineContentConfig>,
+  SST extends Record<string, StyleConfig>,
+>(blocks: IBlock<ST, IT, SST>[]): boolean {
+  console.log(blocks);
+  const a = blocks.some((block) => {
+    //@ts-expect-error
+    if (block.content[0]?.text === "-") {
+      return false;
+    }
+
+    //@ts-expect-error
+    return block?.content?.length > 0 || block?.children?.length > 0;
+  });
+  console.log(a);
+  return a;
+}
+
 // export function getInlineContentText<
 //   ST extends BlockConfig,
 //   IT extends InlineContentConfig,

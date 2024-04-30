@@ -6,10 +6,9 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "Contextual Notes",
-    "version": "1.0.0"
+    "productName": "Contextual Notes V2",
+    "version": "2.0.0"
   },
-
   "tauri": {
     "allowlist": {
       "all": false,
@@ -23,18 +22,23 @@
       "protocol": {
         "all": true,
         "asset": true,
-        "assetScope": ["**"]
+        "assetScope": ["**/*"]
       },
       "dialog": {
         "all": false,
         "ask": false,
         "confirm": false,
         "message": false,
-        "open": false,
+        "open": true,
         "save": true
       },
       "fs": {
-        "scope": ["$APPDATA/**/*", "$APPDATA/.bin/**/*", "$RESOURCE/audio/*"],
+        "scope": [
+          "$APPDATA/**/*",
+          "$APPDATA/.bin/**/*",
+          "$RESOURCE/audio/*",
+          "**"
+        ],
         "all": true,
         "readFile": false,
         "writeFile": false,
@@ -52,16 +56,16 @@
         "writeText": true
       },
       "window": {
-        "all": false,
+        "all": true,
         "center": false,
-        "close": false,
-        "create": false,
+        "close": true,
+        "create": true,
         "hide": false,
         "maximize": false,
         "minimize": false,
         "print": false,
         "requestUserAttention": false,
-        "setAlwaysOnTop": false,
+        "setAlwaysOnTop": true,
         "setClosable": false,
         "setContentProtected": false,
         "setCursorGrab": false,
@@ -90,7 +94,7 @@
     },
     "windows": [
       {
-        "title": "Contextual Notes",
+        "title": "Contextual Notes V2",
         "focus": true,
         "titleBarStyle": "Overlay",
         "width": 1080,
@@ -98,7 +102,7 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost"
     },
     "bundle": {
       "active": true,

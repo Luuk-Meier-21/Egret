@@ -101,7 +101,7 @@ export function generateBlocks(blocks: BlockData | undefined): BlockData {
     ([
       {
         type: "paragraph",
-        content: [],
+        content: "",
       },
     ] as BlockData)
   );

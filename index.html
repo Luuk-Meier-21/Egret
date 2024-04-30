@@ -9,10 +9,14 @@
 
   <body class="bg-black text-white">
     <div
-      data-tauri-drag-region
       aria-hidden="true"
-      class="fixed left-24 right-4 top-1 z-[9999] h-5 cursor-move ring-1 ring-transparent hover:bg-black hover:ring-white/30"
-    ></div>
+      class="fixed z-[9999] h-7 w-full border-b-[1px] border-b-white/30 bg-black"
+    >
+      <div
+        data-tauri-drag-region
+        class="ring-transparen ml-[70px] h-full w-full cursor-move hover:bg-white/15"
+      ></div>
+    </div>
     <div id="root" class="pt-5"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

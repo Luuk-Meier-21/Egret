@@ -1,32 +1,44 @@
 import Fuse, { FuseOptionKey, IFuseOptions } from "fuse.js";
-import { useEffect, useRef, useState } from "react";
+import {
+  ForwardedRef,
+  KeyboardEvent,
+  forwardRef,
+  useEffect,
+  useState,
+} from "react";
 import { useRegisterAction } from "../../services/actions/actions-registry";
+import { useHotkeyOverride } from "../../utils/hotkeys";
 
 interface SearchProps<T> {
   list: ReadonlyArray<T>;
   keys: FuseOptionKey<T>;
   label: string;
   onResult?: (results: T[], query: string) => void;
+  onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
   onConfirm?: () => void;
 }
 
-function Search<T>({
-  list,
-  keys,
-  label,
-  onResult = () => {},
-  onConfirm = () => {},
-}: SearchProps<T>) {
-  const ref = useRef(null);
+function SearchInner<T>(
+  {
+    list,
+    keys,
+    label,
+    onResult = () => {},
+    onKeyDown = () => {},
+    onConfirm = () => {},
+  }: SearchProps<T>,
+  ref: ForwardedRef<HTMLInputElement>,
+) {
   const [query, setQuery] = useState<string | null>(null);
   const [key, setKey] = useState<FuseOptionKey<T> | null>(null);
 
   const focusSearch = () => {
-    if (ref.current === null) {
+    // @ts-expect-error
+    const element = ref.current as HTMLInputElement;
+
+    if (element === null) {
       return;
     }
-
-    const element = ref.current as HTMLDivElement;
 
     element.focus();
   };
@@ -67,31 +79,36 @@ function Search<T>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, key]);
 
+  useHotkeyOverride();
+
   return (
     <div
       data-testid="Search"
       data-component-name="Search"
-      aria-labelledby="search"
       id="search-box"
+      aria-labelledby="search"
       className="gap-2 p-4 ring-1 ring-white"
     >
-      <DeleteButton />
       <label id="search" htmlFor="search-query">
         {label}
       </label>
       <input
         id="search-query"
         ref={ref}
-        type="text"
+        type="search"
+        autoFocus
         spellCheck="false"
         autoCorrect="false"
         className="bg-transparent"
         onKeyDown={(event) => {
+          onKeyDown(event);
+
           if (event.code !== "Enter") {
             return true;
           }
           onConfirm();
           event.preventDefault();
+          return false;
         }}
         value={query || ""}
         onChange={(event) => {
@@ -103,5 +120,9 @@ function Search<T>({
     </div>
   );
 }
+
+export const Search = forwardRef(SearchInner) as <T>(
+  props: SearchProps<T> & { ref?: ForwardedRef<HTMLInputElement> },
+) => ReturnType<typeof SearchInner>;
 
 export default Search;

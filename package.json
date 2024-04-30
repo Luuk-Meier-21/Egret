@@ -17,6 +17,7 @@
     "@blocknote/core": "^0.12.0",
     "@blocknote/react": "^0.12.0",
     "@tauri-apps/api": "^1.5.3",
+    "clsx": "^2.1.1",
     "fuse.js": "^7.0.0",
     "hotkeys-js": "^3.13.7",
     "howler": "^2.2.4",
@@ -28,8 +29,10 @@
     "uuid-validate": "^0.0.3"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.13",
     "@tauri-apps/cli": "^1.5.11",
     "@types/howler": "^2.2.11",
+    "@types/node": "^20.12.7",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@types/uuid": "^9.0.8",

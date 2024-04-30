@@ -10,6 +10,8 @@ import {
 import { layoutReducer } from "./layout-builder-reducer";
 import { DocumentRegionData } from "../../types/document/document";
 import { systemSound } from "../../bindings";
+import { blocksHaveContent } from "../../utils/block";
+import { announceError } from "../../utils/error";
 
 export type LayoutBuilderCallback = (layout: Layout) => void;
 
@@ -26,10 +28,6 @@ export function useLayoutBuilder(staticLayout: Layout) {
 
   const announceDeletion = () => {
     systemSound("Pop", 1.5, 1.5, 0.2);
-  };
-
-  const announceError = () => {
-    systemSound("Basso", 3, 1.5, 0.2);
   };
 
   const insertContent = (
@@ -101,7 +99,15 @@ export function useLayoutBuilder(staticLayout: Layout) {
     return newColumn;
   };
 
-  const removeRow = (row: LayoutNodeData): LayoutNodeData => {
+  const removeRow = (
+    row: LayoutNodeData,
+    force: boolean = false,
+  ): LayoutNodeData => {
+    if (!force && row.data?.blocks && blocksHaveContent(row.data.blocks)) {
+      announceError();
+      return row;
+    }
+
     const index = layout.tree.indexOf(row);
 
     if (layout.tree.length <= 1 && layout.tree[0].type === "node") {
@@ -125,7 +131,17 @@ export function useLayoutBuilder(staticLayout: Layout) {
   const removeNodeFromRow = (
     row: LayoutBranchData,
     column: LayoutNodeData,
+    force: boolean = false,
   ): LayoutNodeData => {
+    if (
+      !force &&
+      column.data?.blocks &&
+      blocksHaveContent(column.data.blocks)
+    ) {
+      announceError();
+      return column;
+    }
+
     const nodeIndex = row.children.indexOf(column);
 
     dispatch({ type: "remove-column-from-row", row, column });

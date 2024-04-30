@@ -13,7 +13,7 @@ import { handleError } from "./announce";
 import { FILE } from "../config/files";
 import { exists } from "@tauri-apps/api/fs";
 
-const UNSAVED_CHANGES_MAX = 15;
+const UNSAVED_CHANGES_MAX = 5;
 
 export function useEditorAutoSaveHandle(
   editor: IBlockEditor,

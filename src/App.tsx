@@ -18,18 +18,6 @@ import { ONBOARDING_CONTENT } from "./config/onboarding";
 import { keywordsRecordOptions, keywordsRecordPath } from "./config/keywords";
 import { Keyword } from "./types/keywords";
 
-// const TEST_LAYOUT_NODES = flattenLayoutNodes(TEST_LAYOUT);
-
-// const TEST_REGIONS = TEST_DOCUMENT.data.views[0].content;
-
-// const TEST_RELATIONS = [
-//   generateLayoutToDocumentRelation(
-//     TEST_LAYOUT,
-//     TEST_LAYOUT_NODES[6],
-//     TEST_REGIONS[0],
-//   ),
-// ];
-
 function App() {
   if (isWithoutTauri) {
     return (
@@ -96,6 +84,7 @@ function App() {
             }
 
             const directory = await getDocumentDirectoryOfId(params.id);
+            console.log(directory);
 
             if (directory === null) {
               return;
@@ -113,7 +102,7 @@ function App() {
             const document = await store
               .loadStore(
                 pathInDirectory(directory, `${directory.name}.document.json`),
-                generateBlankDocument(directory.fileName),
+                generateBlankDocument(directory.name),
               )
               .then((store) => store.load());
 

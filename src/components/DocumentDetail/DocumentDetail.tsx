@@ -1,4 +1,4 @@
-import { useLoaderData } from "react-router";
+import { useLoaderData, useNavigate } from "react-router";
 import { deleteDocumentById } from "../../utils/documents";
 import { Keyword } from "../../types/keywords";
 import { LayoutBranchOrNode } from "../LayoutBranch/LayoutBranch";
@@ -13,6 +13,7 @@ import { useLayoutBuilder } from "../../services/layout/layout-builder";
 import {
   keyAction,
   keyExplicitAction,
+  keyExplicitNavigation,
   keyNavigation,
 } from "../../config/shortcut";
 import { DocumentDirectory } from "../../types/documents";
@@ -28,7 +29,6 @@ import { startCompanionMode, systemSound } from "../../bindings";
 import { useLayoutHTMLExporter } from "../../services/layout/layout-export";
 import { useEffect, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
-import { flattenLayoutNodesByReference } from "../../services/layout/layout-content";
 
 interface DocumentDetailProps {}
 
@@ -40,7 +40,6 @@ function DocumentDetail({}: DocumentDetailProps) {
     Keyword[],
   ];
 
-  // const store = useAbstractStore();
   const builder = useLayoutBuilder(staticLayout);
   const selection = useLayoutState(builder);
   const navigator = useLayoutNavigator(selection, builder);
@@ -52,7 +51,9 @@ function DocumentDetail({}: DocumentDetailProps) {
     pathInDirectory(directory, `${directory.name}.layout.json`),
   );
 
-  const exportToHtml = useLayoutHTMLExporter();
+  const exportToHtml = useLayoutHTMLExporter(staticDocumentData.name);
+
+  const navigate = useNavigate();
 
   // const [keywords, setKeywords] = useState<Keyword[]>(staticKeywords);
 
@@ -84,6 +85,14 @@ function DocumentDetail({}: DocumentDetailProps) {
       unlistenMessage.then((f) => f());
     };
   }, []);
+
+  const { elementWithShortcut: GoToHome } = useScopedAction(
+    "Navigate to home",
+    keyAction("Escape"),
+    async () => {
+      navigate("/");
+    },
+  );
 
   useScopedAction("Save document", keyAction("s"), async () => {
     await saveDocument();
@@ -130,24 +139,37 @@ function DocumentDetail({}: DocumentDetailProps) {
     true,
   );
 
+  const deleteNode = (force: boolean = false) => {
+    const currentRow = navigator.getCurrentRow();
+    const currentNode = navigator.getCurrentNode();
+
+    if (currentRow === null || currentNode === null) {
+      return;
+    }
+
+    if (currentRow.type === "branch") {
+      const node = builder.removeNodeFromRow(currentRow, currentNode, force);
+      selection.setNodeId(node.id);
+    } else {
+      const node = builder.removeRow(currentRow, force);
+      selection.setNodeId(node.id);
+    }
+  };
+
   useScopedAction(
-    "Delete column",
+    "Delete node",
     keyNavigation("backspace"),
     async () => {
-      const currentRow = navigator.getCurrentRow();
-      const currentNode = navigator.getCurrentNode();
+      deleteNode();
+    },
+    true,
+  );
 
-      if (currentRow === null || currentNode === null) {
-        return;
-      }
-
-      if (currentRow.type === "branch") {
-        const node = builder.removeNodeFromRow(currentRow, currentNode);
-        selection.setNodeId(node.id);
-      } else {
-        const node = builder.removeRow(currentRow);
-        selection.setNodeId(node.id);
-      }
+  useScopedAction(
+    "Force delete node",
+    keyExplicitNavigation("backspace"),
+    async () => {
+      deleteNode(true);
     },
     true,
   );
@@ -180,6 +202,32 @@ function DocumentDetail({}: DocumentDetailProps) {
     keyExplicitAction("="),
     isInCompanionMode === true,
     callback,
+  );
+
+  useScopedAction(
+    "Move to first column",
+    keyExplicitNavigation("left"),
+    async () => {
+      navigator.focusColumnStart();
+    },
+    true,
+  );
+
+  useScopedAction(
+    "Move to last column",
+    keyExplicitNavigation("right"),
+    async () => {
+      navigator.focusColumnEnd();
+    },
+    true,
+  );
+
+  useScopedAction(
+    "Escape focus",
+    "Escape",
+    async () => {
+      navigator.blurColumn();
+    },
     true,
   );
 
@@ -199,42 +247,58 @@ function DocumentDetail({}: DocumentDetailProps) {
   // setKeywords(keywords);
   // };
 
+  // const classes = clsx("", {
+  //   " prose": true,
+  // });
+
   return (
-    <main
-      data-component-name="DocumentDetail"
-      lang={staticDocumentData.data.meta.lang ?? "en"}
-    >
-      {builder.layout.tree.map((branchOrNode) => (
-        <LayoutBranchOrNode
-          key={branchOrNode.id}
-          value={branchOrNode}
-          renderNode={(node) => {
-            const isFocused = node.id === selection.nodeId;
+    <div data-component-name="DocumentDetail">
+      <div className="px-4 pb-2 opacity-50 focus-within:opacity-100">
+        <GoToHome />
+      </div>
+      <main
+        lang={staticDocumentData.data.meta.lang ?? "en"}
+        // className={classes}
+        className="font-serif text-base text-white [&_a]:text-indigo-500 [&_a]:underline"
+      >
+        {builder.layout.tree.map((branchOrNode, rowIndex) => (
+          <LayoutBranchOrNode
+            key={branchOrNode.id}
+            value={branchOrNode}
+            renderNode={(node, columnIndex) => {
+              const isFocused = node.id === selection.nodeId;
 
-            const data = node.data || generateDocumentRegion({});
+              const data = node.data || generateDocumentRegion({});
 
-            return (
-              <DocumentRegion
-                onSave={(region) => {
-                  handleSave(region, node);
-                }}
-                onChange={() => {
-                  // handleChange(region, node);
-                }}
-                isFocused={isFocused}
-                onFocus={() => {
-                  navigator.focusColumn(branchOrNode.id, node.id);
-                }}
-                onBlur={() => {
-                  navigator.blurColumn();
-                }}
-                region={data}
-              />
-            );
-          }}
-        />
-      ))}
-    </main>
+              return (
+                <DocumentRegion
+                  onSave={(region) => {
+                    handleSave(region, node);
+                  }}
+                  onExplicitAnnounce={() => {
+                    return `Item ${columnIndex + 1} of Row ${rowIndex + 1} from the top`;
+                  }}
+                  onImplicitAnnounce={() => {
+                    return null;
+                  }}
+                  onChange={() => {
+                    // handleChange(region, node);
+                  }}
+                  isFocused={isFocused}
+                  onFocus={() => {
+                    navigator.focusColumn(branchOrNode.id, node.id);
+                  }}
+                  onBlur={() => {
+                    navigator.blurColumn();
+                  }}
+                  region={data}
+                />
+              );
+            }}
+          />
+        ))}
+      </main>
+    </div>
   );
 }
 export default DocumentDetail;

@@ -1,9 +1,10 @@
 import { generateDocumentRegion } from "../services/document/document-generator";
 import { BlockData } from "../types/document/document";
+import { v4 as uuidv4, validate } from "uuid";
 
 export const ONBOARDING_BLOCKS: BlockData = [
   {
-    id: "1ae35140-5259-4de0-b004-c1bfaf2043e5",
+    id: uuidv4(),
     type: "title",
     props: {},
     content: [
@@ -16,7 +17,7 @@ export const ONBOARDING_BLOCKS: BlockData = [
     children: [],
   },
   {
-    id: "f69ed762-0120-479b-87cd-551c6b92c470",
+    id: uuidv4(),
     type: "paragraph",
     props: {
       textColor: "default",
@@ -33,7 +34,7 @@ export const ONBOARDING_BLOCKS: BlockData = [
     children: [],
   },
   {
-    id: "d3409325-d144-4b23-8bd0-b05b8af6d81b",
+    id: uuidv4(),
     type: "paragraph",
     props: {
       textColor: "default",
@@ -54,6 +55,15 @@ export const ONBOARDING_BLOCKS: BlockData = [
       },
     ],
     children: [],
+  },
+  {
+    id: uuidv4(),
+    type: "image",
+    props: {
+      src: "https://images.unsplash.com/photo-1573867639040-6dd25fa5f597?q=80&w=2970&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    },
+    content:
+      "This is a image with alt text (command, o). A close up image of a thick marker sketch of four variants of a user iterface.",
   },
 ];
 

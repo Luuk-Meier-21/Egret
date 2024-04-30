@@ -30,6 +30,10 @@ export function useLayoutNavigator(
     recursivePlay(row.type === "branch" ? row.children.length : 1);
   };
 
+  const playSoundColumn = async (column: LayoutNodeData) => {
+    playSound("Purr", { speed: 1.5, volume: 1, time: 0.5 });
+  };
+
   useEffect(() => {
     const row = rows.find((row) => row.id === rowId);
     if (row?.type === "branch") {
@@ -103,7 +107,7 @@ export function useLayoutNavigator(
       const previousColumn = row.children[index - 1];
       if (previousColumn) {
         setNodeId(previousColumn.id);
-        playSound("Purr", { speed: 1.5, volume: 1, time: 0.5 });
+        playSoundColumn(previousColumn);
       } else {
         const newColumn = builder.addColumn(row, "before");
         setNodeId(newColumn.id);
@@ -129,7 +133,7 @@ export function useLayoutNavigator(
       const nextColumn = row.children[index + 1];
       if (nextColumn) {
         setNodeId(nextColumn.id);
-        playSound("Purr", { speed: 2.5, volume: 1, time: 0.5 });
+        playSoundColumn(nextColumn);
       } else {
         const newColumn = builder.addColumn(row, "after");
 
@@ -139,6 +143,40 @@ export function useLayoutNavigator(
       const newColumn = builder.addColumnToNodeRow(row, "after");
 
       setNodeId(newColumn.id);
+    }
+  };
+
+  const focusColumnStart = () => {
+    const rowIndex = rows.findIndex((row) => row.id === rowId);
+
+    if (rowIndex < 0) {
+      return;
+    }
+
+    const row = rows[rowIndex];
+    if (row?.type === "branch") {
+      const startColumn = row.children[0];
+      if (startColumn) {
+        setNodeId(startColumn.id);
+        playSoundColumn(startColumn);
+      }
+    }
+  };
+
+  const focusColumnEnd = () => {
+    const rowIndex = rows.findIndex((row) => row.id === rowId);
+
+    if (rowIndex < 0) {
+      return;
+    }
+
+    const row = rows[rowIndex];
+    if (row?.type === "branch") {
+      const startColumn = row.children[row.children.length - 1];
+      if (startColumn) {
+        setNodeId(startColumn.id);
+        playSoundColumn(startColumn);
+      }
     }
   };
 
@@ -161,6 +199,8 @@ export function useLayoutNavigator(
     blurColumn,
     getCurrentRow,
     getCurrentNode,
+    focusColumnStart,
+    focusColumnEnd,
   } as const;
 }
 
