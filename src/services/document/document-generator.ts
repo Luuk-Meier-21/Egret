@@ -3,6 +3,7 @@ import {
   BlockData,
   DocumentContentData,
   DocumentData,
+  DocumentMeta,
   DocumentRegionData,
   DocumentViewData,
 } from "../../types/document/document";
@@ -32,32 +33,14 @@ export function generateDirectoryName(name: string, id?: string) {
   return `${name}.${id || uuidv4()}`;
 }
 
-export function generateDocumentData(
-  data: Partial<DocumentData> & { name: string },
-): DocumentData {
+export function generateDocumentMeta(
+  data: Partial<DocumentMeta> & { name: string },
+): DocumentMeta {
   return {
     id: data.id || uuidv4(),
     name: data.name,
-    data: generateDocumentContentData(data.data || {}),
     keywords: data.keywords || undefined,
-  };
-}
-
-export function generateDocumentContentData(
-  data: Partial<DocumentContentData>,
-): DocumentContentData {
-  return {
-    meta: generateDocumentMetaData(data?.meta || {}),
-    views: data?.views || [],
-  };
-}
-
-export function generateDocumentMetaData(
-  data: Partial<DocumentMetaData>,
-): DocumentMetaData {
-  return {
-    version: data?.version || 1,
-    lang: data?.lang || "en",
+    language: data.language || "en",
   };
 }
 

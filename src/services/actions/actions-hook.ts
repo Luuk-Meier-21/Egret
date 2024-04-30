@@ -13,14 +13,13 @@ export function useScopedAction(
   label: string,
   shortcut: string,
   callback: ActionCallback,
-  hidden: boolean = false,
 ) {
   const [_, dispatch] = useContext(ActionsContext);
   const action: ActionConfiguration = {
     label,
     shortcut,
     callback,
-    hidden,
+    hidden: false,
   };
 
   useHotkeys(shortcut, callback);
@@ -47,7 +46,6 @@ export function useConditionalAction(
   shortcut: string,
   condition: boolean,
   callback: ActionCallback,
-  hidden: boolean = true,
 ) {
   const [_, dispatch] = useContext(ActionsContext);
   const wrappedCallback = () => {
@@ -60,7 +58,7 @@ export function useConditionalAction(
     label,
     shortcut,
     callback: wrappedCallback,
-    hidden,
+    hidden: false,
   };
 
   useHotkeys(shortcut, wrappedCallback);
@@ -89,13 +87,12 @@ export function useInjectedAction(
   label: string,
   shortcut: string,
   callback: ActionCallback,
-  hidden: boolean = false,
 ) {
   const action: ActionConfiguration = {
     label,
     shortcut,
     callback,
-    hidden,
+    hidden: false,
   };
 
   useHotkeys(shortcut, callback);

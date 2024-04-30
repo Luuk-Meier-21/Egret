@@ -29,9 +29,6 @@ export const Link = createReactBlockSpec(
     render: (props) => {
       return (
         <a
-          onFocus={() => {
-            console.log("hi");
-          }}
           href={props.block.props.url}
           className="inline-block w-full text-red-500 underline"
           ref={props.contentRef}

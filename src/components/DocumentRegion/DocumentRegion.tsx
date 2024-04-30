@@ -9,13 +9,14 @@ import { keyAction, keyExplicitAction } from "../../config/shortcut";
 import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
 import { useConditionalAction } from "../../services/actions/actions-hook";
 import { insertOrUpdateBlock } from "@blocknote/core";
-import { open } from "@tauri-apps/api/dialog";
+import { DialogFilter, open } from "@tauri-apps/api/dialog";
 import { voiceSay } from "../../bindings";
 import { convertFileSrc } from "@tauri-apps/api/tauri";
 import { toDataURL } from "../../utils/url";
 import { announceError } from "../../utils/error";
 import { copyFile } from "@tauri-apps/api/fs";
 import { ASSETS, DOCUMENTS } from "../../config/files";
+import { openAsset } from "../../utils/filesystem";
 
 interface DocumentRegionProps {
   region: DocumentRegionData;
@@ -105,24 +106,6 @@ function DocumentRegion({
     shell.open(url);
   });
 
-  const pickImage = async () => {
-    const targetImage = await open({
-      title: "Image to insert",
-      directory: false,
-      multiple: false,
-      filters: [
-        {
-          name: "Image",
-          extensions: ["png", "jpg", "jpeg", "pdf", "svg"],
-        },
-      ],
-    });
-
-    const src = `${Array.isArray(targetImage) ? targetImage[0] : targetImage}`;
-
-    return convertFileSrc(src);
-  };
-
   useConditionalAction(
     "Insert image by url",
     keyAction("o"),
@@ -133,7 +116,12 @@ function DocumentRegion({
       }
 
       try {
-        const url = await pickImage();
+        const url = await openAsset("Select a Image", [
+          {
+            name: "Image",
+            extensions: ["png", "jpg", "jpeg", "pdf", "svg"],
+          },
+        ]);
 
         insertOrUpdateBlock(editor, {
           type: "image",
@@ -160,13 +148,50 @@ function DocumentRegion({
       }
 
       try {
-        const url = await pickImage();
+        const url = await openAsset("Select a Image", [
+          {
+            name: "Image",
+            extensions: ["png", "jpg", "jpeg", "pdf", "svg"],
+          },
+        ]);
         const dataUrl = await toDataURL(url);
 
         insertOrUpdateBlock(editor, {
           type: "image",
           props: {
             src: dataUrl,
+          },
+        });
+
+        editor.focus();
+      } catch (error) {
+        announceError();
+        console.error(error);
+      }
+    },
+  );
+
+  useConditionalAction(
+    "Insert audio fragment",
+    keyAction("l"),
+    isFocused,
+    async () => {
+      if (!editor.isFocused()) {
+        return;
+      }
+
+      try {
+        const url = await openAsset("Select a Image", [
+          {
+            name: "Audio",
+            extensions: ["png", "jpg", "jpeg", "pdf", "svg"],
+          },
+        ]);
+
+        insertOrUpdateBlock(editor, {
+          type: "image",
+          props: {
+            src: url,
           },
         });
 
@@ -229,7 +254,7 @@ function DocumentRegion({
       aria-current="page"
       data-focused={isFocused || undefined}
       ref={ref}
-      className="input-hint relative  w-full p-4 text-white outline-none data-[focused]:bg-white data-[focused]:text-black"
+      className="input-hint relative  w-full p-4 text-inherit outline-none data-[focused]:bg-white data-[focused]:text-black"
     >
       <BlockNoteView
         id={region.id}
