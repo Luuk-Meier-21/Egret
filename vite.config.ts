@@ -14,6 +14,7 @@ export default defineConfig(async () => ({
   server: {
     port: 1420,
     strictPort: true,
+    host: true,
     watch: {
       // 3. tell vite to ignore watching `src-tauri`
       ignored: ["**/src-tauri/**"],
@@ -30,6 +31,7 @@ export default defineConfig(async () => ({
     input: {
       main: resolve(__dirname, "index.html"),
       nested: resolve(__dirname, "windows/prompt/index.html"),
+      companion: resolve(__dirname, "windows/companion/index.html"),
     },
   },
 }));

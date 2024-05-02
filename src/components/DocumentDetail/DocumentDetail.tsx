@@ -17,20 +17,42 @@ import {
   keyNavigation,
 } from "../../config/shortcut";
 import { DocumentDirectory } from "../../types/documents";
-import { Layout, LayoutNodeData } from "../../types/layout/layout";
+import {
+  Layout,
+  LayoutNodeData,
+  SanitizedLayout,
+} from "../../types/layout/layout";
 import { useStateStore } from "../../services/store/store-hooks";
 import { pathInDirectory } from "../../services/store/store";
 import DocumentRegion from "../DocumentRegion/DocumentRegion";
+import { useScopedAction } from "../../services/actions/actions-hook";
 import {
-  useConditionalAction,
-  useScopedAction,
-} from "../../services/actions/actions-hook";
-import { startCompanionMode, systemSound } from "../../bindings";
+  closeCompanionSocket,
+  getLayoutState,
+  openCompanionSocket,
+  setLayoutState,
+  systemSound,
+} from "../../bindings";
 import { useLayoutHTMLExporter } from "../../services/layout/layout-export";
 import { useEffect, useState } from "react";
-import { listen } from "@tauri-apps/api/event";
+import { Event, listen } from "@tauri-apps/api/event";
+import { deepJSONClone } from "../../utils/object";
+import { flattenLayoutNodesByReference } from "../../services/layout/layout-content";
 
 interface DocumentDetailProps {}
+
+function sanitizeLayout(layout: Layout): SanitizedLayout {
+  const cloneLayout: SanitizedLayout = {
+    ...deepJSONClone(layout),
+    clean: true,
+  };
+  const nodes = flattenLayoutNodesByReference(cloneLayout.tree);
+  nodes.forEach((node) => {
+    node.data = undefined;
+  });
+
+  return cloneLayout;
+}
 
 function DocumentDetail({}: DocumentDetailProps) {
   const [directory, staticDocumentData, staticLayout, _] = useLoaderData() as [
@@ -67,25 +89,6 @@ function DocumentDetail({}: DocumentDetailProps) {
   //   // builder.insertContent(region, node);
   // };
 
-  const getNavigator = () => navigator;
-
-  // Companion Events:
-  useEffect(() => {
-    const unlistenConnect = listen("ws-connect", (e) => {
-      console.log(e.payload);
-    });
-
-    const unlistenMessage = listen("action-focus", (e) => {
-      console.log(selection);
-      getNavigator().focusColumnRight();
-    });
-
-    return () => {
-      unlistenConnect.then((f) => f());
-      unlistenMessage.then((f) => f());
-    };
-  }, []);
-
   const { elementWithShortcut: GoToHome } = useScopedAction(
     "Navigate to home",
     keyAction("Escape"),
@@ -111,6 +114,8 @@ function DocumentDetail({}: DocumentDetailProps) {
       await deleteDocumentById(staticDocumentData.id);
     },
   );
+
+  // Navigation actions
 
   useScopedAction(
     "Move up",
@@ -183,27 +188,6 @@ function DocumentDetail({}: DocumentDetailProps) {
     true,
   );
 
-  const callback = async () => {
-    const isActive = await startCompanionMode();
-    console.log(isActive);
-    setCompanionMode(isActive);
-  };
-
-  useConditionalAction(
-    "Start companion mode",
-    keyExplicitAction("="),
-    isInCompanionMode === false,
-    callback,
-    true,
-  );
-
-  useConditionalAction(
-    "Stop companion mode",
-    keyExplicitAction("="),
-    isInCompanionMode === true,
-    callback,
-  );
-
   useScopedAction(
     "Move to first column",
     keyExplicitNavigation("left"),
@@ -231,25 +215,61 @@ function DocumentDetail({}: DocumentDetailProps) {
     true,
   );
 
-  // const listener = useRef(false);
+  // const callback = async () => {
+  //   const active = isInCompanionMode
+  //     ? await closeCompanionSocket()
+  //     : await openCompanionSocket();
 
-  // const setKeywordRelation = async (keyword: Keyword) => {
-  // const newKeywords = keywords;
-  // const hasRelation = keywordHasRelation(keyword, staticDocumentData);
-  // if (hasRelation) {
-  //   keywords.find((k) =>)
-  // }
-  // hasRelation
-  //   ? await dereferenceKeywordFromDocument(keyword, staticDocumentData)
-  //   : await referenceKeywordToDocument(keyword, staticDocumentData);
-  // await saveKeyword(keyword);
-  // const keywords = await fetchKeywords();
-  // setKeywords(keywords);
+  //   setCompanionMode(active);
   // };
 
-  // const classes = clsx("", {
-  //   " prose": true,
-  // });
+  // useConditionalAction(
+  //   "Start companion mode",
+  //   keyExplicitAction("="),
+  //   isInCompanionMode === false,
+  //   callback,
+  //   true,
+  // );
+
+  // Companion mode actions
+
+  useScopedAction(
+    "Start companion mode",
+    keyExplicitNavigation("left"),
+    async () => {
+      await openCompanionSocket();
+    },
+    true,
+  );
+
+  useScopedAction(
+    "Stop companion mode",
+    keyExplicitNavigation("left"),
+    async () => {
+      await closeCompanionSocket();
+    },
+    true,
+  );
+
+  useEffect(() => {
+    const focusCallback = (e: Event<any>) => {
+      navigator.focusColumn(e.payload.row_id, e.payload.column_id);
+    };
+
+    const unlistenFocus = listen("focus", focusCallback);
+    return () => {
+      unlistenFocus.then((f) => f());
+    };
+
+    // No dependancy array! Function needs to be redefined on every effect, otherwise it will use stale state when fired.
+    // https://stackoverflow.com/questions/57847594/accessing-up-to-date-state-from-within-a-callback
+  });
+
+  useEffect(() => {
+    setLayoutState(sanitizeLayout(builder.layout)).then(() => {
+      console.log("🔄 Sync layout with backend");
+    });
+  }, [builder.layout]);
 
   return (
     <div data-component-name="DocumentDetail">
@@ -302,3 +322,23 @@ function DocumentDetail({}: DocumentDetailProps) {
   );
 }
 export default DocumentDetail;
+
+// const listener = useRef(false);
+
+// const setKeywordRelation = async (keyword: Keyword) => {
+// const newKeywords = keywords;
+// const hasRelation = keywordHasRelation(keyword, staticDocumentData);
+// if (hasRelation) {
+//   keywords.find((k) =>)
+// }
+// hasRelation
+//   ? await dereferenceKeywordFromDocument(keyword, staticDocumentData)
+//   : await referenceKeywordToDocument(keyword, staticDocumentData);
+// await saveKeyword(keyword);
+// const keywords = await fetchKeywords();
+// setKeywords(keywords);
+// };
+
+// const classes = clsx("", {
+//   " prose": true,
+// });
