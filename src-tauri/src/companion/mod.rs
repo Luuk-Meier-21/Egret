@@ -1,14 +1,17 @@
-use std::sync::{self, mpsc::Receiver, Arc};
+use std::{
+    fmt::Display,
+    sync::{self, mpsc::Receiver, Arc},
+    thread::sleep,
+    time::Duration,
+};
 
 use futures_util::{
     lock::Mutex,
     stream::{SplitSink, SplitStream},
     FutureExt, SinkExt, StreamExt,
 };
-use tauri::{
-    async_runtime::{self},
-    Error, Manager, State,
-};
+use serde::Serialize;
+use tauri::{async_runtime, window, Error, Manager, State};
 use tokio::{
     sync::oneshot::{self},
     task::JoinHandle,
@@ -163,35 +166,85 @@ fn serve_get(path_segment: &'static str, port: u16, json: Value) -> oneshot::Sen
     stx
 }
 
+#[derive(Clone, serde::Serialize, serde::Deserialize, specta::Type, Debug)]
+enum SocketEvent {
+    RefreshClient,
+}
+
 fn serve_eventfull_socket(
     app: tauri::AppHandle,
     json_state: Arc<tokio::sync::Mutex<JSON>>,
     path_segment: &'static str,
     port: u16,
 ) -> JoinHandle<()> {
-    tokio::spawn(async move {
-        let clients: Arc<tokio::sync::Mutex<Vec<WebSocket>>> =
-            Arc::new(tokio::sync::Mutex::new(Vec::new()));
+    let (sender, mut reciever) = tauri::async_runtime::channel::<
+        Arc<async_runtime::Mutex<SplitSink<WebSocket, Message>>>,
+    >(10);
+    let (event_sender, mut event_reciever) = tokio::sync::broadcast::channel::<(
+        SocketEvent,
+        Arc<async_runtime::Mutex<SplitSink<WebSocket, Message>>>,
+    )>(5);
 
+    let app_in = app.clone();
+    let app_out = app;
+
+    let json_state_out = json_state.clone();
+    let json_state_in = json_state;
+
+    tokio::spawn(async move {
         let routes = warp::path(path_segment)
             .and(warp::ws())
             .map(move |ws: warp::ws::Ws| {
-                let app = app.clone();
-                let state = json_state.clone();
-                let a = clients.clone();
+                let sender_clone = sender.clone();
+                let app_clone = app_in.clone();
+                let json_state_clone = json_state_in.clone();
 
                 ws.on_upgrade(|websocket| async move {
-                    // let b = a.lock().await;
-                    handle_socket_client(websocket, app, state).await;
+                    let (ws_out, ws_in) = websocket.split();
+                    let ws_out_arc = Arc::new(tokio::sync::Mutex::new(ws_out));
+
+                    if let Err(error) = sender_clone.send(ws_out_arc.clone()).await {
+                        println!("Unable to send rx error: {}", error);
+                    };
+
+                    handle_socket_client(
+                        ws_in,
+                        ws_out_arc.clone(),
+                        app_clone.clone(),
+                        json_state_clone.clone(),
+                    )
+                    .await;
                 })
             });
-
         warp::serve(routes).bind(([0, 0, 0, 0], port)).await
+    });
+
+    tokio::spawn(async move {
+        let app = app_out.clone();
+
+        while let Some(ws_out) = reciever.recv().await {
+            let event_sender_clone = event_sender.clone();
+
+            app.listen_global("refresh-client", move |event| {
+                let _ = event_sender_clone.send((SocketEvent::RefreshClient, ws_out.clone()));
+            });
+        }
+    });
+
+    tokio::spawn(async move {
+        while let Ok((event, ws_out)) = event_reciever.recv().await {
+            match event {
+                SocketEvent::RefreshClient => {
+                    send_layout_state(ws_out.clone(), json_state_out.clone()).await;
+                }
+            }
+        }
     })
 }
 
 async fn handle_socket_client(
-    websocket: WebSocket,
+    ws_in: SplitStream<WebSocket>,
+    ws_out: Arc<async_runtime::Mutex<SplitSink<WebSocket, Message>>>,
     app: tauri::AppHandle,
     json_state: Arc<tokio::sync::Mutex<JSON>>,
 ) {
@@ -203,28 +256,27 @@ async fn handle_socket_client(
     )
     .unwrap();
 
-    let (mut ws_out, ws_in) = websocket.split();
-
-    send_layout_state(&mut ws_out, json_state.clone()).await;
-    handle_socket_message(ws_out, ws_in, app, json_state).await;
+    send_layout_state(ws_out.clone(), json_state.clone()).await;
+    handle_socket_message(ws_in, ws_out, app.clone(), json_state.clone()).await;
 }
 
 async fn handle_socket_message(
-    mut ws_out: SplitSink<WebSocket, Message>,
     mut ws_in: SplitStream<WebSocket>,
+    ws_out: Arc<async_runtime::Mutex<SplitSink<WebSocket, Message>>>,
     app: tauri::AppHandle,
     json_state: Arc<tokio::sync::Mutex<JSON>>,
 ) {
     while let Some(result) = ws_in.next().await {
         if let Ok(message) = result {
             let data = message.to_str().unwrap_or("No value found");
+            println!("Message: {}", data);
 
             let mut data_split = data.split(":");
 
             let message_type = data_split.next().unwrap_or("none");
             let message_content = data_split.next().unwrap_or("none");
 
-            send_layout_state(&mut ws_out, json_state.clone()).await;
+            send_layout_state(ws_out.clone(), json_state.clone()).await;
 
             let _ = match message_type {
                 "focus" => emit_action_focus(app.clone(), message_content),
@@ -235,7 +287,7 @@ async fn handle_socket_message(
 }
 
 pub async fn send_layout_state(
-    ws_out: &mut SplitSink<WebSocket, Message>,
+    ws_out: Arc<async_runtime::Mutex<SplitSink<WebSocket, Message>>>,
     json_state: Arc<tokio::sync::Mutex<JSON>>,
 ) {
     let json = json_state.lock().await;
@@ -244,12 +296,23 @@ pub async fn send_layout_state(
     let clean_option = json.0.get("clean");
     if let Some(serde_json::Value::Bool(is_clean)) = clean_option {
         if *is_clean {
-            let _ = ws_out.send(Message::text(json_string)).await;
+            let _ = ws_out.lock().await.send(Message::text(json_string)).await;
         } else {
             println!("Passed JSON has specified its uncleanliness, rejected.");
         }
     } else {
         println!("Passed JSON has not specified its cleanliness, rejected.");
+    }
+}
+
+async fn send(ws_out: Arc<async_runtime::Mutex<SplitSink<WebSocket, Message>>>, message: Message) {
+    if let Err(error) = ws_out
+        .lock()
+        .await
+        .send(Message::text("Message from other tread"))
+        .await
+    {
+        println!("Unable to send to client, {}", error);
     }
 }
 

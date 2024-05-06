@@ -37,6 +37,7 @@ function App() {
     console.log(event);
   };
   const onMessage = (event: MessageEvent) => {
+    console.log("message", event);
     refreshLayout(event.data);
   };
   const onError = (event: Event) => {
@@ -70,6 +71,7 @@ function App() {
     <div>
       <button
         onClick={async () => {
+          console.log("Send");
           webSocket.current?.send("load:hi");
         }}
       >

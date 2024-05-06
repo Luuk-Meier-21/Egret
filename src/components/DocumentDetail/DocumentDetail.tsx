@@ -35,9 +35,10 @@ import {
 } from "../../bindings";
 import { useLayoutHTMLExporter } from "../../services/layout/layout-export";
 import { useEffect, useState } from "react";
-import { Event, listen } from "@tauri-apps/api/event";
+import { Event, emit, listen } from "@tauri-apps/api/event";
 import { deepJSONClone } from "../../utils/object";
 import { flattenLayoutNodesByReference } from "../../services/layout/layout-content";
+import { app } from "@tauri-apps/api";
 
 interface DocumentDetailProps {}
 
@@ -251,6 +252,15 @@ function DocumentDetail({}: DocumentDetailProps) {
     true,
   );
 
+  useScopedAction(
+    "Refresh event",
+    keyExplicitNavigation("left"),
+    async () => {
+      emit("refresh-client", "none");
+    },
+    true,
+  );
+
   useEffect(() => {
     const focusCallback = (e: Event<any>) => {
       navigator.focusColumn(e.payload.row_id, e.payload.column_id);
@@ -267,7 +277,7 @@ function DocumentDetail({}: DocumentDetailProps) {
 
   useEffect(() => {
     setLayoutState(sanitizeLayout(builder.layout)).then(() => {
-      console.log("🔄 Sync layout with backend");
+      emit("refresh-client");
     });
   }, [builder.layout]);
 
