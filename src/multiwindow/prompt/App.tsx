@@ -8,12 +8,9 @@ import SearchList from "../../components/SearchList/SearchList";
 const getParams = (params: URLSearchParams): PromiseWindowData => {
   const data = {} as PromiseWindowData;
 
-  console.log(params);
-
   for (let [key, value] of params.entries() as IterableIterator<
     [keyof PromiseWindowData, string]
   >) {
-    console.log(key, value);
     //@ts-ignore
     data[key] = value.includes(",") ? value.split(",") : value;
   }

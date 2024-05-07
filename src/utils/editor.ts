@@ -95,7 +95,7 @@ export function useEditorAutosave(
     }
 
     await saveDocument(getCurrentDocument());
-    console.log("🚀 ~ save ~ after:", unsavedChangesCount.current);
+    console.info("🚀 ~ save ~ after:", unsavedChangesCount.current);
     unsavedChangesCount.current = 0;
   };
 

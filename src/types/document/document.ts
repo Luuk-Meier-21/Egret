@@ -39,9 +39,9 @@ export type DocumentContentData = {
   views: DocumentViewData[];
 };
 
-export type DocumentData = {
+export type DocumentMeta = {
   name: string;
   id: string;
   keywords?: string[];
-  data: DocumentContentData;
+  language: "nl" | "en";
 };

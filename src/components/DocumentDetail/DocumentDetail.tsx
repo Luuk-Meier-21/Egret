@@ -3,7 +3,7 @@ import { deleteDocumentById } from "../../utils/documents";
 import { Keyword } from "../../types/keywords";
 import { LayoutBranchOrNode } from "../LayoutBranch/LayoutBranch";
 import {
-  DocumentData,
+  DocumentMeta,
   DocumentRegionData,
 } from "../../types/document/document";
 import { useLayoutNavigator } from "../../services/layout/layout-navigation";
@@ -24,13 +24,17 @@ import DocumentRegion from "../DocumentRegion/DocumentRegion";
 import { useScopedAction } from "../../services/actions/actions-hook";
 import { systemSound } from "../../bindings";
 import { useLayoutHTMLExporter } from "../../services/layout/layout-export";
+import clsx from "clsx";
+import { useEffect, useState } from "react";
 
 interface DocumentDetailProps {}
+
+const STYLE_KEYS = ["serif", "sans"];
 
 function DocumentDetail({}: DocumentDetailProps) {
   const [directory, staticDocumentData, staticLayout, _] = useLoaderData() as [
     DocumentDirectory,
-    DocumentData,
+    DocumentMeta,
     Layout,
     Keyword[],
   ];
@@ -39,9 +43,11 @@ function DocumentDetail({}: DocumentDetailProps) {
   const selection = useLayoutState(builder);
   const navigator = useLayoutNavigator(selection, builder);
 
+  const [styleIndex, setStyleIndex] = useState(0);
+
   const saveDocument = useStateStore(
     builder.layout,
-    pathInDirectory(directory, `${directory.name}.layout.json`),
+    pathInDirectory(directory, "layout.json"),
   );
 
   const exportToHtml = useLayoutHTMLExporter(staticDocumentData.name);
@@ -86,32 +92,17 @@ function DocumentDetail({}: DocumentDetailProps) {
     },
   );
 
-  useScopedAction(
-    "Move up",
-    keyNavigation("up"),
-    async () => {
-      navigator.focusRowUp();
-    },
-    true,
-  );
+  useScopedAction("Move up", keyNavigation("up"), async () => {
+    navigator.focusRowUp();
+  });
 
-  useScopedAction(
-    "Move down",
-    keyNavigation("down"),
-    async () => {
-      navigator.focusRowDown();
-    },
-    true,
-  );
+  useScopedAction("Move down", keyNavigation("down"), async () => {
+    navigator.focusRowDown();
+  });
 
-  useScopedAction(
-    "Move right",
-    keyNavigation("right"),
-    async () => {
-      navigator.focusColumnRight();
-    },
-    true,
-  );
+  useScopedAction("Move right", keyNavigation("right"), async () => {
+    navigator.focusColumnRight();
+  });
 
   const deleteNode = (force: boolean = false) => {
     const currentRow = navigator.getCurrentRow();
@@ -130,14 +121,9 @@ function DocumentDetail({}: DocumentDetailProps) {
     }
   };
 
-  useScopedAction(
-    "Delete node",
-    keyNavigation("backspace"),
-    async () => {
-      deleteNode();
-    },
-    true,
-  );
+  useScopedAction("Delete node", keyNavigation("backspace"), async () => {
+    deleteNode();
+  });
 
   useScopedAction(
     "Force delete node",
@@ -145,17 +131,11 @@ function DocumentDetail({}: DocumentDetailProps) {
     async () => {
       deleteNode(true);
     },
-    true,
   );
 
-  useScopedAction(
-    "Move left",
-    keyNavigation("left"),
-    async () => {
-      navigator.focusColumnLeft();
-    },
-    true,
-  );
+  useScopedAction("Move left", keyNavigation("left"), async () => {
+    navigator.focusColumnLeft();
+  });
 
   useScopedAction(
     "Move to first column",
@@ -163,7 +143,6 @@ function DocumentDetail({}: DocumentDetailProps) {
     async () => {
       navigator.focusColumnStart();
     },
-    true,
   );
 
   useScopedAction(
@@ -172,17 +151,11 @@ function DocumentDetail({}: DocumentDetailProps) {
     async () => {
       navigator.focusColumnEnd();
     },
-    true,
   );
 
-  useScopedAction(
-    "Escape focus",
-    "Escape",
-    async () => {
-      navigator.blurColumn();
-    },
-    true,
-  );
+  useScopedAction("Escape focus", "Escape", async () => {
+    navigator.blurColumn();
+  });
 
   // const setKeywordRelation = async (keyword: Keyword) => {
   // const newKeywords = keywords;
@@ -198,20 +171,25 @@ function DocumentDetail({}: DocumentDetailProps) {
   // setKeywords(keywords);
   // };
 
-  // const classes = clsx("", {
-  //   " prose": true,
-  // });
+  useScopedAction("Cycle styles", keyAction("t"), async () => {
+    styleIndex < STYLE_KEYS.length - 1
+      ? setStyleIndex(styleIndex + 1)
+      : setStyleIndex(0);
+  });
+
+  const classes = clsx({
+    "font-serif text-base text-white [&_a]:text-indigo-500 [&_a]:underline":
+      styleIndex === 0,
+    "font-sans leading-7 bg-white text-base text-gray-900 [&_a]:bg-blue-600 [&_a]:mb-5 [&_a]:flex [&_a]:mr-auto [&_a]:mt-4 [&_a]:text-white [&_a]:p-2 [&_a]:rounded-lg data-[focused=true]:bg-red-400":
+      styleIndex === 1,
+  });
 
   return (
     <div data-component-name="DocumentDetail">
       <div className="px-4 pb-2 opacity-50 focus-within:opacity-100">
         <GoToHome />
       </div>
-      <main
-        lang={staticDocumentData.data.meta.lang ?? "en"}
-        // className={classes}
-        className="font-serif text-base text-white [&_a]:text-indigo-500 [&_a]:underline"
-      >
+      <main className={classes}>
         {builder.layout.tree.map((branchOrNode, rowIndex) => (
           <LayoutBranchOrNode
             key={branchOrNode.id}

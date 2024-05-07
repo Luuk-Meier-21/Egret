@@ -40,6 +40,7 @@ import { keyAction, keyExplicitAction } from "../../config/shortcut";
 import { formatShortcutsForSpeech } from "../../utils/speech";
 import { prompt, selectSingle } from "../../services/window/window-manager";
 import { announceError } from "../../utils/error";
+import { navigateDropState } from "../../utils/navigation";
 
 interface ActionsProps {
   children: ReactNode | ReactNode[];
@@ -87,12 +88,8 @@ function Actions({ children }: ActionsProps) {
           parseFileToDocumentDirectory,
         );
 
-        // TODO: share succes state
-        setTimeout(() => {
-          navigate(`/`);
-          handleSucces();
-          navigate(`/documents/${directory.id}`);
-        }, 100);
+        navigateDropState(navigate, `/documents/${directory.id}`);
+        handleSucces();
       } catch (error) {
         handleError("Failed to create document: ", error);
       }
@@ -119,7 +116,7 @@ function Actions({ children }: ActionsProps) {
 
         if (matchingKeyword) {
           throw Error("Keyword of name found");
-        } // merge
+        }
 
         const keyword = generateKeyword({ label });
 
@@ -161,12 +158,8 @@ function Actions({ children }: ActionsProps) {
         return;
       }
 
-      navigate("/");
-      setTimeout(() => {
-        navigate(`/documents/${document?.id}`);
-      }, 100);
+      navigateDropState(navigate, `/documents/${document?.id}`);
     },
-    true,
   );
 
   const { elementWithShortcut: OpenActionsPanel } = useInjectedAction(
@@ -182,7 +175,6 @@ function Actions({ children }: ActionsProps) {
       const action = getActionBySlug(slugify(actionLabel));
       action?.callback();
     },
-    true,
   );
 
   return (

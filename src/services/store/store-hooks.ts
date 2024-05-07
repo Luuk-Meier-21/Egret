@@ -27,9 +27,9 @@ export function useStateStore<T>(
       });
   };
 
-  useEffect(() => {
-    forceSave();
-  }, [state]);
+  // useEffect(() => {
+  //   forceSave();
+  // }, [state]);
 
   return forceSave;
 }
