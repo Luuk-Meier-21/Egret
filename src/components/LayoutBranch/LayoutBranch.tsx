@@ -10,13 +10,19 @@ interface LayoutBranchProps<T extends LayoutCommon = LayoutTreeTrunk> {
   value: T;
   level?: "row" | "column" | "unknown";
   index?: number;
-  renderNode: (data: LayoutNodeData, index: number) => ReactNode;
+  length?: number;
+  renderNode: (
+    data: LayoutNodeData,
+    index: number,
+    siblingLength: number,
+  ) => ReactNode;
 }
 
 export function LayoutBranchOrNode({
   value,
   level = "row",
-  index = -1,
+  index = 0,
+  length = 1,
   renderNode = () => null,
 }: LayoutBranchProps) {
   if (value.type === "branch") {
@@ -26,6 +32,7 @@ export function LayoutBranchOrNode({
         level={level}
         renderNode={renderNode}
         value={value}
+        length={length}
       />
     );
   } else {
@@ -35,6 +42,7 @@ export function LayoutBranchOrNode({
         level={level}
         renderNode={renderNode}
         value={value}
+        length={length}
       />
     );
   }
@@ -47,7 +55,7 @@ function LayoutBranch({
 }: LayoutBranchProps<LayoutBranchData<LayoutTreeTrunk>>) {
   return (
     <ul
-      aria-label={`${value.flow}`}
+      aria-label={`Group ${value.children.length} items`}
       id={value.id}
       data-layout-level={level}
       data-layout-type="branch"
@@ -55,14 +63,15 @@ function LayoutBranch({
       data-flow={value.flow}
       className="group flex w-full flex-row"
     >
-      {value.children.map((value, index) => (
+      {value.children.map((item, index) => (
         <li key={index} className="flex group-data-[flow='horizontal']:w-full">
           <LayoutBranchOrNode
             renderNode={renderNode}
-            index={index}
             level="column"
-            key={value.id}
-            value={value}
+            key={item.id}
+            value={item}
+            index={index}
+            length={value.children.length}
           />
         </li>
       ))}
@@ -74,7 +83,8 @@ function LayoutNode({
   value,
   level,
   renderNode,
-  index,
+  index = 0,
+  length = 1,
 }: LayoutBranchProps<LayoutNodeData>) {
   return (
     <section
@@ -84,7 +94,7 @@ function LayoutNode({
       data-layout-type="node"
       className="flex w-full ring-1 ring-white/30"
     >
-      {renderNode(value, index || -1)}
+      {renderNode(value, index, length)}
     </section>
   );
 }
