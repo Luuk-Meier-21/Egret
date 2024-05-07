@@ -34,7 +34,7 @@ import {
   systemSound,
 } from "../../bindings";
 import { useLayoutHTMLExporter } from "../../services/layout/layout-export";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Event, emit, listen } from "@tauri-apps/api/event";
 import { deepJSONClone } from "../../utils/object";
 import { flattenLayoutNodesByReference } from "../../services/layout/layout-content";
@@ -68,6 +68,8 @@ function DocumentDetail({}: DocumentDetailProps) {
   const navigator = useLayoutNavigator(selection, builder);
 
   const [isInCompanionMode, setCompanionMode] = useState(false);
+
+  const layoutCache = useRef(builder.layout);
 
   const saveDocument = useStateStore(
     builder.layout,
@@ -275,10 +277,19 @@ function DocumentDetail({}: DocumentDetailProps) {
     // https://stackoverflow.com/questions/57847594/accessing-up-to-date-state-from-within-a-callback
   });
 
+  const layoutIsChanged = (layout: SanitizedLayout): boolean => {
+    return (
+      layout.tree.length > 0 &&
+      JSON.stringify(layout) !== JSON.stringify(layoutCache.current)
+    );
+  };
+
   useEffect(() => {
-    setLayoutState(sanitizeLayout(builder.layout)).then(() => {
-      emit("refresh-client");
-    });
+    console.log(layoutIsChanged(sanitizeLayout(builder.layout)));
+
+    setLayoutState(sanitizeLayout(builder.layout)).then(() => {});
+
+    layoutCache.current = builder.layout;
   }, [builder.layout]);
 
   return (

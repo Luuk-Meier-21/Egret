@@ -1,24 +1,17 @@
-use std::{
-    fmt::Display,
-    sync::{self, mpsc::Receiver, Arc},
-    thread::sleep,
-    time::Duration,
-};
+use std::sync::{self, Arc};
 
 use futures_util::{
-    lock::Mutex,
     stream::{SplitSink, SplitStream},
-    FutureExt, SinkExt, StreamExt,
+    SinkExt, StreamExt,
 };
-use serde::Serialize;
-use tauri::{async_runtime, window, Error, Manager, State};
+use serde::{Serialize, Serializer};
+use tauri::{async_runtime, Error, Manager, State};
 use tokio::{
     sync::oneshot::{self},
     task::JoinHandle,
 };
 use warp::{
     filters::ws::{Message, WebSocket},
-    reply::Reply,
     Filter,
 };
 
@@ -47,6 +40,7 @@ pub struct CompanionProcess {
     pub socket_sender: sync::Mutex<Option<async_runtime::Sender<()>>>,
     pub api_handle: sync::Mutex<Option<oneshot::Sender<()>>>,
     pub api_json: Arc<tokio::sync::Mutex<JSON>>,
+    pub ws_out: Arc<tokio::sync::Mutex<Option<SplitSink<WebSocket, Message>>>>,
 }
 
 impl Default for CompanionProcess {
@@ -56,7 +50,24 @@ impl Default for CompanionProcess {
             socket_sender: Default::default(),
             api_handle: Default::default(),
             api_json: Default::default(),
+            ws_out: Default::default(),
         }
+    }
+}
+
+type CompanionClientWsOut = Arc<async_runtime::Mutex<SplitSink<WebSocket, Message>>>;
+type CompanionEventSender =
+    tokio::sync::broadcast::Sender<(CompanionWsEvent, CompanionClientWsOut)>;
+
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum CompanionWsEvent {
+    RefreshClient,
+}
+
+impl ToString for CompanionWsEvent {
+    fn to_string(&self) -> String {
+        serde_variant::to_variant_name(&self).unwrap().to_string()
     }
 }
 
@@ -166,30 +177,18 @@ fn serve_get(path_segment: &'static str, port: u16, json: Value) -> oneshot::Sen
     stx
 }
 
-#[derive(Clone, serde::Serialize, serde::Deserialize, specta::Type, Debug)]
-enum SocketEvent {
-    RefreshClient,
-}
-
 fn serve_eventfull_socket(
     app: tauri::AppHandle,
     json_state: Arc<tokio::sync::Mutex<JSON>>,
     path_segment: &'static str,
     port: u16,
 ) -> JoinHandle<()> {
-    let (sender, mut reciever) = tauri::async_runtime::channel::<
-        Arc<async_runtime::Mutex<SplitSink<WebSocket, Message>>>,
-    >(10);
-    let (event_sender, mut event_reciever) = tokio::sync::broadcast::channel::<(
-        SocketEvent,
-        Arc<async_runtime::Mutex<SplitSink<WebSocket, Message>>>,
-    )>(5);
+    let (sender, mut reciever) = tauri::async_runtime::channel::<CompanionClientWsOut>(10);
+    let (event_sender, mut event_reciever) =
+        tokio::sync::broadcast::channel::<(CompanionWsEvent, CompanionClientWsOut)>(40);
 
     let app_in = app.clone();
     let app_out = app;
-
-    let json_state_out = json_state.clone();
-    let json_state_in = json_state;
 
     tokio::spawn(async move {
         let routes = warp::path(path_segment)
@@ -197,14 +196,14 @@ fn serve_eventfull_socket(
             .map(move |ws: warp::ws::Ws| {
                 let sender_clone = sender.clone();
                 let app_clone = app_in.clone();
-                let json_state_clone = json_state_in.clone();
+                let json_state_clone = json_state.clone();
 
                 ws.on_upgrade(|websocket| async move {
                     let (ws_out, ws_in) = websocket.split();
                     let ws_out_arc = Arc::new(tokio::sync::Mutex::new(ws_out));
 
                     if let Err(error) = sender_clone.send(ws_out_arc.clone()).await {
-                        println!("Unable to send rx error: {}", error);
+                        println!("Send Error .210: {}", error);
                     };
 
                     handle_socket_client(
@@ -219,25 +218,24 @@ fn serve_eventfull_socket(
         warp::serve(routes).bind(([0, 0, 0, 0], port)).await
     });
 
+    // Event listener
     tokio::spawn(async move {
-        let app = app_out.clone();
-
         while let Some(ws_out) = reciever.recv().await {
+            let app_clone = app_out.clone();
             let event_sender_clone = event_sender.clone();
 
-            app.listen_global("refresh-client", move |event| {
-                let _ = event_sender_clone.send((SocketEvent::RefreshClient, ws_out.clone()));
-            });
+            let listen = move |event: CompanionWsEvent| {
+                listen_companion_event(event, &app_clone, &event_sender_clone, &ws_out);
+            };
+
+            listen(CompanionWsEvent::RefreshClient);
         }
     });
 
+    // Event dispatcher
     tokio::spawn(async move {
         while let Ok((event, ws_out)) = event_reciever.recv().await {
-            match event {
-                SocketEvent::RefreshClient => {
-                    send_layout_state(ws_out.clone(), json_state_out.clone()).await;
-                }
-            }
+            send(ws_out, Message::text(event.to_string())).await;
         }
     })
 }
@@ -269,7 +267,6 @@ async fn handle_socket_message(
     while let Some(result) = ws_in.next().await {
         if let Ok(message) = result {
             let data = message.to_str().unwrap_or("No value found");
-            println!("Message: {}", data);
 
             let mut data_split = data.split(":");
 
@@ -306,14 +303,22 @@ pub async fn send_layout_state(
 }
 
 async fn send(ws_out: Arc<async_runtime::Mutex<SplitSink<WebSocket, Message>>>, message: Message) {
-    if let Err(error) = ws_out
-        .lock()
-        .await
-        .send(Message::text("Message from other tread"))
-        .await
-    {
+    if let Err(error) = ws_out.lock().await.send(message).await {
         println!("Unable to send to client, {}", error);
     }
+}
+
+fn listen_companion_event(
+    event: CompanionWsEvent,
+    app: &tauri::AppHandle,
+    event_sender: &CompanionEventSender,
+    ws_out: &CompanionClientWsOut,
+) {
+    app.listen_global(&event.to_string(), move |_| {
+        if let Err(error) = event_sender.send((event.clone(), ws_out.clone())) {
+            println!("Send error for event: ({}): {}", event.to_string(), error);
+        }
+    });
 }
 
 // let return_message = Message::text(format!("Application: {data}"));

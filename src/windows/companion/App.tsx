@@ -27,9 +27,14 @@ function App() {
   const webSocket = useRef(connectWebsocket());
   const [layout, setLayout] = useState<Layout>();
 
-  const refreshLayout = (jsonString: string) => {
-    if (jsonString.length > 0 && JSON.stringify(layout) !== jsonString) {
-      setLayout(jsonToLayout(jsonString));
+  const refreshLayout = (data: string) => {
+    if (data === "refresh") {
+      webSocket.current?.send("load");
+      return;
+    }
+
+    if (data.length > 0 && JSON.stringify(layout) !== data) {
+      setLayout(jsonToLayout(data));
     }
   };
 
@@ -37,7 +42,7 @@ function App() {
     console.log(event);
   };
   const onMessage = (event: MessageEvent) => {
-    console.log("message", event);
+    console.log(event);
     refreshLayout(event.data);
   };
   const onError = (event: Event) => {

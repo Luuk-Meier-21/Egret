@@ -21,6 +21,7 @@ strum_macros = "0.26.2"
 warp = "0.3.7"
 tokio = { version = "1.36.0", features = ["full"] }
 futures-util = "0.3.30"
+serde_variant = "0.1.3"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
