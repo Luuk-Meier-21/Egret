@@ -16,8 +16,7 @@ import {
   keyExplicitNavigation,
   keyNavigation,
 } from "../../config/shortcut";
-import { DocumentDirectory } from "../../types/documents";
-import { Layout, LayoutNodeData } from "../../types/layout/layout";
+import { LayoutNodeData } from "../../types/layout/layout";
 import { useStateStore } from "../../services/store/store-hooks";
 import { pathInDirectory } from "../../services/store/store";
 import DocumentRegion from "../DocumentRegion/DocumentRegion";
@@ -26,19 +25,15 @@ import { systemSound } from "../../bindings";
 import { useLayoutHTMLExporter } from "../../services/layout/layout-export";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
+import { useDocumentViewLoader } from "../../services/loader/loader";
 
 interface DocumentDetailProps {}
 
 const STYLE_KEYS = ["serif", "sans"];
 
 function DocumentDetail({}: DocumentDetailProps) {
-  const [directory, staticDocumentData, staticLayout, _] = useLoaderData() as [
-    DocumentDirectory,
-    DocumentMeta,
-    Layout,
-    Keyword[],
-  ];
-
+  const [directory, staticDocumentData, staticLayout, _keywords] =
+    useDocumentViewLoader();
   const builder = useLayoutBuilder(staticLayout);
   const selection = useLayoutState(builder);
   const navigator = useLayoutNavigator(selection, builder);
@@ -51,7 +46,6 @@ function DocumentDetail({}: DocumentDetailProps) {
   );
 
   const exportToHtml = useLayoutHTMLExporter(staticDocumentData.name);
-
   const navigate = useNavigate();
 
   // const [keywords, setKeywords] = useState<Keyword[]>(staticKeywords);
@@ -153,10 +147,6 @@ function DocumentDetail({}: DocumentDetailProps) {
     },
   );
 
-  useScopedAction("Escape focus", "Escape", async () => {
-    navigator.blurColumn();
-  });
-
   // const setKeywordRelation = async (keyword: Keyword) => {
   // const newKeywords = keywords;
   // const hasRelation = keywordHasRelation(keyword, staticDocumentData);
@@ -194,14 +184,23 @@ function DocumentDetail({}: DocumentDetailProps) {
           <LayoutBranchOrNode
             key={branchOrNode.id}
             value={branchOrNode}
-            renderNode={(node, columnIndex) => {
+            renderNode={(node, columnIndex, columnLength) => {
               const isFocused = node.id === selection.nodeId;
 
               const data = node.data || generateDocumentRegion({});
 
+              const columnsLabel =
+                columnIndex < 1
+                  ? `List ${columnLength} items, ${columnIndex + 1} of ${columnLength}`
+                  : `${columnIndex + 1} of ${columnLength}`;
+
+              const rowLabel = `full width`;
+              const label = columnLength > 1 ? columnsLabel : rowLabel;
+
               return (
                 <DocumentRegion
-                  onSave={(region) => {
+                  label={label}
+                  onSave={(region, _editor) => {
                     handleSave(region, node);
                   }}
                   onExplicitAnnounce={() => {

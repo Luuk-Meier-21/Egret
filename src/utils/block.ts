@@ -107,3 +107,11 @@ export function useBlockSelection<
 
   return isSelected;
 }
+
+export function polyfillTiptapBreaking(editor: IBlockEditor): boolean {
+  const isBreaking =
+    editor._tiptapEditor?.view === undefined ||
+    editor._tiptapEditor?.view?.dom === undefined;
+
+  return isBreaking;
+}

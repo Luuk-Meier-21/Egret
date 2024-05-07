@@ -1,21 +1,25 @@
 import { DocumentRegionData } from "../../types/document/document";
 import { schema } from "../../blocks/schema";
 import { shell } from "@tauri-apps/api";
-import { toggleBlock } from "../../utils/block";
+import {
+  polyfillTiptapBreaking,
+  tiptapIsBreaking,
+  toggleBlock,
+} from "../../utils/block";
 import { useEditorAutoSaveHandle } from "../../utils/editor";
 import { IBlockEditor } from "../../types/block";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { keyAction, keyExplicitAction } from "../../config/shortcut";
 import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
-import { useConditionalAction } from "../../services/actions/actions-hook";
+import {
+  useConditionalAction,
+  useScopedAction,
+} from "../../services/actions/actions-hook";
 import { insertOrUpdateBlock } from "@blocknote/core";
 import { DialogFilter, open } from "@tauri-apps/api/dialog";
 import { voiceSay } from "../../bindings";
-import { convertFileSrc } from "@tauri-apps/api/tauri";
 import { toDataURL } from "../../utils/url";
 import { announceError } from "../../utils/error";
-import { copyFile } from "@tauri-apps/api/fs";
-import { ASSETS, DOCUMENTS } from "../../config/files";
 import { openAsset } from "../../utils/filesystem";
 
 interface DocumentRegionProps {
@@ -33,6 +37,7 @@ interface DocumentRegionProps {
   ) => string | null;
   onBlur: (region: DocumentRegionData, editor: IBlockEditor) => void;
   isFocused: boolean;
+  label?: string;
 }
 
 function DocumentRegion({
@@ -44,8 +49,12 @@ function DocumentRegion({
   isFocused = false,
   onFocus,
   onBlur,
+  label,
 }: DocumentRegionProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const editButton = useRef<HTMLButtonElement>(null);
+
+  const [inEdit, setEdit] = useState(false);
 
   const editor = useCreateBlockNote({
     schema,
@@ -63,6 +72,7 @@ function DocumentRegion({
 
   const focus = () => {
     try {
+      editButton.current?.focus();
       editor.focus();
       onImplicitAnnounce(region, editor);
     } catch (error) {
@@ -70,11 +80,19 @@ function DocumentRegion({
     }
   };
 
+  const startEdit = () => {
+    setEdit(true);
+  };
+
+  const stopEdit = () => {
+    setEdit(false);
+  };
+
   useEffect(() => {
     if (isFocused) {
       focus();
     }
-  }, [isFocused]);
+  }, [isFocused, inEdit]);
 
   useEffect(() => {
     editor._tiptapEditor.on("create", () => {
@@ -248,35 +266,80 @@ function DocumentRegion({
     },
   );
 
+  const getPreviewText = (): string | undefined => {
+    const maxWords = 5;
+
+    if (polyfillTiptapBreaking(editor)) {
+      return;
+    }
+
+    const innerText = editor.domElement.innerText;
+    const words = innerText.match(/([^\s]+)/g) || [];
+
+    if (words.join(" ").length <= 0) {
+      return;
+    }
+
+    if (words.length > maxWords) {
+      return `${words.slice(0, maxWords).join(" ")}…`;
+    }
+
+    return words.join(" ");
+  };
+
   return (
     <section
       data-component-name="DocumentDetail"
       aria-current="page"
+      lang="en"
       data-focused={isFocused || undefined}
       ref={ref}
-      className="input-hint relative  w-full p-4 text-inherit outline-none data-[focused]:bg-white data-[focused]:text-black"
+      aria-label={label}
+      tabIndex={0}
+      onFocus={() => {
+        onFocus(region, editor);
+        focus();
+      }}
+      onBlur={() => {
+        onBlur(region, editor);
+        console.warn("Blur");
+        stopEdit();
+      }}
+      className="input-hint relative w-full  p-4 text-inherit outline-none outline-8 focus:outline data-[focused]:bg-white data-[focused]:text-black"
     >
       <BlockNoteView
         id={region.id}
         data-editor
-        onFocus={() => {
-          onFocus(region, editor);
-        }}
-        onBlur={() => {
-          onBlur(region, editor);
-        }}
         className="mx-auto flex h-full w-full max-w-[46em] outline-none focus:outline-none [&_*]:outline-none"
         editor={editor}
         slashMenu={false}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") {
-            editor;
-          }
-        }}
         sideMenu={false}
         formattingToolbar={false}
         hyperlinkToolbar={false}
+        editable={inEdit}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            stopEdit();
+          }
+        }}
+        onFocus={() => {
+          onFocus(region, editor);
+          focus();
+        }}
+        onBlur={() => {
+          onBlur(region, editor);
+          console.warn("Blur");
+          stopEdit();
+        }}
       />
+      {!inEdit && (
+        <button
+          ref={editButton}
+          className="absolute inset-0 text-left"
+          onClick={startEdit}
+          aria-label={getPreviewText() || "Blank"}
+        ></button>
+      )}
     </section>
   );
 }

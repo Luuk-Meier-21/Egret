@@ -38,7 +38,7 @@ function rowComponent({
   contentRef,
   editor,
 }: BlockComponentProps<typeof imageConfig, "image">): ReactNode {
-  const label = "Alt";
+  const label = "  Image";
   const src = block.props.src;
   // @ts-expect-error
   const alt = block.content.length > 0 ? block.content[0].text : "/n";

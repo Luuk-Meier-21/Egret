@@ -1,17 +1,16 @@
-import { DocumentDirectory, DocumentReference } from "../../types/documents";
+import { DocumentDirectory } from "../../types/documents";
 import Search from "../Search/Search";
 import { ReactNode, useRef, useState } from "react";
 import { Keyword } from "../../types/keywords";
 // import { includeKeywordsInDocuments } from "../../utils/keywords";
 import { useRegisterAction } from "../../services/actions/actions-registry";
 import { writeText } from "@tauri-apps/api/clipboard";
-import { useHotkeyOverride } from "../../utils/hotkeys";
 
 interface DocumentsOverviewProps {
   // Documents overview could be uses as a document selector, wrapped in a dialog component. Callbacks resolve promise like prompt handles this
-  onDocumentClick: (document: DocumentReference) => void;
-  onDocumentSelection?: (document: DocumentReference | null) => void;
-  documentReferences: DocumentReference[];
+  onDocumentClick: (document: DocumentDirectory) => void;
+  onDocumentSelection?: (document: DocumentDirectory | null) => void;
+  directories: DocumentDirectory[];
   keywords: Keyword[];
   children?: ReactNode | ReactNode[];
 }
@@ -19,15 +18,15 @@ interface DocumentsOverviewProps {
 function DocumentsOverview({
   onDocumentClick,
   onDocumentSelection = () => {},
-  documentReferences,
+  directories,
   children,
 }: DocumentsOverviewProps) {
   const documentsRef = useRef<HTMLUListElement>(null);
 
   const [selectedDocument, setSelectedDocument] =
-    useState<DocumentReference | null>(null);
+    useState<DocumentDirectory | null>(null);
 
-  const selectDocument = (document: DocumentReference | null) => {
+  const selectDocument = (document: DocumentDirectory | null) => {
     setSelectedDocument(document);
     onDocumentSelection(document);
   };
@@ -42,7 +41,7 @@ function DocumentsOverview({
 
   const [filteredDocuments, setFilteredDocuments] =
     //@ts-ignore
-    useState<DocumentDirectory[]>(documentReferences);
+    useState<DocumentDirectory[]>(directories);
 
   return (
     <div data-component-name="DocumentsOverview" aria-live="polite">
@@ -88,7 +87,7 @@ function DocumentsOverview({
       {children}
       <Search
         label="Search document"
-        list={documentReferences}
+        list={directories}
         keys={["name", "keywords.label"]}
         onConfirm={() => {
           documentsRef.current?.querySelector("button")?.focus();
