@@ -33,3 +33,9 @@ export class ObjectRegistry<T extends Record<string, {}>> {
 export function deepJSONClone<T>(data: T): T {
   return JSON.parse(JSON.stringify(data));
 }
+
+export function objectIsEqual<
+  T extends Record<string, any> | Record<string, any>[],
+>(objectA: T, objectB: T): Boolean {
+  return JSON.stringify(objectA) === JSON.stringify(objectB);
+}

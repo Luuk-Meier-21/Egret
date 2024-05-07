@@ -12,11 +12,25 @@ import { DocumentRegionData } from "../../types/document/document";
 import { systemSound } from "../../bindings";
 import { blocksHaveContent } from "../../utils/block";
 import { announceError } from "../../utils/error";
+import { useHistoryState } from "./layout-history";
+import { useObservableEffect } from "./layout-change";
+import { useScopedAction } from "../actions/actions-hook";
 
 export type LayoutBuilderCallback = (layout: Layout) => void;
 
 export function useLayoutBuilder(staticLayout: Layout) {
   const [layout, dispatch] = useReducer(layoutReducer, staticLayout);
+  const layoutHistory = useHistoryState(layout);
+
+  useObservableEffect(() => {
+    layoutHistory.setState(layout);
+  }, [layout]);
+
+  useScopedAction("undo layout change", "cmd+z", () => {
+    layoutHistory.undo();
+
+    console.log(layoutHistory.pointer);
+  });
 
   useEffect(() => {
     handleRowChildrenChange(layout.tree);

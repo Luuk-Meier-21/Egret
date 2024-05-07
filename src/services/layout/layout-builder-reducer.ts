@@ -53,6 +53,10 @@ type LayoutAction = ActionRequired &
         node: LayoutNodeData;
         data: DocumentRegionData;
       }
+    | {
+        type: "overwrite";
+        layout: Layout;
+      }
   );
 
 export function layoutReducer(oldLayout: Layout, action: LayoutAction): Layout {
@@ -133,6 +137,11 @@ export function layoutReducer(oldLayout: Layout, action: LayoutAction): Layout {
       }
 
       return { ...oldLayout, tree: rows };
+    }
+    case "overwrite": {
+      const layout = deepJSONClone(action.layout);
+
+      return { ...layout };
     }
     default:
       return oldLayout;
