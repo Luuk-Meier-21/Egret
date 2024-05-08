@@ -17,15 +17,27 @@ type ActionRequired = {
 };
 
 type LayoutAction = ActionRequired &
-  (
-    | {
-        type: "add-row";
+  // | {
+  //     type: "add-row";
+  //     newRow: LayoutBranchOrNodeData;
+  //     position: "before" | "after";
+  //   }
+  (| {
+        type: "insert-row";
+        row: LayoutBranchOrNodeData;
         newRow: LayoutBranchOrNodeData;
         position: "before" | "after";
       }
+    // | {
+    //     type: "add-column";
+    //     row: LayoutBranchData;
+    //     newColumn: LayoutNodeData;
+    //     position: "before" | "after";
+    //   }
     | {
-        type: "add-column";
+        type: "insert-column";
         row: LayoutBranchData;
+        column: LayoutNodeData;
         newColumn: LayoutNodeData;
         position: "before" | "after";
       }
@@ -57,23 +69,60 @@ type LayoutAction = ActionRequired &
 
 export function layoutReducer(oldLayout: Layout, action: LayoutAction): Layout {
   switch (action.type) {
-    case "add-row": {
-      const rows = deepJSONClone(oldLayout.tree);
-      const appendKey = action.position === "before" ? "unshift" : "push";
+    // case "add-row": {
+    //   const rows = deepJSONClone(oldLayout.tree);
+    //   const appendKey = action.position === "before" ? "unshift" : "push";
 
-      rows[appendKey](action.newRow);
+    //   rows[appendKey](action.newRow);
+
+    //   return { ...oldLayout, tree: rows };
+    // }
+    case "insert-row": {
+      const rows = deepJSONClone(oldLayout.tree);
+      const index = rows.findIndex((r) => r.id === action.row.id);
+      const directionNumber = action.position === "before" ? 0 : 1;
+
+      if (index < 0) {
+        return oldLayout;
+      }
+
+      rows.splice(index + directionNumber, 0, action.newRow);
 
       return { ...oldLayout, tree: rows };
     }
-    case "add-column": {
+    // case "add-column": {
+    //   const rows = oldLayout.tree;
+    //   const row = deepJSONClone(action.row);
+    //   const appendKey = action.position === "before" ? "unshift" : "push";
+
+    //   row.children[appendKey](action.newColumn);
+
+    //   const index = rows.findIndex((r) => r.id === row.id);
+    //   rows[index] = row;
+
+    //   return { ...oldLayout, tree: rows };
+    // }
+    case "insert-column": {
       const rows = oldLayout.tree;
       const row = deepJSONClone(action.row);
-      const appendKey = action.position === "before" ? "unshift" : "push";
+      const columnIndex = row.children.findIndex(
+        (c) => c.id === action.column.id,
+      );
+      const directionNumber = action.position === "before" ? 0 : 1;
 
-      row.children[appendKey](action.newColumn);
+      if (columnIndex < 0) {
+        return oldLayout;
+      }
 
-      const index = rows.findIndex((r) => r.id === row.id);
-      rows[index] = row;
+      row.children.splice(columnIndex + directionNumber, 0, action.newColumn);
+
+      const rowIndex = rows.findIndex((r) => r.id === row.id);
+
+      if (rowIndex < 0) {
+        return oldLayout;
+      }
+
+      rows[rowIndex] = row;
 
       return { ...oldLayout, tree: rows };
     }

@@ -1,20 +1,21 @@
 import { useEffect } from "react";
 import {
+  Layout,
   LayoutBranchOrNodeData,
   LayoutNodeData,
   LayoutTreeTrunk,
 } from "../../types/layout/layout";
 import { flattenLayoutNodesByReference } from "./layout-content";
-import { LayoutBuilder } from "./layout-builder";
 import { LayoutState } from "./layout-state";
 import { delay, playSound } from "../../utils/sound";
+import { announceError } from "../../utils/error";
 
 export function useLayoutNavigator(
   { rowId, setRowId, nodeId, setNodeId }: LayoutState,
-  builder: LayoutBuilder,
+  layout: Layout,
 ) {
-  const rows = builder.layout.tree;
-  const nodes = flattenLayoutNodesByReference(builder.layout.tree);
+  const rows = layout.tree;
+  const nodes = flattenLayoutNodesByReference(layout.tree);
 
   const playSoundRows = async (row: LayoutTreeTrunk) => {
     const recursivePlay = async (count: number, index: number = 0) => {
@@ -49,7 +50,7 @@ export function useLayoutNavigator(
     }
 
     scrollNodeIntoView();
-  }, [rowId, nodeId, builder.layout]);
+  }, [rowId, nodeId, layout]);
 
   const scrollNodeIntoView = () => {
     const element = document.getElementById(nodeId || "");
@@ -77,8 +78,7 @@ export function useLayoutNavigator(
       setRowId(previousRow.id);
       playSoundRows(previousRow);
     } else {
-      const newRow = builder.addRow("before");
-      setRowId(newRow.id);
+      announceError();
     }
   };
 
@@ -89,8 +89,7 @@ export function useLayoutNavigator(
       setRowId(nextRow.id);
       playSoundRows(nextRow);
     } else {
-      const newRow = builder.addRow("after");
-      setRowId(newRow.id);
+      announceError();
     }
   };
 
@@ -108,15 +107,10 @@ export function useLayoutNavigator(
       if (previousColumn) {
         setNodeId(previousColumn.id);
         playSoundColumn(previousColumn);
-      } else {
-        const newColumn = builder.addColumn(row, "before");
-        setNodeId(newColumn.id);
+        return;
       }
-    } else {
-      const newColumn = builder.addColumnToNodeRow(row, "before");
-
-      setNodeId(newColumn.id);
     }
+    announceError();
   };
 
   const focusColumnRight = () => {
@@ -133,16 +127,10 @@ export function useLayoutNavigator(
       if (nextColumn) {
         setNodeId(nextColumn.id);
         playSoundColumn(nextColumn);
-      } else {
-        const newColumn = builder.addColumn(row, "after");
-
-        setNodeId(newColumn.id);
+        return;
       }
-    } else {
-      const newColumn = builder.addColumnToNodeRow(row, "after");
-
-      setNodeId(newColumn.id);
     }
+    announceError();
   };
 
   const focusColumnStart = () => {
