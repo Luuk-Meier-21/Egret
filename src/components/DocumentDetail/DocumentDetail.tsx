@@ -23,6 +23,7 @@ import clsx from "clsx";
 import { useState } from "react";
 import { useDocumentViewLoader } from "../../services/loader/loader";
 import { ariaItemOfList, ariaLines, ariaList } from "../../services/aria/label";
+import { announceError } from "../../utils/error";
 
 interface DocumentDetailProps {}
 
@@ -31,9 +32,10 @@ const STYLE_KEYS = ["serif", "sans"];
 function DocumentDetail({}: DocumentDetailProps) {
   const [directory, staticDocumentData, staticLayout, _keywords] =
     useDocumentViewLoader();
+
   const builder = useLayoutBuilder(staticLayout);
-  const selection = useLayoutState(builder);
-  const navigator = useLayoutNavigator(selection, builder);
+  const selection = useLayoutState(builder.layout);
+  const navigator = useLayoutNavigator(selection, builder.layout);
 
   const [styleIndex, setStyleIndex] = useState(0);
 
@@ -91,6 +93,10 @@ function DocumentDetail({}: DocumentDetailProps) {
     navigator.focusRowDown();
   });
 
+  useScopedAction("Move left", keyNavigation("left"), async () => {
+    navigator.focusColumnLeft();
+  });
+
   useScopedAction("Move right", keyNavigation("right"), async () => {
     navigator.focusColumnRight();
   });
@@ -100,6 +106,7 @@ function DocumentDetail({}: DocumentDetailProps) {
     const currentNode = navigator.getCurrentNode();
 
     if (currentRow === null || currentNode === null) {
+      announceError();
       return;
     }
 
@@ -109,6 +116,36 @@ function DocumentDetail({}: DocumentDetailProps) {
     } else {
       const node = builder.removeRow(currentRow, force);
       selection.setNodeId(node.id);
+    }
+  };
+
+  const insertRow = (position: "before" | "after") => {
+    const currentRow = navigator.getCurrentRow();
+
+    if (currentRow === null) {
+      announceError();
+      return;
+    }
+
+    const newNode = builder.insertRow(currentRow, position);
+    selection.setNodeId(newNode.id);
+  };
+
+  const insertColumn = (position: "before" | "after") => {
+    const currentRow = navigator.getCurrentRow();
+    const currentNode = navigator.getCurrentNode();
+
+    if (currentRow === null || currentNode === null) {
+      announceError();
+      return;
+    }
+
+    if (currentRow.type === "branch") {
+      const newNode = builder.insertColumn(currentRow, currentNode, position);
+      selection.setNodeId(newNode.id);
+    } else {
+      const newNode = builder.addColumnToNodeRow(currentRow, position);
+      selection.setNodeId(newNode.id);
     }
   };
 
@@ -124,23 +161,31 @@ function DocumentDetail({}: DocumentDetailProps) {
     },
   );
 
-  useScopedAction("Move left", keyNavigation("left"), async () => {
-    navigator.focusColumnLeft();
+  useScopedAction("Insert row above", keyExplicitNavigation("up"), async () => {
+    insertRow("before");
   });
 
   useScopedAction(
-    "Move to first column",
-    keyExplicitNavigation("left"),
+    "Insert row under",
+    keyExplicitNavigation("down"),
     async () => {
-      navigator.focusColumnStart();
+      insertRow("after");
     },
   );
 
   useScopedAction(
-    "Move to last column",
+    "Insert column left",
+    keyExplicitNavigation("left"),
+    async () => {
+      insertColumn("before");
+    },
+  );
+
+  useScopedAction(
+    "Insert column right",
     keyExplicitNavigation("right"),
     async () => {
-      navigator.focusColumnEnd();
+      insertColumn("after");
     },
   );
 

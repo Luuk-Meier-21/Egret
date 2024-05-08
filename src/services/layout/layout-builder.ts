@@ -3,6 +3,7 @@ import { generateLayoutNode } from "./layout-generator";
 import {
   Layout,
   LayoutBranchData,
+  LayoutBranchOrNodeData,
   LayoutCommon,
   LayoutNodeData,
   LayoutTreeTrunk,
@@ -58,26 +59,51 @@ export function useLayoutBuilder(staticLayout: Layout) {
     }
   };
 
-  const addRow = (position: "before" | "after"): LayoutNodeData => {
+  // const addRow = (position: "before" | "after"): LayoutNodeData => {
+  //   const newRow = generateLayoutNode({});
+  //   dispatch({ type: "add-row", position, newRow });
+  //   announceCreation();
+
+  //   return newRow;
+  // };
+
+  const insertRow = (
+    row: LayoutBranchOrNodeData,
+    position: "before" | "after",
+  ): LayoutNodeData => {
     const newRow = generateLayoutNode({});
-    dispatch({ type: "add-row", position, newRow });
+    dispatch({ type: "insert-row", position, row, newRow });
     announceCreation();
 
     return newRow;
   };
 
-  const addColumn = (
+  // const addColumn = (
+  //   row: LayoutBranchData,
+  //   position: "before" | "after",
+  // ): LayoutNodeData => {
+  //   const newColumn = generateLayoutNode({});
+  //   dispatch({
+  //     type: "add-column",
+  //     position,
+  //     row,
+  //     newColumn: newColumn,
+  //   });
+  //   announceCreation();
+
+  //   return newColumn;
+  // };
+
+  const insertColumn = (
     row: LayoutBranchData,
+    column: LayoutNodeData,
     position: "before" | "after",
   ): LayoutNodeData => {
     const newColumn = generateLayoutNode({});
-    dispatch({
-      type: "add-column",
-      position,
-      row,
-      newColumn: newColumn,
-    });
+    dispatch({ type: "insert-column", position, row, column, newColumn });
     announceCreation();
+
+    console.log(newColumn);
 
     return newColumn;
   };
@@ -155,12 +181,14 @@ export function useLayoutBuilder(staticLayout: Layout) {
   };
 
   return {
-    addRow,
-    addColumn,
-    addColumnToNodeRow,
+    // addRow,
+    // addColumn,
     removeRow,
     removeNodeFromRow,
+    addColumnToNodeRow,
     insertContent,
+    insertRow,
+    insertColumn,
     layout,
   } as const;
 }
