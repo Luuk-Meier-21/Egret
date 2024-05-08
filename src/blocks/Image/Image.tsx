@@ -1,7 +1,7 @@
 import { insertOrUpdateBlock } from "@blocknote/core";
 import { createReactBlockSpec } from "@blocknote/react";
 import { schema } from "../../blocks/schema";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 import { BlockComponentProps } from "../../types/block";
 import { useBlockSelection } from "../../utils/block";
 import { voiceSay } from "../../bindings";

@@ -1,11 +1,7 @@
-import { useLoaderData, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { deleteDocumentById } from "../../utils/documents";
-import { Keyword } from "../../types/keywords";
 import { LayoutBranchOrNode } from "../LayoutBranch/LayoutBranch";
-import {
-  DocumentMeta,
-  DocumentRegionData,
-} from "../../types/document/document";
+import { DocumentRegionData } from "../../types/document/document";
 import { useLayoutNavigator } from "../../services/layout/layout-navigation";
 import { generateDocumentRegion } from "../../services/document/document-generator";
 import { useLayoutState } from "../../services/layout/layout-state";
@@ -24,8 +20,9 @@ import { useScopedAction } from "../../services/actions/actions-hook";
 import { systemSound } from "../../bindings";
 import { useLayoutHTMLExporter } from "../../services/layout/layout-export";
 import clsx from "clsx";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDocumentViewLoader } from "../../services/loader/loader";
+import { ariaItemOfList, ariaLines, ariaList } from "../../services/aria/label";
 
 interface DocumentDetailProps {}
 
@@ -186,16 +183,12 @@ function DocumentDetail({}: DocumentDetailProps) {
             value={branchOrNode}
             renderNode={(node, columnIndex, columnLength) => {
               const isFocused = node.id === selection.nodeId;
-
               const data = node.data || generateDocumentRegion({});
-
-              const columnsLabel =
-                columnIndex < 1
-                  ? `List ${columnLength} items, ${columnIndex + 1} of ${columnLength}`
-                  : `${columnIndex + 1} of ${columnLength}`;
-
-              const rowLabel = `full width`;
-              const label = columnLength > 1 ? columnsLabel : rowLabel;
+              const label = ariaLines({
+                [ariaList(columnLength)]: columnIndex <= 0 && isFocused,
+                [ariaItemOfList(columnIndex + 1, columnLength)]:
+                  columnLength > 1,
+              });
 
               return (
                 <DocumentRegion

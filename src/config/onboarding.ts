@@ -1,6 +1,6 @@
 import { generateDocumentRegion } from "../services/document/document-generator";
 import { BlockData } from "../types/document/document";
-import { v4 as uuidv4, validate } from "uuid";
+import { v4 as uuidv4 } from "uuid";
 
 export const ONBOARDING_BLOCKS: BlockData = [
   {

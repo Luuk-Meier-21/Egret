@@ -1,17 +1,7 @@
-import {
-  ReactNode,
-  createContext,
-  useContext,
-  useReducer,
-  useRef,
-} from "react";
+import { ReactNode, createContext, useReducer, useRef } from "react";
 import { useNavigate } from "react-router";
-import {
-  ActionConfiguration,
-  action,
-} from "../../services/actions/actions-registry";
+import { ActionConfiguration } from "../../services/actions/actions-registry";
 import { handleError, handleSucces } from "../../utils/announce";
-import { DialogContext } from "../Dialog/DialogProvider";
 import { useAbstractStore } from "../../services/store/store-hooks";
 import {
   documentsPath,
@@ -32,15 +22,12 @@ import {
   ActionReducerAction,
   actionsReducer,
 } from "../../services/actions/actions-reducer";
-import {
-  useInjectedAction,
-  useScopedAction,
-} from "../../services/actions/actions-hook";
+import { useInjectedAction } from "../../services/actions/actions-hook";
 import { keyAction, keyExplicitAction } from "../../config/shortcut";
-import { formatShortcutsForSpeech } from "../../utils/speech";
 import { prompt, selectSingle } from "../../services/window/window-manager";
 import { announceError } from "../../utils/error";
 import { navigateDropState } from "../../utils/navigation";
+import { formatShortcutsForSpeech } from "../../utils/speech";
 
 interface ActionsProps {
   children: ReactNode | ReactNode[];
@@ -144,21 +131,16 @@ function Actions({ children }: ActionsProps) {
         return;
       }
 
-      const documentName = await selectSingle(
+      const documentId = await selectSingle(
         "Open document",
         "Search for documents",
-        documents.map((document) => document.name),
-      );
-      const document = documents.find(
-        (value) => slugify(value.name) === slugify(documentName),
+        documents.map((document) => ({
+          label: document.name,
+          value: document.id,
+        })),
       );
 
-      if (document === undefined) {
-        announceError();
-        return;
-      }
-
-      navigateDropState(navigate, `/documents/${document?.id}`);
+      navigateDropState(navigate, `/documents/${documentId}`);
     },
   );
 
@@ -170,8 +152,12 @@ function Actions({ children }: ActionsProps) {
       const actionLabel = await selectSingle(
         "Execute action",
         "Search for actions",
-        actions.map((action) => action.label),
+        actions.map((action) => ({
+          label: `${action.label} (${formatShortcutsForSpeech(action.shortcut.split("+")).join(" + ")})`,
+          value: action.label,
+        })),
       );
+      console.log(actionLabel);
       const action = getActionBySlug(slugify(actionLabel));
       action?.callback();
     },

@@ -1,7 +1,6 @@
 import { FileEntry, FsOptions, readDir } from "@tauri-apps/api/fs";
 import { Store, decodeJSON, encodeJSON } from "./store";
 import { DOCUMENTS } from "../../config/files";
-import { useEffect } from "react";
 import { requireDir } from "../../utils/filesystem";
 
 export function useStateStore<T>(

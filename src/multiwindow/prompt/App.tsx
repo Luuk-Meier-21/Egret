@@ -76,11 +76,14 @@ function App() {
         </div>
       )}
       {data.type === "select" &&
-        (Array.isArray(data.options) ? (
+        (Array.isArray(data.values) ? (
           <SearchList
-            list={data.options}
+            list={data.labels.map((label, index) => ({
+              label: label,
+              value: data.values[index],
+            }))}
             label={data.label}
-            searchKeys={[]}
+            searchKeys={["label"]}
             onKeyDown={(event) => {
               if (event.key === "Escape") {
                 reject();
@@ -90,11 +93,11 @@ function App() {
             renderItem={(option) => (
               <button
                 onClick={() => {
-                  submit(option);
+                  submit(option.value);
                 }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
-                    submit(option);
+                    submit(option.value);
                   }
 
                   if (event.key === "Escape") {
@@ -102,18 +105,18 @@ function App() {
                   }
                 }}
               >
-                {option}
+                {option.label}
               </button>
             )}
           />
         ) : (
           <button
             onClick={() => {
-              submit(data.options);
+              submit(data.values);
             }}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
-                submit(data.options);
+                submit(data.values);
               }
 
               if (event.key === "Escape") {
@@ -121,7 +124,7 @@ function App() {
               }
             }}
           >
-            {data.options}
+            {data.labels}
           </button>
         ))}
     </div>

@@ -3,7 +3,7 @@ import { DocumentMeta } from "../types/document/document";
 
 export function generateBlankDocumentMeta(
   name: string,
-  withOnboarding: boolean = true,
+  _withOnboarding: boolean = true,
 ): DocumentMeta {
   return generateDocumentMeta({
     name,

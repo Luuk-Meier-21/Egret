@@ -47,15 +47,11 @@ function SearchInner<T>(
     focusSearch();
   });
 
-  const { element: DeleteButton } = useRegisterAction(
-    "Delete search query",
-    "shift+cmd+f",
-    () => {
-      setQuery(null);
-      setKey(null);
-      focusSearch();
-    },
-  );
+  useRegisterAction("Delete search query", "shift+cmd+f", () => {
+    setQuery(null);
+    setKey(null);
+    focusSearch();
+  });
 
   useEffect(() => {
     const search = (query: string, key: FuseOptionKey<T> | null) => {

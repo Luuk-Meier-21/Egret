@@ -2,14 +2,12 @@ import { FileEntry } from "@tauri-apps/api/fs";
 import {
   BlockData,
   DocumentContentData,
-  DocumentData,
   DocumentMeta,
   DocumentRegionData,
   DocumentViewData,
 } from "../../types/document/document";
 import {
   DocumentDirectory,
-  DocumentMetaData,
   DocumentReference,
   LegacyDocumentContent,
 } from "../../types/documents";

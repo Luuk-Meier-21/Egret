@@ -12,7 +12,8 @@ export type PromiseWindowData = {
   | {
       type: "select";
       label: string;
-      options: string[];
+      values: string[];
+      labels: string[];
     }
 );
 
@@ -89,14 +90,22 @@ export function prompt(prompt: string, promptDescription: string) {
 export function selectSingle(
   prompt: string,
   promptDescription: string,
-  options: string[],
+  options: { label: string; value: string }[],
 ) {
+  let labels: string[] = [];
+  let values = options.map(({ label, value }) => {
+    labels.push(label);
+    return value;
+  });
+
+  // Data has to be send over url query params, tauri currently supports no alternaltive
   return promiseWindow(
     prompt,
     {
       type: "select",
       label: promptDescription,
-      options: options,
+      values: values,
+      labels: labels,
     },
     {
       width: 600,

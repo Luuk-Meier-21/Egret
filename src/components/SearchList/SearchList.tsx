@@ -12,7 +12,7 @@ interface SearchListProps<T> {
   list: T[];
   label: string;
   searchKeys: string[];
-  renderItem: (item: T) => ReactNode;
+  renderItem: (item: T, index: number) => ReactNode;
   onSearchConfirm?: () => void;
   onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
   searchPosition?: "top" | "bottom";
@@ -51,9 +51,13 @@ function SearchListInner<T>(
         />
       )}
       <div className="p-4 ring-1 ring-white">
-        <ul ref={listRef} className="pb-4">
+        <ul
+          ref={listRef}
+          aria-label={`${filteredList.length} results`}
+          className="pb-4"
+        >
           {filteredList.map((item, index) => (
-            <li key={index}>{renderItem(item)}</li>
+            <li key={index}>{renderItem(item, index)}</li>
           ))}
         </ul>
       </div>

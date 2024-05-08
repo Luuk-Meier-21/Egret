@@ -1,22 +1,14 @@
 import { DocumentRegionData } from "../../types/document/document";
 import { schema } from "../../blocks/schema";
 import { shell } from "@tauri-apps/api";
-import {
-  polyfillTiptapBreaking,
-  tiptapIsBreaking,
-  toggleBlock,
-} from "../../utils/block";
+import { polyfillTiptapBreaking, toggleBlock } from "../../utils/block";
 import { useEditorAutoSaveHandle } from "../../utils/editor";
 import { IBlockEditor } from "../../types/block";
 import { useEffect, useRef, useState } from "react";
 import { keyAction, keyExplicitAction } from "../../config/shortcut";
 import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
-import {
-  useConditionalAction,
-  useScopedAction,
-} from "../../services/actions/actions-hook";
+import { useConditionalAction } from "../../services/actions/actions-hook";
 import { insertOrUpdateBlock } from "@blocknote/core";
-import { DialogFilter, open } from "@tauri-apps/api/dialog";
 import { voiceSay } from "../../bindings";
 import { toDataURL } from "../../utils/url";
 import { announceError } from "../../utils/error";
@@ -54,7 +46,7 @@ function DocumentRegion({
   const ref = useRef<HTMLDivElement>(null);
   const editButton = useRef<HTMLButtonElement>(null);
 
-  const [inEdit, setEdit] = useState(false);
+  const [isEditing, setEditing] = useState(false);
 
   const editor = useCreateBlockNote({
     schema,
@@ -81,18 +73,18 @@ function DocumentRegion({
   };
 
   const startEdit = () => {
-    setEdit(true);
+    setEditing(true);
   };
 
   const stopEdit = () => {
-    setEdit(false);
+    setEditing(false);
   };
 
   useEffect(() => {
     if (isFocused) {
       focus();
     }
-  }, [isFocused, inEdit]);
+  }, [isFocused, isEditing]);
 
   useEffect(() => {
     editor._tiptapEditor.on("create", () => {
@@ -287,6 +279,14 @@ function DocumentRegion({
     return words.join(" ");
   };
 
+  /**
+   * Component renders a visual and a voice assisted (VA) version.
+   * - VA:      a button containing x words from the editors content, finetuned for VA users.
+   * - Visual:  the complete editor content is shown to visual users or collaborators.
+   *
+   * In both cases a user needs to confirm edit to change the content.
+   * */
+
   return (
     <section
       data-component-name="DocumentDetail"
@@ -302,40 +302,40 @@ function DocumentRegion({
       }}
       onBlur={() => {
         onBlur(region, editor);
-        console.warn("Blur");
         stopEdit();
       }}
-      className="input-hint relative w-full  p-4 text-inherit outline-none outline-8 focus:outline data-[focused]:bg-white data-[focused]:text-black"
+      className="input-hint relative w-full  p-4 text-inherit data-[focused]:bg-white data-[focused]:text-black"
     >
-      <BlockNoteView
-        id={region.id}
-        data-editor
-        className="mx-auto flex h-full w-full max-w-[46em] outline-none focus:outline-none [&_*]:outline-none"
-        editor={editor}
-        slashMenu={false}
-        sideMenu={false}
-        formattingToolbar={false}
-        hyperlinkToolbar={false}
-        editable={inEdit}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") {
+      <div aria-hidden={!isEditing ? "true" : undefined}>
+        <BlockNoteView
+          id={region.id}
+          data-editor
+          className="mx-auto flex h-full w-full max-w-[46em] outline-none [&_*]:outline-none"
+          editor={editor}
+          slashMenu={false}
+          sideMenu={false}
+          formattingToolbar={false}
+          hyperlinkToolbar={false}
+          editable={isEditing}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              stopEdit();
+            }
+          }}
+          onFocus={() => {
+            onFocus(region, editor);
+            focus();
+          }}
+          onBlur={() => {
+            onBlur(region, editor);
             stopEdit();
-          }
-        }}
-        onFocus={() => {
-          onFocus(region, editor);
-          focus();
-        }}
-        onBlur={() => {
-          onBlur(region, editor);
-          console.warn("Blur");
-          stopEdit();
-        }}
-      />
-      {!inEdit && (
+          }}
+        />
+      </div>
+      {!isEditing && (
         <button
           ref={editButton}
-          className="absolute inset-0 text-left"
+          className="absolute inset-0 text-left outline-2 outline-white focus:outline-dashed"
           onClick={startEdit}
           aria-label={getPreviewText() || "Blank"}
         ></button>

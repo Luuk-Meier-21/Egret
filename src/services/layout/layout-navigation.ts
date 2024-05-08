@@ -30,7 +30,7 @@ export function useLayoutNavigator(
     recursivePlay(row.type === "branch" ? row.children.length : 1);
   };
 
-  const playSoundColumn = async (column: LayoutNodeData) => {
+  const playSoundColumn = async (_column: LayoutNodeData) => {
     playSound("Purr", { speed: 1.5, volume: 1, time: 0.5 });
   };
 

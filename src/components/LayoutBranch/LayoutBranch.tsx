@@ -5,6 +5,7 @@ import {
   LayoutNodeData,
   LayoutTreeTrunk,
 } from "../../types/layout/layout";
+import { ariaList } from "../../services/aria/label";
 
 interface LayoutBranchProps<T extends LayoutCommon = LayoutTreeTrunk> {
   value: T;
@@ -55,7 +56,7 @@ function LayoutBranch({
 }: LayoutBranchProps<LayoutBranchData<LayoutTreeTrunk>>) {
   return (
     <ul
-      aria-label={`Group ${value.children.length} items`}
+      aria-label={ariaList(value.children.length)}
       id={value.id}
       data-layout-level={level}
       data-layout-type="branch"
