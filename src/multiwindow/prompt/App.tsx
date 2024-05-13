@@ -1,6 +1,6 @@
 import { emit } from "@tauri-apps/api/event";
 import { useHotkeys } from "../../utils/hotkeys";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { announceError } from "../../utils/error";
 import { PromiseWindowData } from "../../services/window/window-manager";
 import SearchList from "../../components/SearchList/SearchList";
@@ -22,6 +22,7 @@ function App() {
   const [input, setInput] = useState<string | null>(null);
   const params = new URLSearchParams(window.location.search);
   const data = getParams(params);
+  const ref = useRef(null);
 
   const submit = (targetInput: any = input) => {
     if (targetInput === null) {
@@ -89,6 +90,7 @@ function App() {
                 reject();
               }
             }}
+            ref={ref}
             searchPosition="top"
             renderItem={(option) => (
               <button

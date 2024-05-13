@@ -1,26 +1,11 @@
 import Fuse, { FuseOptionKey, IFuseOptions } from "fuse.js";
-import {
-  ForwardedRef,
-  KeyboardEvent,
-  forwardRef,
-  useEffect,
-  useState,
-} from "react";
+import { ForwardedRef, useEffect, useState } from "react";
 import { useRegisterAction } from "../../services/actions/actions-registry";
-import { useHotkeyOverride, useHotkeys } from "../../utils/hotkeys";
-import { keyAction } from "../../config/shortcut";
+import { useHotkeyOverride } from "../../utils/hotkeys";
 import { useScopedAction } from "../../services/actions/actions-hook";
+import { SearchProps } from "./Search";
 
-interface SearchProps<T> {
-  list: ReadonlyArray<T>;
-  keys: FuseOptionKey<T>;
-  label: string;
-  onResult?: (results: T[], query: string) => void;
-  onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
-  onConfirm?: () => void;
-}
-
-function SearchInner<T>(
+export function SearchInner<T>(
   {
     list,
     keys,
@@ -72,13 +57,11 @@ function SearchInner<T>(
   }, [query, key]);
 
   useHotkeyOverride();
-  useScopedAction(`Remove search query ${label}`, "Backspace", () => {
+  useScopedAction("Backspace", () => {
     setQuery(null);
   });
 
-  useScopedAction(`Focus search ${label}`, keyAction("f"), () => {
-    focusSearch();
-  });
+  useScopedAction();
 
   return (
     <div
@@ -119,9 +102,3 @@ function SearchInner<T>(
     </div>
   );
 }
-
-export const Search = forwardRef(SearchInner) as <T>(
-  props: SearchProps<T> & { ref?: ForwardedRef<HTMLInputElement> },
-) => ReturnType<typeof SearchInner>;
-
-export default Search;

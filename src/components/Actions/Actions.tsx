@@ -28,6 +28,7 @@ import { prompt, selectSingle } from "../../services/window/window-manager";
 import { announceError } from "../../utils/error";
 import { navigateDropState } from "../../utils/navigation";
 import { formatShortcutsForSpeech } from "../../utils/speech";
+import { useHotkeyOverride, useHotkeys } from "../../utils/hotkeys";
 
 interface ActionsProps {
   children: ReactNode | ReactNode[];
@@ -60,6 +61,12 @@ function Actions({ children }: ActionsProps) {
 
     return action;
   };
+
+  useHotkeyOverride();
+  useHotkeys("Backspace", (event) => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  });
 
   const { elementWithShortcut: NewDocument } = useInjectedAction(
     dispatch,
