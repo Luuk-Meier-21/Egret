@@ -7,7 +7,11 @@ import { useHotkeys } from "../../utils/hotkeys";
 import { formatShortcutsForSpeech } from "../../utils/speech";
 import { IBlockEditor } from "../../types/block";
 
-export type ActionCallback = () => void;
+export type ActionCallback = () =>
+  | boolean
+  | void
+  | Promise<boolean>
+  | Promise<void>;
 
 export interface ActionConfiguration {
   label: string;
