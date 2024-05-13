@@ -1,11 +1,18 @@
-import { DocumentRegionData } from "../../types/document/document";
+import {
+  DocumentRegionData,
+  DocumentRegionUserLandmark,
+} from "../../types/document/document";
 import { schema } from "../../blocks/schema";
 import { shell } from "@tauri-apps/api";
 import { polyfillTiptapBreaking, toggleBlock } from "../../utils/block";
 import { useEditorAutoSaveHandle } from "../../utils/editor";
 import { IBlockEditor } from "../../types/block";
 import { useEffect, useRef, useState } from "react";
-import { keyAction, keyExplicitAction } from "../../config/shortcut";
+import {
+  keyAction,
+  keyExplicitAction,
+  keyLandmark,
+} from "../../config/shortcut";
 import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
 import { useConditionalAction } from "../../services/actions/actions-hook";
 import { insertOrUpdateBlock } from "@blocknote/core";
@@ -13,12 +20,17 @@ import { voiceSay } from "../../bindings";
 import { toDataURL } from "../../utils/url";
 import { announceError } from "../../utils/error";
 import { openAsset } from "../../utils/filesystem";
+import { prompt } from "../../services/window/window-manager";
 
 interface DocumentRegionProps {
   region: DocumentRegionData;
   onSave?: (region: DocumentRegionData, editor: IBlockEditor) => void;
   onChange?: (region: DocumentRegionData, editor: IBlockEditor) => void;
   onFocus: (region: DocumentRegionData, editor: IBlockEditor) => void;
+  onAddLandmark: (
+    region: DocumentRegionData,
+    landmark: DocumentRegionUserLandmark,
+  ) => void;
   onImplicitAnnounce?: (
     region: DocumentRegionData,
     editor: IBlockEditor,
@@ -36,6 +48,7 @@ function DocumentRegion({
   region,
   onSave = () => {},
   onChange = () => {},
+  onAddLandmark = () => {},
   onImplicitAnnounce = () => null,
   onExplicitAnnounce = () => null,
   isFocused = false,
@@ -58,9 +71,11 @@ function DocumentRegion({
     blocks: editor.document,
   });
 
-  useEditorAutoSaveHandle(editor, () => {
+  const autoSave = () => {
     onSave(regionWithCurrentBlock(), editor);
-  });
+  };
+
+  useEditorAutoSaveHandle(editor, autoSave);
 
   const focus = () => {
     try {
@@ -183,7 +198,7 @@ function DocumentRegion({
 
   useConditionalAction(
     "Insert audio fragment",
-    keyAction("l"),
+    keyAction("i"),
     isFocused,
     async () => {
       if (!editor.isFocused()) {
@@ -241,7 +256,7 @@ function DocumentRegion({
 
   useConditionalAction(
     "Speak current position",
-    keyExplicitAction("i"),
+    keyExplicitAction("/"),
     isFocused,
     async () => {
       if (!editor.isFocused()) {
@@ -279,6 +294,23 @@ function DocumentRegion({
     return words.join(" ");
   };
 
+  useConditionalAction(
+    `Add landmark`,
+    keyExplicitAction("l"),
+    isFocused,
+    async () => {
+      const label = await prompt("label", "Landmark label");
+
+      if (label === null) {
+        announceError();
+        return;
+      }
+
+      onAddLandmark(region, {
+        label,
+      });
+    },
+  );
   /**
    * Component renders a visual and a voice assisted (VA) version.
    * - VA:      a button containing x words from the editors content, finetuned for VA users.
@@ -304,8 +336,16 @@ function DocumentRegion({
         onBlur(region, editor);
         stopEdit();
       }}
-      className="input-hint relative w-full  p-4 text-inherit data-[focused]:bg-white data-[focused]:text-black"
+      className="input-hint relative w-full p-4 text-inherit data-[focused]:bg-white data-[focused]:text-black"
     >
+      {region.landmark && (
+        <span
+          aria-hidden="true"
+          className="absolute left-2 right-2 top-0 block text-sm opacity-50"
+        >
+          Landmark: {region.landmark?.label}
+        </span>
+      )}
       <div aria-hidden={!isEditing ? "true" : undefined}>
         <BlockNoteView
           id={region.id}
@@ -319,6 +359,7 @@ function DocumentRegion({
           editable={isEditing}
           onKeyDown={(event) => {
             if (event.key === "Escape") {
+              onSave(region, editor);
               stopEdit();
             }
           }}

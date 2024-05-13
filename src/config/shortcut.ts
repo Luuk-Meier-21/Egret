@@ -13,3 +13,7 @@ export function keyAction(...keys: string[]) {
 export function keyExplicitAction(...keys: string[]) {
   return ["cmd", "shift", ...keys].join("+");
 }
+
+export function keyLandmark(...keys: string[]) {
+  return ["cmd", "option", ...keys].join("+");
+}

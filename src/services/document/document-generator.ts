@@ -73,6 +73,7 @@ export function generateDocumentRegion(
     type: "region",
     contentType: "text",
     blocks: generateBlocks(data.blocks),
+    landmark: undefined,
   };
 }
 

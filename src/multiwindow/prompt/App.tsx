@@ -55,7 +55,7 @@ function App() {
             type="text"
             className="flex h-full w-full bg-black"
             spellCheck="false"
-            placeholder="Document name"
+            placeholder={data.label}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
                 submit();

@@ -20,7 +20,7 @@ import { useScopedAction } from "../../services/actions/actions-hook";
 import { systemSound } from "../../bindings";
 import { useLayoutHTMLExporter } from "../../services/layout/layout-export";
 import clsx from "clsx";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDocumentViewLoader } from "../../services/loader/loader";
 import { ariaItemOfList, ariaLines, ariaList } from "../../services/aria/label";
 import { announceError } from "../../utils/error";
@@ -58,12 +58,12 @@ function DocumentDetail({}: DocumentDetailProps) {
     () => {
       saveDocument();
     },
-    ([layout]) =>
-      deepJSONClone(flattenLayoutNodesByReference(layout.tree).length),
+    ([layout]) => JSON.stringify(layout),
     [builder.layout],
   );
 
   const handleSave = (region: DocumentRegionData, node: LayoutNodeData) => {
+    console.log(region.landmark);
     builder.insertContent(region, node);
     saveDocument();
   };
@@ -216,11 +216,15 @@ function DocumentDetail({}: DocumentDetailProps) {
   // setKeywords(keywords);
   // };
 
-  useScopedAction("Cycle styles", keyAction("t"), async () => {
-    styleIndex < STYLE_KEYS.length - 1
-      ? setStyleIndex(styleIndex + 1)
-      : setStyleIndex(0);
-  });
+  // useScopedAction("Cycle styles", keyAction("t"), async () => {
+  //   styleIndex < STYLE_KEYS.length - 1
+  //     ? setStyleIndex(styleIndex + 1)
+  //     : setStyleIndex(0);
+  // });
+
+  useEffect(() => {
+    console.log(builder.layout);
+  }, [builder.layout]);
 
   const classes = clsx({
     "font-serif text-base text-white [&_a]:text-indigo-500 [&_a]:underline":
@@ -243,6 +247,7 @@ function DocumentDetail({}: DocumentDetailProps) {
               const isFocused = node.id === selection.nodeId;
               const data = node.data || generateDocumentRegion({});
               const label = ariaLines({
+                [`${data.landmark?.label}`]: data.landmark !== undefined,
                 [ariaList(columnLength)]: columnIndex <= 0 && isFocused,
                 [ariaItemOfList(columnIndex + 1, columnLength)]:
                   columnLength > 1,
@@ -256,6 +261,9 @@ function DocumentDetail({}: DocumentDetailProps) {
                   }}
                   onChange={(region) => {
                     handleChange(region, node);
+                  }}
+                  onAddLandmark={(region, landmark) => {
+                    builder.addLandmark(node, landmark);
                   }}
                   onExplicitAnnounce={() => {
                     return `Item ${columnIndex + 1} of Row ${rowIndex + 1} from the top`;

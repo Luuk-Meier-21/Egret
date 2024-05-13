@@ -69,7 +69,6 @@ export class Store<T> {
   };
 
   save = async () => {
-    console.log("save for: ", this.path, this.data);
     await requireDir(DOCUMENTS.path, {
       dir: DOCUMENTS.source,
     });

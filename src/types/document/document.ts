@@ -24,7 +24,12 @@ export type ContentData<T extends TreeData> = TreeData & {
 export type DocumentRegionData = {
   id: string;
   type: "region";
+  landmark?: DocumentRegionUserLandmark;
 } & TextData;
+
+export type DocumentRegionUserLandmark = {
+  label: string;
+};
 
 export interface DocumentViewData extends ContentData<DocumentRegionData> {
   id: string;

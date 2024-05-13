@@ -9,7 +9,10 @@ import {
   LayoutTreeTrunk,
 } from "../../types/layout/layout";
 import { layoutReducer } from "./layout-builder-reducer";
-import { DocumentRegionData } from "../../types/document/document";
+import {
+  DocumentRegionData,
+  DocumentRegionUserLandmark,
+} from "../../types/document/document";
 import { systemSound } from "../../bindings";
 import { blocksHaveContent } from "../../utils/block";
 import { announceError } from "../../utils/error";
@@ -194,6 +197,16 @@ export function useLayoutBuilder(staticLayout: Layout) {
     );
   };
 
+  const addLandmark = (
+    node: LayoutNodeData,
+    landmark: DocumentRegionUserLandmark,
+  ) => {
+    dispatch({ type: "add-landmark", node, landmark });
+    announceCreation();
+
+    return node;
+  };
+
   return {
     // addRow,
     // addColumn,
@@ -203,6 +216,7 @@ export function useLayoutBuilder(staticLayout: Layout) {
     insertContent,
     insertRow,
     insertColumn,
+    addLandmark,
     layout,
   } as const;
 }

@@ -23,7 +23,7 @@ export function useStateStore<T>(
       .set(state)
       .save()
       .then(() => {
-        console.info("💾 ~ store saved to: ", path);
+        // console.info("💾 ~ store saved to: ", path);
       });
   };
 

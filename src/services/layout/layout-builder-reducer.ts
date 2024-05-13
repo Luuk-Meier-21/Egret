@@ -1,4 +1,7 @@
-import { DocumentRegionData } from "../../types/document/document";
+import {
+  DocumentRegionData,
+  DocumentRegionUserLandmark,
+} from "../../types/document/document";
 import {
   Layout,
   LayoutBranchData,
@@ -68,6 +71,11 @@ type LayoutAction = ActionRequired &
     | {
         type: "overwrite";
         layout: Layout;
+      }
+    | {
+        type: "add-landmark";
+        node: LayoutNodeData;
+        landmark: DocumentRegionUserLandmark;
       }
   );
 
@@ -183,6 +191,18 @@ export function layoutReducer(oldLayout: Layout, action: LayoutAction): Layout {
 
       if (node) {
         node.data = action.data;
+      }
+
+      return { ...oldLayout, tree: rows };
+    }
+    case "add-landmark": {
+      const rows = oldLayout.tree;
+      const nodes = flattenLayoutNodesByReference(rows);
+
+      const node = nodes.find((node) => node.id === action.node.id);
+
+      if (node && node.data) {
+        node.data.landmark = action.landmark;
       }
 
       return { ...oldLayout, tree: rows };
