@@ -16,7 +16,7 @@ import {
   keyExplicitNavigation,
   keyNavigation,
 } from "../../config/shortcut";
-import { LayoutNodeData } from "../../types/layout/layout";
+import { Layout, LayoutNodeData } from "../../types/layout/layout";
 import { useStateStore } from "../../services/store/store-hooks";
 import { pathInDirectory } from "../../services/store/store";
 import DocumentRegion from "../DocumentRegion/DocumentRegion";
@@ -26,6 +26,11 @@ import { useLayoutHTMLExporter } from "../../services/layout/layout-export";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 import { useDocumentViewLoader } from "../../services/loader/loader";
+import { AutoSaveDispatchType } from "../../utils/editor";
+import { useHistoryState } from "../../services/layout/layout-history";
+import { useStrictEffect } from "../../services/layout/layout-change";
+import { deepJSONClone } from "../../utils/object";
+import { flattenLayoutNodesByReference } from "../../services/layout/layout-content";
 
 interface DocumentDetailProps {}
 
@@ -37,8 +42,12 @@ function DocumentDetail({}: DocumentDetailProps) {
   const builder = useLayoutBuilder(staticLayout);
   const selection = useLayoutState(builder);
   const navigator = useLayoutNavigator(selection, builder);
+  const history = useHistoryState(builder.layout);
 
   const [styleIndex, setStyleIndex] = useState(0);
+
+  const layoutNodeLength = ([layout]: [Layout]) =>
+    deepJSONClone(flattenLayoutNodesByReference(layout.tree)).length;
 
   const saveDocument = useStateStore(
     builder.layout,
@@ -52,13 +61,27 @@ function DocumentDetail({}: DocumentDetailProps) {
 
   // useStateStore(keywords, keywordsRecordPath, keywordsRecordOptions);
 
-  const handleSave = (region: DocumentRegionData, node: LayoutNodeData) => {
+  // useStrictEffect(
+  //   () => {
+
+  //     saveDocument();
+  //   },
+  //   layoutNodeLength,
+  //   [builder.layout],
+  // );
+
+  const handleSave = (
+    region: DocumentRegionData,
+    node: LayoutNodeData,
+    type: AutoSaveDispatchType,
+  ) => {
     builder.insertContent(region, node);
+    if (type === "unknown") saveDocument();
   };
 
-  // const handleChange = (region: DocumentRegionData, node: LayoutNodeData) => {
-  //   // builder.insertContent(region, node);
-  // };
+  const handleChange = (region: DocumentRegionData, node: LayoutNodeData) => {
+    builder.insertContent(region, node);
+  };
 
   const { elementWithShortcut: GoToHome } = useScopedAction(
     "Navigate to home",
@@ -70,7 +93,6 @@ function DocumentDetail({}: DocumentDetailProps) {
 
   useScopedAction("Save document", keyAction("s"), async () => {
     await saveDocument();
-    systemSound("Glass", 1, 1, 1);
   });
 
   useScopedAction("Export document", keyAction("e"), async () => {
@@ -167,6 +189,17 @@ function DocumentDetail({}: DocumentDetailProps) {
       : setStyleIndex(0);
   });
 
+  useScopedAction("Undo", keyAction("z"), async () => {
+    history.undo();
+    console.log("undo to history", history.history);
+  });
+
+  useScopedAction("Undo", keyAction("g"), async () => {
+    history.setState(builder.layout);
+
+    console.log("set to history", history.history);
+  });
+
   const classes = clsx({
     "font-serif text-base text-white [&_a]:text-indigo-500 [&_a]:underline":
       styleIndex === 0,
@@ -200,17 +233,17 @@ function DocumentDetail({}: DocumentDetailProps) {
               return (
                 <DocumentRegion
                   label={label}
-                  onSave={(region, _editor) => {
-                    handleSave(region, node);
+                  onSave={(region, _editor, type) => {
+                    handleSave(region, node, type);
+                  }}
+                  onChange={(region, _editor) => {
+                    handleChange(region, node);
                   }}
                   onExplicitAnnounce={() => {
                     return `Item ${columnIndex + 1} of Row ${rowIndex + 1} from the top`;
                   }}
                   onImplicitAnnounce={() => {
                     return null;
-                  }}
-                  onChange={() => {
-                    // handleChange(region, node);
                   }}
                   isFocused={isFocused}
                   onFocus={() => {

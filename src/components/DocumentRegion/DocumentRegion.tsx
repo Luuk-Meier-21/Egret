@@ -6,7 +6,10 @@ import {
   tiptapIsBreaking,
   toggleBlock,
 } from "../../utils/block";
-import { useEditorAutoSaveHandle } from "../../utils/editor";
+import {
+  AutoSaveDispatchType,
+  useEditorAutoSaveHandle,
+} from "../../utils/editor";
 import { IBlockEditor } from "../../types/block";
 import { useEffect, useRef, useState } from "react";
 import { keyAction, keyExplicitAction } from "../../config/shortcut";
@@ -24,7 +27,11 @@ import { openAsset } from "../../utils/filesystem";
 
 interface DocumentRegionProps {
   region: DocumentRegionData;
-  onSave?: (region: DocumentRegionData, editor: IBlockEditor) => void;
+  onSave?: (
+    region: DocumentRegionData,
+    editor: IBlockEditor,
+    type: AutoSaveDispatchType,
+  ) => void;
   onChange?: (region: DocumentRegionData, editor: IBlockEditor) => void;
   onFocus: (region: DocumentRegionData, editor: IBlockEditor) => void;
   onImplicitAnnounce?: (
@@ -66,8 +73,8 @@ function DocumentRegion({
     blocks: editor.document,
   });
 
-  useEditorAutoSaveHandle(editor, () => {
-    onSave(regionWithCurrentBlock(), editor);
+  useEditorAutoSaveHandle(editor, (type: AutoSaveDispatchType) => {
+    onSave(regionWithCurrentBlock(), editor, type);
   });
 
   const focus = () => {
@@ -76,7 +83,7 @@ function DocumentRegion({
       editor.focus();
       onImplicitAnnounce(region, editor);
     } catch (error) {
-      console.info(`Unable to focus: (${region.label || region.id})`);
+      console.warn(`Unable to focus: (${region.label || region.id})`);
     }
   };
 
@@ -302,7 +309,6 @@ function DocumentRegion({
       }}
       onBlur={() => {
         onBlur(region, editor);
-        console.warn("Blur");
         stopEdit();
       }}
       className="input-hint relative w-full  p-4 text-inherit outline-none outline-8 focus:outline data-[focused]:bg-white data-[focused]:text-black"

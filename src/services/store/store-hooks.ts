@@ -1,9 +1,8 @@
 import { FileEntry, FsOptions, readDir } from "@tauri-apps/api/fs";
 import { Store, decodeJSON, encodeJSON } from "./store";
 import { DOCUMENTS } from "../../config/files";
-import { useEffect } from "react";
 import { requireDir } from "../../utils/filesystem";
-import { useObservableEffect } from "../layout/layout-change";
+import { systemSound } from "../../bindings";
 
 export function useStateStore<T>(
   state: T,
@@ -24,13 +23,10 @@ export function useStateStore<T>(
       .set(state)
       .save()
       .then(() => {
+        systemSound("Glass", 1, 1, 1);
         console.info("💾 ~ store saved to: ", path);
       });
   };
-
-  useObservableEffect(() => {
-    forceSave();
-  }, [state]);
 
   return forceSave;
 }

@@ -12,25 +12,12 @@ import { DocumentRegionData } from "../../types/document/document";
 import { systemSound } from "../../bindings";
 import { blocksHaveContent } from "../../utils/block";
 import { announceError } from "../../utils/error";
-import { useHistoryState } from "./layout-history";
-import { useObservableEffect } from "./layout-change";
-import { useScopedAction } from "../actions/actions-hook";
+import { flattenLayoutNodes } from "./layout-content";
 
 export type LayoutBuilderCallback = (layout: Layout) => void;
 
 export function useLayoutBuilder(staticLayout: Layout) {
   const [layout, dispatch] = useReducer(layoutReducer, staticLayout);
-  const layoutHistory = useHistoryState(layout);
-
-  useObservableEffect(() => {
-    layoutHistory.setState(layout);
-  }, [layout]);
-
-  useScopedAction("undo layout change", "cmd+z", () => {
-    layoutHistory.undo();
-
-    console.log(layoutHistory.pointer);
-  });
 
   useEffect(() => {
     handleRowChildrenChange(layout.tree);
@@ -168,6 +155,12 @@ export function useLayoutBuilder(staticLayout: Layout) {
     );
   };
 
+  const overwrite = (layout: Layout) => {
+    dispatch({ type: "overwrite", layout });
+
+    return flattenLayoutNodes(layout)[0];
+  };
+
   return {
     addRow,
     addColumn,
@@ -175,6 +168,7 @@ export function useLayoutBuilder(staticLayout: Layout) {
     removeRow,
     removeNodeFromRow,
     insertContent,
+    overwrite,
     layout,
   } as const;
 }

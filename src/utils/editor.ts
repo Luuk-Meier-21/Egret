@@ -15,18 +15,21 @@ import { exists } from "@tauri-apps/api/fs";
 
 const UNSAVED_CHANGES_MAX = 5;
 
+export type AutoSaveDispatchType =
+  | "force"
+  | "changes"
+  | "blur"
+  | "close"
+  | "unknown";
+
 export function useEditorAutoSaveHandle(
   editor: IBlockEditor,
-  onSave: () => void,
+  onSave: (type: AutoSaveDispatchType) => void,
 ) {
   const unsavedChangesCount = useRef(0);
 
-  const handleSave = (type: string = "unknown") => {
-    console.info(
-      `🪝 ~ autosave, event: ${type}, after:`,
-      unsavedChangesCount.current,
-    );
-    onSave();
+  const handleSave = (type: AutoSaveDispatchType = "unknown") => {
+    onSave(type);
     unsavedChangesCount.current = 0;
   };
 
@@ -35,7 +38,7 @@ export function useEditorAutoSaveHandle(
       unsavedChangesCount.current++;
 
       if (unsavedChangesCount.current > UNSAVED_CHANGES_MAX) {
-        handleSave("auto");
+        handleSave("changes");
       }
     });
 
@@ -52,7 +55,7 @@ export function useEditorAutoSaveHandle(
     });
 
     return () => {
-      handleSave("unmount");
+      handleSave("close");
       unlisten();
     };
   }, []);
