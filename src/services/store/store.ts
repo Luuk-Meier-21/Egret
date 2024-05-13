@@ -69,6 +69,7 @@ export class Store<T> {
   };
 
   save = async () => {
+    console.log("save for: ", this.path, this.data);
     await requireDir(DOCUMENTS.path, {
       dir: DOCUMENTS.source,
     });
@@ -78,6 +79,7 @@ export class Store<T> {
     return this.data;
   };
   load = async () => {
+    console.log("load for: ", this.path);
     const json = await readTextFile(this.path, this.options);
     this.data = this.decode(json);
 

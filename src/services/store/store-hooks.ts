@@ -2,6 +2,7 @@ import { FileEntry, FsOptions, readDir } from "@tauri-apps/api/fs";
 import { Store, decodeJSON, encodeJSON } from "./store";
 import { DOCUMENTS } from "../../config/files";
 import { requireDir } from "../../utils/filesystem";
+import { useObservableEffect } from "../layout/layout-change";
 
 export function useStateStore<T>(
   state: T,
@@ -26,9 +27,9 @@ export function useStateStore<T>(
       });
   };
 
-  // useEffect(() => {
-  //   forceSave();
-  // }, [state]);
+  useObservableEffect(() => {
+    forceSave();
+  }, [state]);
 
   return forceSave;
 }
