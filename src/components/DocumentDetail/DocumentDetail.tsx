@@ -24,6 +24,9 @@ import { useState } from "react";
 import { useDocumentViewLoader } from "../../services/loader/loader";
 import { ariaItemOfList, ariaLines, ariaList } from "../../services/aria/label";
 import { announceError } from "../../utils/error";
+import { useStrictEffect } from "../../services/layout/layout-change";
+import { deepJSONClone } from "../../utils/object";
+import { flattenLayoutNodesByReference } from "../../services/layout/layout-content";
 
 interface DocumentDetailProps {}
 
@@ -51,13 +54,23 @@ function DocumentDetail({}: DocumentDetailProps) {
 
   // useStateStore(keywords, keywordsRecordPath, keywordsRecordOptions);
 
+  useStrictEffect(
+    () => {
+      saveDocument();
+    },
+    ([layout]) =>
+      deepJSONClone(flattenLayoutNodesByReference(layout.tree).length),
+    [builder.layout],
+  );
+
   const handleSave = (region: DocumentRegionData, node: LayoutNodeData) => {
     builder.insertContent(region, node);
+    saveDocument();
   };
 
-  // const handleChange = (region: DocumentRegionData, node: LayoutNodeData) => {
-  //   // builder.insertContent(region, node);
-  // };
+  const handleChange = (region: DocumentRegionData, node: LayoutNodeData) => {
+    builder.insertContent(region, node);
+  };
 
   const { elementWithShortcut: GoToHome } = useScopedAction(
     "Navigate to home",
@@ -241,14 +254,14 @@ function DocumentDetail({}: DocumentDetailProps) {
                   onSave={(region, _editor) => {
                     handleSave(region, node);
                   }}
+                  onChange={(region) => {
+                    handleChange(region, node);
+                  }}
                   onExplicitAnnounce={() => {
                     return `Item ${columnIndex + 1} of Row ${rowIndex + 1} from the top`;
                   }}
                   onImplicitAnnounce={() => {
                     return null;
-                  }}
-                  onChange={() => {
-                    // handleChange(region, node);
                   }}
                   isFocused={isFocused}
                   onFocus={() => {
