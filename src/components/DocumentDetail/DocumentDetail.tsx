@@ -14,7 +14,11 @@ import {
 } from "../../config/shortcut";
 import { LayoutNodeData } from "../../types/layout/layout";
 import { useStateStore } from "../../services/store/store-hooks";
-import { pathInDirectory } from "../../services/store/store";
+import {
+  defaultFsOptions,
+  pathInDirectory,
+  pathOfDocumentsDirectory,
+} from "../../services/store/store";
 import DocumentRegion from "../DocumentRegion/DocumentRegion";
 import { useScopedAction } from "../../services/actions/actions-hook";
 import { systemSound } from "../../bindings";
@@ -25,8 +29,12 @@ import { useDocumentViewLoader } from "../../services/loader/loader";
 import { ariaItemOfList, ariaLines, ariaList } from "../../services/aria/label";
 import { announceError } from "../../utils/error";
 import { useStrictEffect } from "../../services/layout/layout-change";
-import { deepJSONClone } from "../../utils/object";
 import { flattenLayoutNodesByReference } from "../../services/layout/layout-content";
+import { prompt, selectSingle } from "../../services/window/window-manager";
+import { FILE_BIN } from "../../config/files";
+import { requireDir } from "../../utils/filesystem";
+import { copyFile, removeDir, removeFile } from "@tauri-apps/api/fs";
+import { navigateDropState } from "../../utils/navigation";
 
 interface DocumentDetailProps {}
 
@@ -63,7 +71,6 @@ function DocumentDetail({}: DocumentDetailProps) {
   );
 
   const handleSave = (region: DocumentRegionData, node: LayoutNodeData) => {
-    console.log(region.landmark);
     builder.insertContent(region, node);
     saveDocument();
   };
@@ -94,7 +101,23 @@ function DocumentDetail({}: DocumentDetailProps) {
     "Delete document",
     keyExplicitAction("backspace"),
     async () => {
-      await deleteDocumentById(staticDocumentData.id);
+      const confirmText = "document";
+      const text = await prompt(
+        "Confirm deletion",
+        `Type the word '${confirmText}' to confirm deletion`,
+      );
+
+      if (confirmText !== text) {
+        announceError();
+        return;
+      }
+
+      await removeDir(pathOfDocumentsDirectory(directory.fileName), {
+        ...defaultFsOptions,
+        recursive: true,
+      });
+
+      navigate("/");
     },
   );
 
@@ -202,6 +225,22 @@ function DocumentDetail({}: DocumentDetailProps) {
     },
   );
 
+  useScopedAction(`Find landmark`, keyExplicitAction("l"), async () => {
+    const options = flattenLayoutNodesByReference(builder.layout.tree)
+      .filter((value) => value.data?.landmark !== undefined)
+      .map((value) => ({
+        value: value.id,
+        label: value.data?.landmark?.label || "",
+      }));
+
+    if (options.length <= 0) {
+      return false;
+    }
+
+    const nodeId = await selectSingle("label", "Landmark label", options);
+    selection.setNodeId(nodeId);
+  });
+
   // const setKeywordRelation = async (keyword: Keyword) => {
   // const newKeywords = keywords;
   // const hasRelation = keywordHasRelation(keyword, staticDocumentData);
@@ -221,10 +260,6 @@ function DocumentDetail({}: DocumentDetailProps) {
   //     ? setStyleIndex(styleIndex + 1)
   //     : setStyleIndex(0);
   // });
-
-  useEffect(() => {
-    console.log(builder.layout);
-  }, [builder.layout]);
 
   const classes = clsx({
     "font-serif text-base text-white [&_a]:text-indigo-500 [&_a]:underline":

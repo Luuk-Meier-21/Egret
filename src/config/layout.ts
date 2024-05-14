@@ -5,9 +5,11 @@ import {
 } from "../services/layout/layout-generator";
 import { Layout } from "../types/layout/layout";
 
-const defaultLayoutMapping = {
+export const defaultLayoutMapping = {
   website: generateLayoutWebsite,
   simple: generateLayoutSimple,
+  "grid-small": generateLayoutGrid3,
+  "grid-large": generateLayoutGrid6,
 };
 
 export function generateDefaultLayout(key: keyof typeof defaultLayoutMapping) {
@@ -69,6 +71,79 @@ function generateLayoutSimple(): Layout {
       generateLayoutBranch({
         flow: "horizontal",
         children: [generateLayoutNode({}), generateLayoutNode({})],
+      }),
+    ],
+  });
+}
+
+function generateLayoutGrid3(): Layout {
+  return generateLayout({
+    name: "Grid 3 by 3",
+    tree: [
+      generateLayoutBranch({
+        flow: "horizontal",
+        children: [
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+        ],
+      }),
+      generateLayoutBranch({
+        flow: "horizontal",
+        children: [
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+        ],
+      }),
+      generateLayoutBranch({
+        flow: "horizontal",
+        children: [
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+        ],
+      }),
+    ],
+  });
+}
+
+function generateLayoutGrid6(): Layout {
+  return generateLayout({
+    name: "Grid 6 by 3",
+    tree: [
+      generateLayoutBranch({
+        flow: "horizontal",
+        children: [
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+        ],
+      }),
+      generateLayoutBranch({
+        flow: "horizontal",
+        children: [
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+        ],
+      }),
+      generateLayoutBranch({
+        flow: "horizontal",
+        children: [
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+        ],
       }),
     ],
   });

@@ -20,7 +20,7 @@ import { voiceSay } from "../../bindings";
 import { toDataURL } from "../../utils/url";
 import { announceError } from "../../utils/error";
 import { openAsset } from "../../utils/filesystem";
-import { prompt } from "../../services/window/window-manager";
+import { prompt, selectSingle } from "../../services/window/window-manager";
 
 interface DocumentRegionProps {
   region: DocumentRegionData;

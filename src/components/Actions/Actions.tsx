@@ -5,6 +5,7 @@ import { handleError, handleSucces } from "../../utils/announce";
 import { useAbstractStore } from "../../services/store/store-hooks";
 import {
   documentsPath,
+  pathInDirectory,
   pathOfDocumentsDirectory,
 } from "../../services/store/store";
 import {
@@ -32,6 +33,12 @@ import { announceError } from "../../utils/error";
 import { navigateDropState } from "../../utils/navigation";
 import { formatShortcutsForSpeech } from "../../utils/speech";
 import { useHotkeyOverride, useHotkeys } from "../../utils/hotkeys";
+import { generateLayoutWithContent } from "../../services/layout/layout-content";
+import {
+  defaultLayoutMapping,
+  generateDefaultLayout,
+} from "../../config/layout";
+import { ONBOARDING_CONTENT } from "../../config/onboarding";
 
 interface ActionsProps {
   children: ReactNode | ReactNode[];
@@ -96,6 +103,26 @@ function Actions({ children }: ActionsProps) {
           path,
           parseFileToDocumentDirectory,
         );
+
+        const layoutOptions = Object.keys(defaultLayoutMapping).map((key) => ({
+          value: key,
+          label: key,
+        }));
+
+        const layoutKey = (await selectSingle(
+          "Document layout",
+          "Select a document layout",
+          layoutOptions,
+        )) as keyof typeof defaultLayoutMapping;
+
+        await store
+          .createStore(
+            generateLayoutWithContent(generateDefaultLayout(layoutKey), [
+              ONBOARDING_CONTENT,
+            ]),
+            pathInDirectory(directory, "layout.json"),
+          )
+          .save();
 
         navigateDropState(navigate, `/documents/${directory.id}`);
         handleSucces();

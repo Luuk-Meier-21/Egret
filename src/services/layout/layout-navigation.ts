@@ -27,8 +27,8 @@ export function useLayoutNavigator(
     };
 
     playSound("Blow", { speed: 2.5, volume: 1, time: 0.5 });
-    await delay(300);
-    recursivePlay(row.type === "branch" ? row.children.length : 1);
+    // await delay(300);
+    // recursivePlay(row.type === "branch" ? row.children.length : 1);
   };
 
   const playSoundColumn = async (_column: LayoutNodeData) => {

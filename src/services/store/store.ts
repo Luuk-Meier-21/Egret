@@ -1,6 +1,12 @@
-import { FsOptions, readTextFile, writeTextFile } from "@tauri-apps/api/fs";
+import {
+  FsOptions,
+  copyFile,
+  readTextFile,
+  removeFile,
+  writeTextFile,
+} from "@tauri-apps/api/fs";
 import { formatDocumentName } from "../../utils/documents";
-import { DOCUMENTS } from "../../config/files";
+import { DOCUMENTS, FILE_BIN } from "../../config/files";
 import { DocumentDirectory, DocumentReference } from "../../types/documents";
 import { requireDir, requireFile } from "../../utils/filesystem";
 
@@ -46,10 +52,12 @@ export interface Storea<T> {
   save: () => Promise<T | null>;
   load: () => Promise<T>;
 }
+export const defaultFsOptions: FsOptions = {
+  dir: DOCUMENTS.source,
+};
+
 export class Store<T> {
-  options: FsOptions = {
-    dir: DOCUMENTS.source,
-  };
+  options: FsOptions = defaultFsOptions;
 
   constructor(
     public data: T,
@@ -83,6 +91,18 @@ export class Store<T> {
     this.data = this.decode(json);
 
     return this.data;
+  };
+  delete = async () => {
+    await requireDir(FILE_BIN.path, {
+      dir: FILE_BIN.source,
+    });
+
+    const binPath = `${FILE_BIN.path}/${this.path}`;
+
+    await copyFile(this.path, binPath, this.options);
+    await removeFile(this.path, this.options);
+
+    return true;
   };
 
   static async load<T>(
