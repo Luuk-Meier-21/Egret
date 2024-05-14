@@ -22,7 +22,10 @@ import {
   ActionReducerAction,
   actionsReducer,
 } from "../../services/actions/actions-reducer";
-import { useInjectedAction } from "../../services/actions/actions-hook";
+import {
+  useInjectedAction,
+  useScopedAction,
+} from "../../services/actions/actions-hook";
 import { keyAction, keyExplicitAction } from "../../config/shortcut";
 import { prompt, selectSingle } from "../../services/window/window-manager";
 import { announceError } from "../../utils/error";
@@ -62,10 +65,22 @@ function Actions({ children }: ActionsProps) {
     return action;
   };
 
-  useHotkeyOverride();
-  useHotkeys("Backspace", (event) => {
-    event.preventDefault();
-    event.stopImmediatePropagation();
+  // useHotkeys("Backspace", (event) => {
+  //   const tagname = (event.target as HTMLBodyElement).tagName;
+  //   if (tagname === "BUTTON" || tagname === "BODY") {
+  //     event.preventDefault();
+  //     event.stopImmediatePropagation();
+  //   }
+  // });
+
+  window.addEventListener("keydown", (event) => {
+    if (
+      event.key === "Backspace" &&
+      (event.target.tagName === "BODY" || event.target.tagName === "BUTTON")
+    ) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
   });
 
   const { elementWithShortcut: NewDocument } = useInjectedAction(
@@ -189,23 +204,6 @@ function Actions({ children }: ActionsProps) {
           <li>
             <NewKeyword />
           </li>
-          {/* {actions.map((action) => (
-            <button
-              className="block"
-              onClick={() => {
-                action.callback();
-              }}
-            >
-              {action.label}{" "}
-              <em className="text-white/40">
-                (
-                {formatShortcutsForSpeech(action.shortcut.split("+")).join(
-                  ", ",
-                )}
-                )
-              </em>
-            </button>
-          ))} */}
         </ul>
       </ActionsContext.Provider>
     </div>

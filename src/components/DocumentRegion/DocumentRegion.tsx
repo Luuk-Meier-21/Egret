@@ -273,6 +273,24 @@ function DocumentRegion({
     },
   );
 
+  useConditionalAction(
+    `Add landmark`,
+    keyExplicitAction("l"),
+    isFocused,
+    async () => {
+      const label = await prompt("label", "Landmark label");
+
+      if (label === null) {
+        announceError();
+        return;
+      }
+
+      onAddLandmark(region, {
+        label,
+      });
+    },
+  );
+
   const getPreviewText = (): string | undefined => {
     const maxWords = 5;
 
@@ -294,23 +312,6 @@ function DocumentRegion({
     return words.join(" ");
   };
 
-  useConditionalAction(
-    `Add landmark`,
-    keyExplicitAction("l"),
-    isFocused,
-    async () => {
-      const label = await prompt("label", "Landmark label");
-
-      if (label === null) {
-        announceError();
-        return;
-      }
-
-      onAddLandmark(region, {
-        label,
-      });
-    },
-  );
   /**
    * Component renders a visual and a voice assisted (VA) version.
    * - VA:      a button containing x words from the editors content, finetuned for VA users.
@@ -327,15 +328,6 @@ function DocumentRegion({
       data-focused={isFocused || undefined}
       ref={ref}
       aria-label={label}
-      tabIndex={0}
-      onFocus={() => {
-        onFocus(region, editor);
-        focus();
-      }}
-      onBlur={() => {
-        onBlur(region, editor);
-        stopEdit();
-      }}
       className="input-hint relative w-full p-4 text-inherit data-[focused]:bg-white data-[focused]:text-black"
     >
       {region.landmark && (
@@ -377,7 +369,19 @@ function DocumentRegion({
         <button
           ref={editButton}
           className="absolute inset-0 text-left outline-2 outline-white focus:outline-dashed"
-          onClick={startEdit}
+          onClick={() => {
+            onFocus(region, editor);
+            focus();
+            startEdit();
+          }}
+          onFocus={() => {
+            onFocus(region, editor);
+            focus();
+          }}
+          onBlur={() => {
+            onBlur(region, editor);
+            stopEdit();
+          }}
           aria-label={getPreviewText() || "Blank"}
         ></button>
       )}

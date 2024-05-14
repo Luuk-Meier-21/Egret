@@ -71,7 +71,6 @@ function SearchInner<T>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, key]);
 
-  useHotkeyOverride();
   useScopedAction(`Remove search query ${label}`, "Backspace", () => {
     setQuery(null);
   });
