@@ -35,6 +35,10 @@ export function miscPath(name: string, extension: string = "json"): string {
   return `${DOCUMENTS.path}/${name}.${extension}`;
 }
 
+export function concatPath(...segments: string[]): string {
+  return segments.join("/");
+}
+
 export function documentsPath(
   filePath?: string,
   extension: string = "json",

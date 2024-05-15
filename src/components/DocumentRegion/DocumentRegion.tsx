@@ -8,11 +8,7 @@ import { polyfillTiptapBreaking, toggleBlock } from "../../utils/block";
 import { useEditorAutoSaveHandle } from "../../utils/editor";
 import { IBlockEditor } from "../../types/block";
 import { useEffect, useRef, useState } from "react";
-import {
-  keyAction,
-  keyExplicitAction,
-  keyLandmark,
-} from "../../config/shortcut";
+import { keyAction, keyExplicitAction } from "../../config/shortcut";
 import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
 import { useConditionalAction } from "../../services/actions/actions-hook";
 import { insertOrUpdateBlock } from "@blocknote/core";
@@ -20,7 +16,7 @@ import { voiceSay } from "../../bindings";
 import { toDataURL } from "../../utils/url";
 import { announceError } from "../../utils/error";
 import { openAsset } from "../../utils/filesystem";
-import { prompt, selectSingle } from "../../services/window/window-manager";
+import { prompt } from "../../services/window/window-manager";
 
 interface DocumentRegionProps {
   region: DocumentRegionData;

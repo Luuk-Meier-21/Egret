@@ -46,12 +46,6 @@ export function useScopedAction(
     hidden: false,
   };
 
-  const announce = (value: boolean) => {
-    if (!value) {
-      announceError();
-    }
-  };
-
   useHotkeys(shortcut, () => actionCallbackWithAnnounce(callback));
 
   useEffect(() => {

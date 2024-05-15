@@ -17,7 +17,7 @@ export function useLayoutNavigator(
   const rows = layout.tree;
   const nodes = flattenLayoutNodesByReference(layout.tree);
 
-  const playSoundRows = async (row: LayoutTreeTrunk) => {
+  const playSoundRows = async (_row: LayoutTreeTrunk) => {
     const recursivePlay = async (count: number, index: number = 0) => {
       if (index < count) {
         playSound("Purr", { speed: 2.5, volume: 1, time: 0.25 });

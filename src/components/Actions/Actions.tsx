@@ -23,16 +23,12 @@ import {
   ActionReducerAction,
   actionsReducer,
 } from "../../services/actions/actions-reducer";
-import {
-  useInjectedAction,
-  useScopedAction,
-} from "../../services/actions/actions-hook";
+import { useInjectedAction } from "../../services/actions/actions-hook";
 import { keyAction, keyExplicitAction } from "../../config/shortcut";
 import { prompt, selectSingle } from "../../services/window/window-manager";
 import { announceError } from "../../utils/error";
 import { navigateDropState } from "../../utils/navigation";
 import { formatShortcutsForSpeech } from "../../utils/speech";
-import { useHotkeyOverride, useHotkeys } from "../../utils/hotkeys";
 import { generateLayoutWithContent } from "../../services/layout/layout-content";
 import {
   defaultLayoutMapping,
@@ -72,17 +68,10 @@ function Actions({ children }: ActionsProps) {
     return action;
   };
 
-  // useHotkeys("Backspace", (event) => {
-  //   const tagname = (event.target as HTMLBodyElement).tagName;
-  //   if (tagname === "BUTTON" || tagname === "BODY") {
-  //     event.preventDefault();
-  //     event.stopImmediatePropagation();
-  //   }
-  // });
-
   window.addEventListener("keydown", (event) => {
     if (
       event.key === "Backspace" &&
+      //@ts-ignore
       (event.target.tagName === "BODY" || event.target.tagName === "BUTTON")
     ) {
       event.preventDefault();
@@ -206,7 +195,6 @@ function Actions({ children }: ActionsProps) {
           value: action.label,
         })),
       );
-      console.log(actionLabel);
       const action = getActionBySlug(slugify(actionLabel));
       action?.callback();
     },

@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router";
-import { deleteDocumentById } from "../../utils/documents";
 import { LayoutBranchOrNode } from "../LayoutBranch/LayoutBranch";
 import { DocumentRegionData } from "../../types/document/document";
 import { useLayoutNavigator } from "../../services/layout/layout-navigation";
@@ -15,6 +14,7 @@ import {
 import { LayoutNodeData } from "../../types/layout/layout";
 import { useStateStore } from "../../services/store/store-hooks";
 import {
+  concatPath,
   defaultFsOptions,
   pathInDirectory,
   pathOfDocumentsDirectory,
@@ -22,40 +22,44 @@ import {
 import DocumentRegion from "../DocumentRegion/DocumentRegion";
 import { useScopedAction } from "../../services/actions/actions-hook";
 import { systemSound } from "../../bindings";
-import { useLayoutHTMLExporter } from "../../services/layout/layout-export";
 import clsx from "clsx";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDocumentViewLoader } from "../../services/loader/loader";
 import { ariaItemOfList, ariaLines, ariaList } from "../../services/aria/label";
 import { announceError } from "../../utils/error";
 import { useStrictEffect } from "../../services/layout/layout-change";
 import { flattenLayoutNodesByReference } from "../../services/layout/layout-content";
-import { prompt, selectSingle } from "../../services/window/window-manager";
-import { FILE_BIN } from "../../config/files";
-import { requireDir } from "../../utils/filesystem";
-import { copyFile, removeDir, removeFile } from "@tauri-apps/api/fs";
-import { navigateDropState } from "../../utils/navigation";
+import { selectSingle } from "../../services/window/window-manager";
+import { removeDir, writeTextFile } from "@tauri-apps/api/fs";
+import { save } from "@tauri-apps/api/dialog";
+import {
+  ExportFormat,
+  ExportSize,
+  ExportStyle,
+  exportDocument,
+  getAllExportSizeKeys,
+  getAllExportStyleKeys,
+  getAllExporterKeys,
+} from "../../services/export/export";
 
 interface DocumentDetailProps {}
 
-const STYLE_KEYS = ["serif", "sans"];
-
 function DocumentDetail({}: DocumentDetailProps) {
-  const [directory, staticDocumentData, staticLayout, _keywords] =
+  const [directory, _staticDocumentData, staticLayout, _keywords] =
     useDocumentViewLoader();
 
   const builder = useLayoutBuilder(staticLayout);
   const selection = useLayoutState(builder.layout);
   const navigator = useLayoutNavigator(selection, builder.layout);
 
-  const [styleIndex, setStyleIndex] = useState(0);
+  const [styleIndex, _setStyleIndex] = useState(0);
 
   const saveDocument = useStateStore(
     builder.layout,
     pathInDirectory(directory, "layout.json"),
   );
 
-  const exportToHtml = useLayoutHTMLExporter(staticDocumentData.name);
+  // const exportToHtml = useLayoutHTMLExporter(staticDocumentData.name);
   const navigate = useNavigate();
 
   // const [keywords, setKeywords] = useState<Keyword[]>(staticKeywords);
@@ -93,7 +97,44 @@ function DocumentDetail({}: DocumentDetailProps) {
   });
 
   useScopedAction("Export document", keyAction("e"), async () => {
-    await exportToHtml(builder.layout);
+    await saveDocument();
+
+    const format = (await selectSingle(
+      "Select format",
+      "Export format",
+      getAllExporterKeys().map((key) => ({ label: key, value: key })),
+    )) as ExportFormat;
+    const size = (await selectSingle(
+      "Select size",
+      "Export size",
+      getAllExportSizeKeys().map((key) => ({ label: key, value: key })),
+    )) as ExportSize;
+    const style = (await selectSingle(
+      "Select style preset",
+      "Export style",
+      getAllExportStyleKeys().map((key) => ({ label: key, value: key })),
+    )) as ExportStyle;
+
+    const path = await save({
+      title: `Save as ${format}`,
+      defaultPath: `~/Documents/${directory.name}`,
+      filters: [
+        {
+          name: "Export",
+          extensions: [format],
+        },
+      ],
+    });
+
+    if (path === null) {
+      return;
+    }
+
+    const absolutePath = concatPath(directory.filePath, "layout.json");
+
+    const svg = await exportDocument(absolutePath, format, size, style);
+
+    await writeTextFile(path, svg);
     systemSound("Glass", 1, 1, 1);
   });
 
@@ -234,12 +275,17 @@ function DocumentDetail({}: DocumentDetailProps) {
       }));
 
     if (options.length <= 0) {
-      return false;
+      announceError();
+      return;
     }
 
     const nodeId = await selectSingle("label", "Landmark label", options);
     selection.setNodeId(nodeId);
   });
+
+  // useScopedAction(`Find landmark`, keyExplicitAction(""), async () => {
+  //   window.print();
+  // });
 
   // const setKeywordRelation = async (keyword: Keyword) => {
   // const newKeywords = keywords;
@@ -270,7 +316,7 @@ function DocumentDetail({}: DocumentDetailProps) {
 
   return (
     <div data-component-name="DocumentDetail">
-      <div className="px-4 pb-2 opacity-50 focus-within:opacity-100">
+      <div className="prose-layout-node:bg-red-200 px-4 pb-2 opacity-50 focus-within:opacity-100">
         <GoToHome />
       </div>
       <main className={classes}>
@@ -297,7 +343,7 @@ function DocumentDetail({}: DocumentDetailProps) {
                   onChange={(region) => {
                     handleChange(region, node);
                   }}
-                  onAddLandmark={(region, landmark) => {
+                  onAddLandmark={(_region, landmark) => {
                     builder.addLandmark(node, landmark);
                   }}
                   onExplicitAnnounce={() => {

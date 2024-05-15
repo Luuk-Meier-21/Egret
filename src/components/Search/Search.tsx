@@ -7,7 +7,6 @@ import {
   useState,
 } from "react";
 import { useRegisterAction } from "../../services/actions/actions-registry";
-import { useHotkeyOverride, useHotkeys } from "../../utils/hotkeys";
 import { keyAction } from "../../config/shortcut";
 import { useScopedAction } from "../../services/actions/actions-hook";
 
@@ -32,7 +31,7 @@ function SearchInner<T>(
   ref: ForwardedRef<HTMLInputElement>,
 ) {
   const [query, setQuery] = useState<string | null>(null);
-  const [key, setKey] = useState<FuseOptionKey<T> | null>(null);
+  const [key, _setKey] = useState<FuseOptionKey<T> | null>(null);
 
   const focusSearch = () => {
     // @ts-expect-error

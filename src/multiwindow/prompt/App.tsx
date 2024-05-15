@@ -2,26 +2,13 @@ import { emit } from "@tauri-apps/api/event";
 import { useHotkeys } from "../../utils/hotkeys";
 import { useRef, useState } from "react";
 import { announceError } from "../../utils/error";
-import { PromiseWindowData } from "../../services/window/window-manager";
+import { getWindowParams } from "../../services/window/window-manager";
 import SearchList from "../../components/SearchList/SearchList";
-
-const getParams = (params: URLSearchParams): PromiseWindowData => {
-  const data = {} as PromiseWindowData;
-
-  for (let [key, value] of params.entries() as IterableIterator<
-    [keyof PromiseWindowData, string]
-  >) {
-    //@ts-ignore
-    data[key] = value.includes(",") ? value.split(",") : value;
-  }
-
-  return data;
-};
 
 function App() {
   const [input, setInput] = useState<string | null>(null);
   const params = new URLSearchParams(window.location.search);
-  const data = getParams(params);
+  const data = getWindowParams(params);
   const ref = useRef(null);
 
   const submit = (targetInput: any = input) => {

@@ -64,7 +64,7 @@ function rowComponent({
         alt={alt}
       />
       <figcaption className="inline-content flex text-sm">
-        <span id="caption" role="textbox" ref={ref} contentEditable={true} />
+        <span id="caption" role="textbox" ref={ref} />
       </figcaption>
     </figure>
   );

@@ -94,7 +94,7 @@ function App() {
             const layout = await store
               .loadStore(
                 pathInDirectory(directory, "layout.json"),
-                generateLayoutWithContent(generateDefaultLayout("simple"), [
+                generateLayoutWithContent(generateDefaultLayout("squares"), [
                   ONBOARDING_CONTENT,
                 ]),
               )

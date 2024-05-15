@@ -1,36 +1,4 @@
-import { useRef, useState } from "react";
-import { deepJSONClone } from "../../utils/object";
-import { useObservableEffect } from "./layout-change";
-
-// export function useObjectHistory<
-//   T extends Record<string, any> | Record<string, any>[],
-// >(object: T) {
-//   const [history, setHistory] = useState([deepJSONClone(object)]);
-//   const item = useRef(deepJSONClone(object));
-
-//   const push = (item: T): number => {
-//     const len = history.length + 1;
-//     setHistory([...history, item]);
-
-//     return len;
-//   };
-
-//   const pop = (): T | undefined => {
-//     const array = [...history];
-//     const item = array.pop();
-//     setHistory(array);
-
-//     return item;
-//   };
-
-//   useObservableEffect(() => {
-
-//   }, [object]);
-
-//   return { push, pop, item } as const;
-// }
-
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 //value for the initial value, is either T or a function that returns T
 type InitialValueType<T> = T | ((prev?: T) => T);

@@ -21,7 +21,7 @@ export function useEditorAutoSaveHandle(
 ) {
   const unsavedChangesCount = useRef(0);
 
-  const handleSave = (type: string = "unknown") => {
+  const handleSave = (_type: string = "unknown") => {
     onSave();
     unsavedChangesCount.current = 0;
   };
