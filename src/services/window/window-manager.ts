@@ -1,6 +1,7 @@
 import { listen } from "@tauri-apps/api/event";
 import { WebviewWindow, WindowOptions } from "@tauri-apps/api/window";
 import { slugify } from "../../utils/url";
+import { ExportWindowProps } from "../export/export";
 
 export type PromiseWindowData = {
   type: string;
@@ -15,6 +16,7 @@ export type PromiseWindowData = {
       values: string[];
       labels: string[];
     }
+  | ExportWindowProps
 );
 
 // Currently Tauri has no good way of sharing data between windows: https://github.com/tauri-apps/tauri/issues/5979
@@ -22,15 +24,17 @@ export function promiseWindow(
   title: string,
   data: PromiseWindowData,
   options: WindowOptions = {},
+  windowEndpoint: string = "prompt",
 ): Promise<string> {
   let resolve = (_: any) => {};
   let reject = () => {};
   let windowLabel: string;
 
   const params = new URLSearchParams(data as Record<string, any>);
+  console.log(window.location);
 
   const webview = new WebviewWindow(slugify(title), {
-    url: `windows/prompt/index.html?${params.toString()}`,
+    url: `window/${windowEndpoint}/index.html?${params.toString()}`,
     focus: true,
     alwaysOnTop: true,
     resizable: false,
@@ -40,6 +44,7 @@ export function promiseWindow(
     height: options.height || 300,
     ...options,
   });
+  console.log(webview);
 
   webview.once("tauri://created", (event) => {
     windowLabel = event.windowLabel;
@@ -113,3 +118,16 @@ export function selectSingle(
     },
   );
 }
+
+export const getWindowParams = (params: URLSearchParams): PromiseWindowData => {
+  const data = {} as PromiseWindowData;
+
+  for (let [key, value] of params.entries() as IterableIterator<
+    [keyof PromiseWindowData, string]
+  >) {
+    //@ts-ignore
+    data[key] = value.includes(",") ? value.split(",") : value;
+  }
+
+  return data;
+};

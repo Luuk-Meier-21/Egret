@@ -62,9 +62,9 @@ pub struct SoundEffect(Mutex<Option<Child>>);
 #[tokio::main]
 async fn main() {
     std::panic::set_hook(Box::new(|info| {
-        println!("Panic!");
+        println!("Panic! {:?}", info);
         let data = format!("{:?}", info);
-        fs::write("/tmp/contextual-notes-panic-log", data).expect("Unable to write file");
+        fs::write("/tmp/egret-panic-log", data).expect("Unable to write file");
     }));
 
     #[cfg(debug_assertions)]

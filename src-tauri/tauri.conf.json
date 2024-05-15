@@ -6,15 +6,15 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "Contextual Notes V2",
-    "version": "2.0.0"
+    "productName": "Egret (Alpha)",
+    "version": "0.2.0"
   },
   "tauri": {
     "allowlist": {
       "all": false,
       "shell": {
         "all": false,
-        "open": true
+        "open": "^((mailto:\\w+)|(tel:\\w+)|(https?://\\w+)|(data:application/pdf;base64,\\w+)).+"
       },
       "globalShortcut": {
         "all": true
@@ -63,7 +63,7 @@
         "hide": false,
         "maximize": false,
         "minimize": false,
-        "print": false,
+        "print": true,
         "requestUserAttention": false,
         "setAlwaysOnTop": true,
         "setClosable": false,
@@ -94,7 +94,7 @@
     },
     "windows": [
       {
-        "title": "Contextual Notes V2",
+        "title": "Egret",
         "focus": true,
         "titleBarStyle": "Overlay",
         "width": 1080,
