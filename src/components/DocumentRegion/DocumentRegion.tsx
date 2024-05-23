@@ -324,12 +324,12 @@ function DocumentRegion({
       data-focused={isFocused || undefined}
       ref={ref}
       aria-label={label}
-      className="input-hint relative w-full p-4 text-inherit data-[focused]:bg-white data-[focused]:text-black"
+      className="input-hint group relative w-full rounded-[8px] border-[1px] border-gray-800 bg-gray-900 p-4 text-inherit data-[focused='true']:bg-gray-400"
     >
       {region.landmark && (
         <span
           aria-hidden="true"
-          className="absolute left-2 right-2 top-0 block text-sm opacity-50"
+          className="absolute left-4 right-4 top-0 block text-sm opacity-50"
         >
           Landmark: {region.landmark?.label}
         </span>
@@ -364,7 +364,7 @@ function DocumentRegion({
       {!isEditing && (
         <button
           ref={editButton}
-          className="absolute inset-0 text-left outline-2 outline-white focus:outline-dashed"
+          className="absolute inset-0 rounded-[8px] border-[1px] border-transparent text-left outline-none focus:border-white"
           onClick={() => {
             onFocus(region, editor);
             focus();

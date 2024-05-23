@@ -1,16 +1,14 @@
 import { useEffect, useState } from "react";
-import { getWindowParams } from "../../services/window/window-manager";
 import { readTextFile } from "@tauri-apps/api/fs";
 import { Layout } from "../../types/layout/layout";
-import { emit } from "@tauri-apps/api/event";
 import { LayoutBranchOrNode } from "../../components/LayoutBranch/LayoutBranch";
 import { getExportStyle, getExporter } from "../../services/export/export";
 import PreviewBlock from "./PreviewBlock";
 import "../../styles.css";
+import { useMultiWindow } from "../../services/window/window-manager";
 
 function App() {
-  const params = new URLSearchParams(window.location.search);
-  const data = getWindowParams(params);
+  const { data, resolve, reject } = useMultiWindow();
   const [layout, setLayout] = useState<Layout | null>(null);
 
   if (data.type !== "export") {
@@ -25,9 +23,9 @@ function App() {
       setTimeout(() => {
         exporter().then((value: string | undefined) => {
           if (value) {
-            emit("submit", value);
+            resolve(value);
           } else {
-            emit("reject");
+            reject();
           }
         });
       }, 2000);
@@ -40,7 +38,7 @@ function App() {
         const json = JSON.parse(data);
         setLayout(json as Layout);
       } catch (error) {
-        emit("reject");
+        reject();
       }
     });
   }, []);
