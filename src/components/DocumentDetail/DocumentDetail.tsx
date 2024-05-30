@@ -97,7 +97,7 @@ function DocumentDetail({}: DocumentDetailProps) {
     systemSound("Glass", 1, 1, 1);
   });
 
-  useScopedAction("Export document", keyAction("e"), async () => {
+  useScopedAction("Preview document", keyAction("e"), async () => {
     await saveDocument();
 
     const format = (await selectSingle(
@@ -116,6 +116,10 @@ function DocumentDetail({}: DocumentDetailProps) {
       getAllExportStyleKeys().map((key) => ({ label: key, value: key })),
     )) as ExportStyle;
 
+    const layoutFilePath = concatPath(directory.filePath, "layout.json");
+
+    const svg = await exportDocument(layoutFilePath, format, size, style);
+
     const path = await save({
       title: `Save as ${format}`,
       defaultPath: `~/Documents/${directory.name}`,
@@ -130,10 +134,6 @@ function DocumentDetail({}: DocumentDetailProps) {
     if (path === null) {
       return;
     }
-
-    const absolutePath = concatPath(directory.filePath, "layout.json");
-
-    const svg = await exportDocument(absolutePath, format, size, style);
 
     await writeTextFile(path, svg);
     systemSound("Glass", 1, 1, 1);
@@ -308,8 +308,8 @@ function DocumentDetail({}: DocumentDetailProps) {
   //     : setStyleIndex(0);
   // });
 
-  const classes = clsx({
-    "font-serif text-base text-white [&_a]:text-indigo-500 [&_a]:underline":
+  const classes = clsx("rounded-lg", {
+    "font-serif text-base tracking-[0.01em] [&_img]:rounded-md [&_figcaption]:italic [&_figcaption]:mt-1 prose-headings:font-normal text-white prose-headings:text-2xl prose-headings:mb-3 prose-a:text-yellow-500 prose-a:underline prose-p:mb-3":
       styleIndex === 0,
     "font-sans leading-7 bg-white text-base text-gray-900 [&_a]:bg-blue-600 [&_a]:mb-5 [&_a]:flex [&_a]:mr-auto [&_a]:mt-4 [&_a]:text-white [&_a]:p-2 [&_a]:rounded-lg data-[focused=true]:bg-red-400":
       styleIndex === 1,

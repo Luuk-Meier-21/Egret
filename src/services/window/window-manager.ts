@@ -1,4 +1,4 @@
-import { listen } from "@tauri-apps/api/event";
+import { emit, listen } from "@tauri-apps/api/event";
 import { WebviewWindow, WindowOptions } from "@tauri-apps/api/window";
 import { slugify } from "../../utils/url";
 import { ExportWindowProps } from "../export/export";
@@ -31,8 +31,6 @@ export function promiseWindow(
   let windowLabel: string;
 
   const params = new URLSearchParams(data as Record<string, any>);
-  console.log(window.location);
-
   const webview = new WebviewWindow(slugify(title), {
     url: `window/${windowEndpoint}/index.html?${params.toString()}`,
     focus: true,
@@ -119,7 +117,7 @@ export function selectSingle(
   );
 }
 
-export const getWindowParams = (params: URLSearchParams): PromiseWindowData => {
+const resolveMultiWindowParams = (params: URLSearchParams) => {
   const data = {} as PromiseWindowData;
 
   for (let [key, value] of params.entries() as IterableIterator<
@@ -130,4 +128,17 @@ export const getWindowParams = (params: URLSearchParams): PromiseWindowData => {
   }
 
   return data;
+};
+
+export const useMultiWindow = (overwriteParams?: URLSearchParams) => {
+  const params = overwriteParams || new URLSearchParams(window.location.search);
+  const data = resolveMultiWindowParams(params);
+  const resolve = (value: string) => emit("submit", value);
+  const reject = () => emit("reject");
+
+  return {
+    data,
+    resolve,
+    reject,
+  } as const;
 };

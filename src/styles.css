@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,6 +8,14 @@
   .input-hint .bn-block-content[data-is-empty-and-focused] .bn-inline-content:has(> .ProseMirror-trailingBreak)::before {
     content: unset;
   }
+}
 
-  .prose-layout-node { /* ... */ }
+@layer components {
+  .box-light {
+    @apply rounded-rem shadow-gray-800 border-[1px] shadow-lg shadow-gray-900/15 bg-gray-400 border-white/5;
+  }
+
+  .box-dark {
+    @apply rounded-rem shadow-gray-800 border-[1px] shadow-lg shadow-gray-900/15 bg-gray-900 border-white/5;
+  }
 }

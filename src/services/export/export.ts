@@ -29,6 +29,15 @@ const exportStylesMapping = {
   wireframe: clsx(
     "font-serif text-[16px] text-black bg-white [&_*[data-layout-type='node']]:ring-black ring-1 ring-transparent data-[layout-type='node']:bg-red-200",
   ),
+  apple: clsx(
+    "font-sans text-lg tracking-tight text-gray-950",
+    "[&_div]:w-full",
+    "prose-p:mb-5 prose-p:w-full prose-p:whitespace-pre-wrap prose-p:max-w-[32em]",
+    "[&_figcaption]:text-base [&>figcaption]:text-gray-500",
+    "[&_*[data-layout-type='node']]:p-5",
+    "prose-headings:text-5xl prose-headings:tracking-tight prose-headings:border-b-[2px] prose-headings:border-gray-200 prose-headings:pb-2 prose-headings:font-medium prose-headings:mb-7",
+    "prose-a:p-4 prose-a:flex prose-a:text-lg prose-a:mb-3 prose-a:rounded-full prose-a:ring-[3px] prose-a:font-bold prose-a:ring-gray-950 prose-a:justify-center prose-a:min-w-[200px]",
+  ),
 };
 
 export const getExporter = (format: ExportFormat) =>
@@ -60,7 +69,7 @@ export function exportDocument(
     {
       minWidth: screen.width || 200,
       minHeight: screen.height || 200,
-      visible: false,
+      // visible: false,
     },
     "export",
   );

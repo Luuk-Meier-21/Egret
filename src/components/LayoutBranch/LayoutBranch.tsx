@@ -93,7 +93,7 @@ function LayoutNode({
       id={value.id}
       data-layout-level={level}
       data-layout-type="node"
-      className="flex w-full ring-1 ring-white/30"
+      className="flex w-full"
     >
       {renderNode(value, index, length)}
     </section>

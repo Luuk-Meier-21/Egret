@@ -227,12 +227,15 @@ function Actions({ children }: ActionsProps) {
   );
 
   return (
-    <div data-component-name="Actions" className="flex flex-col p-4">
+    <div
+      data-component-name="Actions"
+      className="flex min-h-screen flex-col p-4"
+    >
       <ActionsContext.Provider value={[actions, dispatch, getActionBySlug]}>
         <div ref={mainRef}>{children}</div>
         <ul
           aria-label="Actions"
-          className="flex flex-col items-start p-4 opacity-50 focus-within:opacity-100  "
+          className="flex flex-1 flex-col items-start justify-end p-4 opacity-50 focus-within:opacity-100  "
           role="menu"
           ref={actionsRef}
         >

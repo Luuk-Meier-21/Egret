@@ -87,19 +87,20 @@ function SearchInner<T>(
       data-component-name="Search"
       id="search-box"
       aria-labelledby="search"
-      className="gap-2 p-4 ring-1 ring-white"
+      className="rounded-rem box-light flex px-5 py-4 text-white"
     >
-      <label id="search" htmlFor="search-query">
+      <label id="search" htmlFor="search-query" className="hidden">
         {label}
       </label>
       <input
         id="search-query"
         ref={ref}
         type="search"
+        placeholder={`${label}...`}
         autoFocus
         spellCheck="false"
         autoCorrect="false"
-        className="bg-transparent"
+        className="w-full bg-transparent selection:outline-none placeholder:text-white/50 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
         onKeyDown={(event) => {
           onKeyDown(event);
 
@@ -117,6 +118,9 @@ function SearchInner<T>(
           setQuery(query.length > 0 ? query : null);
         }}
       />
+      <span role="tooltip" className="whitespace-nowrap text-white/50">
+        command + f
+      </span>
     </div>
   );
 }

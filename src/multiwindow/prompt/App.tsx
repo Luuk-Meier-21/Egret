@@ -1,14 +1,12 @@
-import { emit } from "@tauri-apps/api/event";
 import { useHotkeys } from "../../utils/hotkeys";
 import { useRef, useState } from "react";
 import { announceError } from "../../utils/error";
-import { getWindowParams } from "../../services/window/window-manager";
 import SearchList from "../../components/SearchList/SearchList";
+import { useMultiWindow } from "../../services/window/window-manager";
 
 function App() {
+  const { data, resolve, reject } = useMultiWindow();
   const [input, setInput] = useState<string | null>(null);
-  const params = new URLSearchParams(window.location.search);
-  const data = getWindowParams(params);
   const ref = useRef(null);
 
   const submit = (targetInput: any = input) => {
@@ -17,11 +15,7 @@ function App() {
       return;
     }
 
-    emit("submit", targetInput);
-  };
-
-  const reject = () => {
-    emit("reject");
+    resolve(targetInput);
   };
 
   useHotkeys("Escape", () => {
