@@ -35,6 +35,8 @@ import {
   generateDefaultLayout,
 } from "../../config/layout";
 import { ONBOARDING_CONTENT } from "../../config/onboarding";
+import { AriaDetail, setAriaDetail } from "../../services/aria/detail";
+import { Enum } from "../../utils/enum";
 
 interface ActionsProps {
   children: ReactNode | ReactNode[];
@@ -200,6 +202,30 @@ function Actions({ children }: ActionsProps) {
     },
   );
 
+  const { elementWithShortcut: SetDetailLevel } = useInjectedAction(
+    dispatch,
+    "Set detail level",
+    keyExplicitAction("y"),
+    async () => {
+      const detailString = await selectSingle(
+        "Set aria detail level",
+        "Aria detail levels",
+        Enum.entries(AriaDetail).map(([key, value]) => ({
+          label: `${key} aria detail`,
+          value: `${value}`,
+        })),
+      );
+      ``;
+      const detail = parseInt(detailString) as AriaDetail;
+      if (!Enum.values(AriaDetail).includes(detail)) {
+        announceError();
+        return;
+      }
+      setAriaDetail(detail);
+      window.location.reload();
+    },
+  );
+
   return (
     <div data-component-name="Actions" className="flex flex-col p-4">
       <ActionsContext.Provider value={[actions, dispatch, getActionBySlug]}>
@@ -218,6 +244,9 @@ function Actions({ children }: ActionsProps) {
           </li>
           <li>
             <NewKeyword />
+          </li>
+          <li>
+            <SetDetailLevel />
           </li>
         </ul>
       </ActionsContext.Provider>

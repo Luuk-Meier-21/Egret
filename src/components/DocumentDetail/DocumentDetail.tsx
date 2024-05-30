@@ -25,7 +25,7 @@ import { systemSound } from "../../bindings";
 import clsx from "clsx";
 import { useState } from "react";
 import { useDocumentViewLoader } from "../../services/loader/loader";
-import { ariaItemOfList, ariaLines, ariaList } from "../../services/aria/label";
+import { ariaItemOfList, ariaList } from "../../services/aria/label";
 import { announceError } from "../../utils/error";
 import { useStrictEffect } from "../../services/layout/layout-change";
 import { flattenLayoutNodesByReference } from "../../services/layout/layout-content";
@@ -41,6 +41,7 @@ import {
   getAllExportStyleKeys,
   getAllExporterKeys,
 } from "../../services/export/export";
+import { ariaLines } from "../../services/aria/aria";
 
 interface DocumentDetailProps {}
 
