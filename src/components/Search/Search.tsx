@@ -78,7 +78,6 @@ function SearchInner<T>(
   });
 
   useScopedAction(`Focus search ${label}`, keyAction("f"), () => {
-    console.log("hi");
     focusSearch();
   });
 
