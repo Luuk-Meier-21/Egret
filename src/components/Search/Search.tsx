@@ -2,8 +2,10 @@ import Fuse, { FuseOptionKey, IFuseOptions } from "fuse.js";
 import {
   ForwardedRef,
   KeyboardEvent,
+  MutableRefObject,
   forwardRef,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { useRegisterAction } from "../../services/actions/actions-registry";
@@ -28,14 +30,15 @@ function SearchInner<T>(
     onKeyDown = () => {},
     onConfirm = () => {},
   }: SearchProps<T>,
-  ref: ForwardedRef<HTMLInputElement>,
+  externalRef: ForwardedRef<HTMLInputElement>,
 ) {
+  const ref = (externalRef ||
+    useRef(null)) as MutableRefObject<HTMLInputElement | null>;
   const [query, setQuery] = useState<string | null>(null);
   const [key, _setKey] = useState<FuseOptionKey<T> | null>(null);
 
   const focusSearch = () => {
-    // @ts-expect-error
-    const element = ref.current as HTMLInputElement;
+    const element = ref?.current;
 
     if (element === null) {
       return;
@@ -75,6 +78,7 @@ function SearchInner<T>(
   });
 
   useScopedAction(`Focus search ${label}`, keyAction("f"), () => {
+    console.log("hi");
     focusSearch();
   });
 

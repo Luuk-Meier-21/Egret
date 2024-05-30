@@ -21,6 +21,7 @@ function DocumentsOverview({
   directories,
   children,
 }: DocumentsOverviewProps) {
+  const searchRef = useRef<HTMLInputElement>(null);
   const documentsRef = useRef<HTMLUListElement>(null);
 
   const [selectedDocument, setSelectedDocument] =
@@ -66,14 +67,6 @@ function DocumentsOverview({
                   className="underline"
                 >
                   {document.name}
-                  {/* {document.keywords.length > 0 && (
-                    <span>
-                      , Keywords:{" "}
-                      {document.keywords
-                        .map((keywords) => keywords.label)
-                        .join(", ")}
-                    </span>
-                  )} */}
                 </button>
               </li>
             ))}
@@ -86,6 +79,7 @@ function DocumentsOverview({
       </section>
       {children}
       <Search
+        ref={searchRef}
         label="Search document"
         list={directories}
         keys={["name", "keywords.label"]}
@@ -93,8 +87,6 @@ function DocumentsOverview({
           documentsRef.current?.querySelector("button")?.focus();
         }}
         onResult={(searchResults) => {
-          // Currently all documents go tru search, this might not be the best idea
-          //@ts-ignore
           setFilteredDocuments(searchResults);
         }}
       />
