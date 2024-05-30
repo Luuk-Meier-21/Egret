@@ -7,6 +7,9 @@ export default {
       serif: ["PT Serif", '"PT Serif"', "serif"],
     },
     extend: {
+      borderRadius: {
+        rem: "1rem",
+      },
       colors: {
         gray: {
           400: "#292828",

@@ -45,11 +45,7 @@ function DocumentsOverview({
 
   return (
     <div data-component-name="DocumentsOverview" aria-live="polite">
-      <section
-        id="documents"
-        aria-label="Documents"
-        className="p-4 ring-1 ring-white"
-      >
+      <section id="documents" aria-label="Documents" className="box-dark p-5">
         {filteredDocuments.length > 0 ? (
           <ul ref={documentsRef} role="menu">
             {filteredDocuments.map((document) => (
