@@ -4,7 +4,7 @@ import { Layout, SanitizedLayout } from "../../types/layout/layout";
 
 const connectWebsocket = (): WebSocket | undefined => {
   try {
-    return new WebSocket("ws://192.168.1.232:2000/socket");
+    return new WebSocket("ws://*:2000/socket");
   } catch (error) {
     console.info(error);
     return;
@@ -69,8 +69,6 @@ function App() {
   const focusColumn = (columnId: string, rowId: string) => {
     webSocket.current?.send(`focus:${columnId}.${rowId}`);
   };
-
-  // const socket = new WebSocket("ws://192.168.1.232:2000/companion");
 
   return (
     <div>
