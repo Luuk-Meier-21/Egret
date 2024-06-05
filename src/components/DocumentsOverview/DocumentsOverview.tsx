@@ -45,22 +45,29 @@ function DocumentsOverview({
     useState<DocumentDirectory[]>(directories);
 
   return (
-    <div data-component-name="DocumentsOverview" aria-live="polite">
-      <section id="documents" aria-label="Documents" className="box-dark p-5">
+    <div
+      data-component-name="DocumentsOverview"
+      aria-live="polite"
+      className="relative flex w-full flex-1 flex-col"
+    >
+      <section id="documents" aria-label="Documents" className="py-5">
         {filteredDocuments.length > 0 ? (
-          <ul ref={documentsRef} role="menu">
+          <ul
+            ref={documentsRef}
+            role="menu"
+            className="flex flex-col divide-y-[1px] divide-white/20"
+          >
             {filteredDocuments.map((document) => (
               <li
                 role="menuitem"
                 aria-relevant="additions removals"
                 key={document.id}
-                className="underline"
               >
                 <button
                   onFocus={() => selectDocument(document)}
                   onBlur={() => selectDocument(null)}
                   onClickCapture={() => onDocumentClick(document)}
-                  className="underline"
+                  className="bento-focus-light relative my-1 rounded-[1rem] px-3 py-1.5 outline-white"
                 >
                   {document.name}
                 </button>
@@ -68,24 +75,30 @@ function DocumentsOverview({
             ))}
           </ul>
         ) : (
-          <p aria-relevant="additions text" role="alert">
-            No documents found
+          <p
+            aria-relevant="additions text"
+            role="alert"
+            className="my-1 px-3 py-1.5 text-white/50"
+          >
+            No documents found for search query...
           </p>
         )}
       </section>
       {children}
-      <Search
-        ref={searchRef}
-        label="Search document"
-        list={directories}
-        keys={["name", "keywords.label"]}
-        onConfirm={() => {
-          documentsRef.current?.querySelector("button")?.focus();
-        }}
-        onResult={(searchResults) => {
-          setFilteredDocuments(searchResults);
-        }}
-      />
+      <div className="mt-auto">
+        <Search
+          ref={searchRef}
+          label="Search document"
+          list={directories}
+          keys={["name", "keywords.label"]}
+          onConfirm={() => {
+            documentsRef.current?.querySelector("button")?.focus();
+          }}
+          onResult={(searchResults) => {
+            setFilteredDocuments(searchResults);
+          }}
+        />
+      </div>
     </div>
   );
 }

@@ -226,31 +226,28 @@ function Actions({ children }: ActionsProps) {
     },
   );
 
+  const elements = [OpenActionsPanel, NewDocument, NewKeyword, SetDetailLevel];
+
   return (
     <div
       data-component-name="Actions"
-      className="flex min-h-screen flex-col p-4"
+      className="flex min-h-screen flex-col gap-y-5 p-4 pt-8"
     >
       <ActionsContext.Provider value={[actions, dispatch, getActionBySlug]}>
-        <div ref={mainRef}>{children}</div>
+        <div className="flex flex-1 flex-col" ref={mainRef}>
+          {children}
+        </div>
         <ul
           aria-label="Actions"
-          className="flex flex-1 flex-col items-start justify-end p-4 opacity-50 focus-within:opacity-100  "
+          className="bento-light sr-only flex flex-col divide-y-[1px] divide-white/20 py-1 focus-within:not-sr-only"
           role="menu"
           ref={actionsRef}
         >
-          <li>
-            <OpenActionsPanel />
-          </li>
-          <li>
-            <NewDocument />
-          </li>
-          <li>
-            <NewKeyword />
-          </li>
-          <li>
-            <SetDetailLevel />
-          </li>
+          {elements.map((Element) => (
+            <li>
+              <Element className="bento-focus-light my-1 rounded-[1rem] px-5 py-1.5" />
+            </li>
+          ))}
         </ul>
       </ActionsContext.Provider>
     </div>

@@ -62,7 +62,7 @@ function LayoutBranch({
       data-layout-type="branch"
       data-component-name="LayoutBranch"
       data-flow={value.flow}
-      className="group flex w-full flex-row"
+      className="group flex w-full flex-row divide-x-[1px] divide-white/20"
     >
       {value.children.map((item, index) => (
         <li key={index} className="flex group-data-[flow='horizontal']:w-full">

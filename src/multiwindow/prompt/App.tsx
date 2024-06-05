@@ -75,6 +75,7 @@ function App() {
             searchPosition="top"
             renderItem={(option) => (
               <button
+                className="bento-focus-light relative my-1 rounded-[1rem] px-3 py-1.5 outline-white"
                 onClick={() => {
                   submit(option.value);
                 }}

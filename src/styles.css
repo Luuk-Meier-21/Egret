@@ -11,11 +11,15 @@
 }
 
 @layer components {
-  .box-light {
+  .bento-light {
     @apply rounded-rem shadow-gray-800 border-[1px] shadow-lg shadow-gray-900/15 bg-gray-400 border-white/5;
   }
 
-  .box-dark {
-    @apply rounded-rem shadow-gray-800 border-[1px] shadow-lg shadow-gray-900/15 bg-gray-900 border-white/5;
+  .bento-dark {
+    @apply rounded-rem shadow-gray-800 border-[1px] shadow-lg shadow-gray-900/20 bg-gray-900 border-white/20;
+  }
+
+  .bento-focus-light {
+    @apply focus:bg-white/10 focus:outline-none focus:ring-1 focus:ring-white
   }
 }

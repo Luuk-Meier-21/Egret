@@ -22,6 +22,6 @@ export class Enum {
 
         return undefined;
       })
-      .filter((value) => value !== undefined);
+      .filter((value) => value !== undefined) as [string, number][];
   }
 }

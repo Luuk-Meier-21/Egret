@@ -22,8 +22,6 @@ import {
 import DocumentRegion from "../DocumentRegion/DocumentRegion";
 import { useScopedAction } from "../../services/actions/actions-hook";
 import { systemSound } from "../../bindings";
-import clsx from "clsx";
-import { useState } from "react";
 import { useDocumentViewLoader } from "../../services/loader/loader";
 import { ariaItemOfList, ariaList } from "../../services/aria/label";
 import { announceError } from "../../utils/error";
@@ -52,8 +50,6 @@ function DocumentDetail({}: DocumentDetailProps) {
   const builder = useLayoutBuilder(staticLayout);
   const selection = useLayoutState(builder.layout);
   const navigator = useLayoutNavigator(selection, builder.layout);
-
-  const [styleIndex, _setStyleIndex] = useState(0);
 
   const saveDocument = useStateStore(
     builder.layout,
@@ -308,64 +304,60 @@ function DocumentDetail({}: DocumentDetailProps) {
   //     : setStyleIndex(0);
   // });
 
-  const classes = clsx("rounded-lg", {
-    "font-serif text-base tracking-[0.01em] [&_img]:rounded-md [&_figcaption]:italic [&_figcaption]:mt-1 prose-headings:font-normal text-white prose-headings:text-2xl prose-headings:mb-3 prose-a:text-yellow-500 prose-a:underline prose-p:mb-3":
-      styleIndex === 0,
-    "font-sans leading-7 bg-white text-base text-gray-900 [&_a]:bg-blue-600 [&_a]:mb-5 [&_a]:flex [&_a]:mr-auto [&_a]:mt-4 [&_a]:text-white [&_a]:p-2 [&_a]:rounded-lg data-[focused=true]:bg-red-400":
-      styleIndex === 1,
-  });
-
   return (
     <div data-component-name="DocumentDetail">
-      <div className="prose-layout-node:bg-red-200 px-4 pb-2 opacity-50 focus-within:opacity-100">
-        <GoToHome />
+      <div className="sr-only focus-within:not-sr-only">
+        <GoToHome className="bento-focus-light my-1 mb-3 rounded-[1rem] px-3 py-1.5 text-white" />
       </div>
-      <main className={classes}>
-        {builder.layout.tree.map((branchOrNode, rowIndex) => (
-          <LayoutBranchOrNode
-            key={branchOrNode.id}
-            value={branchOrNode}
-            renderNode={(node, columnIndex, columnLength) => {
-              const isFocused = node.id === selection.nodeId;
-              const data = node.data || generateDocumentRegion({});
-              const label = ariaLines({
-                [`${data.landmark?.label}`]: data.landmark !== undefined,
-                [ariaList(columnLength)]: columnIndex <= 0 && isFocused,
-                [ariaItemOfList(columnIndex + 1, columnLength)]:
-                  columnLength > 1,
-              });
 
-              return (
-                <DocumentRegion
-                  label={label}
-                  onSave={(region, _editor) => {
-                    handleSave(region, node);
-                  }}
-                  onChange={(region) => {
-                    handleChange(region, node);
-                  }}
-                  onAddLandmark={(_region, landmark) => {
-                    builder.addLandmark(node, landmark);
-                  }}
-                  onExplicitAnnounce={() => {
-                    return `Item ${columnIndex + 1} of Row ${rowIndex + 1} from the top`;
-                  }}
-                  onImplicitAnnounce={() => {
-                    return null;
-                  }}
-                  isFocused={isFocused}
-                  onFocus={() => {
-                    navigator.focusColumn(branchOrNode.id, node.id);
-                  }}
-                  onBlur={() => {
-                    navigator.blurColumn();
-                  }}
-                  region={data}
-                />
-              );
-            }}
-          />
-        ))}
+      <main className="bento-dark overflow-hidden font-serif text-base tracking-[0.01em] text-white prose-headings:mb-3 prose-headings:text-2xl prose-headings:font-normal prose-p:mb-3 prose-a:text-yellow-500 prose-a:underline [&_figcaption]:mt-1 [&_figcaption]:italic [&_img]:rounded-sm">
+        <div className="divide-y-[1px] divide-white/20">
+          {builder.layout.tree.map((branchOrNode, rowIndex) => (
+            <LayoutBranchOrNode
+              key={branchOrNode.id}
+              value={branchOrNode}
+              renderNode={(node, columnIndex, columnLength) => {
+                const isFocused = node.id === selection.nodeId;
+                const data = node.data || generateDocumentRegion({});
+                const label = ariaLines({
+                  [`${data.landmark?.label}`]: data.landmark !== undefined,
+                  [ariaList(columnLength)]: columnIndex <= 0 && isFocused,
+                  [ariaItemOfList(columnIndex + 1, columnLength)]:
+                    columnLength > 1,
+                });
+
+                return (
+                  <DocumentRegion
+                    label={label}
+                    onSave={(region, _editor) => {
+                      handleSave(region, node);
+                    }}
+                    onChange={(region) => {
+                      handleChange(region, node);
+                    }}
+                    onAddLandmark={(_region, landmark) => {
+                      builder.addLandmark(node, landmark);
+                    }}
+                    onExplicitAnnounce={() => {
+                      return `Item ${columnIndex + 1} of Row ${rowIndex + 1} from the top`;
+                    }}
+                    onImplicitAnnounce={() => {
+                      return null;
+                    }}
+                    isFocused={isFocused}
+                    onFocus={() => {
+                      navigator.focusColumn(branchOrNode.id, node.id);
+                    }}
+                    onBlur={() => {
+                      navigator.blurColumn();
+                    }}
+                    region={data}
+                  />
+                );
+              }}
+            />
+          ))}
+        </div>
       </main>
     </div>
   );

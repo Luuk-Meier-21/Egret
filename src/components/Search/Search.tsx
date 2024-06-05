@@ -87,7 +87,7 @@ function SearchInner<T>(
       data-component-name="Search"
       id="search-box"
       aria-labelledby="search"
-      className="rounded-rem box-light flex px-5 py-4 text-white"
+      className="bento-light flex rounded-rem px-5 py-4 text-white focus-within:border-white"
     >
       <label id="search" htmlFor="search-query" className="hidden">
         {label}

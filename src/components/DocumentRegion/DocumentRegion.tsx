@@ -322,9 +322,19 @@ function DocumentRegion({
       aria-current="page"
       lang="en"
       data-focused={isFocused || undefined}
+      data-editing={isEditing || undefined}
       ref={ref}
+      tabIndex={0}
+      onFocus={() => {
+        onFocus(region, editor);
+        focus();
+      }}
+      onBlur={() => {
+        onBlur(region, editor);
+        stopEdit();
+      }}
       aria-label={label}
-      className="input-hint group relative w-full rounded-[8px] border-[1px] border-gray-800 bg-gray-900 p-4 text-inherit data-[focused='true']:bg-gray-400"
+      className="input-hint group relative w-full p-5 data-[focused]:bg-gray-400"
     >
       {region.landmark && (
         <span
@@ -338,14 +348,16 @@ function DocumentRegion({
         <BlockNoteView
           id={region.id}
           data-editor
-          className="mx-auto flex h-full w-full max-w-[46em] outline-none [&_*]:outline-none"
+          className="mx-auto flex h-full w-full max-w-[46em] rounded-sm outline-none ring-1 ring-transparent ring-transparent group-data-[editing]:ring-white/50 [&_*]:outline-none"
           editor={editor}
           slashMenu={false}
           sideMenu={false}
           formattingToolbar={false}
           hyperlinkToolbar={false}
           editable={isEditing}
+          aria-hidden={!isEditing ? "true" : undefined}
           onKeyDown={(event) => {
+            onFocus(region, editor);
             if (event.key === "Escape") {
               onSave(region, editor);
               stopEdit();
@@ -364,7 +376,7 @@ function DocumentRegion({
       {!isEditing && (
         <button
           ref={editButton}
-          className="absolute inset-0 rounded-[8px] border-[1px] border-transparent text-left outline-none focus:border-white"
+          className="absolute inset-0 text-left outline-none"
           onClick={() => {
             onFocus(region, editor);
             focus();
