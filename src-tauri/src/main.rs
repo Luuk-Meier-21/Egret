@@ -4,11 +4,13 @@
 mod sound;
 mod websocket;
 
+use serde::de::value::Error;
+use serde_json::Result;
 use sound::MacOSSystemSound;
 use specta::collect_types;
 use std::{
     fs,
-    process::{Child, Command},
+    process::{Child, Command, Output},
 };
 use tauri::async_runtime::Mutex;
 use tauri_specta::{self, ts};
@@ -37,6 +39,20 @@ fn voice_say(message: String) -> () {
     let args = vec!["-e", script.as_str()];
     let _ = Command::new("osascript").args(args).spawn();
 }
+
+// ipconfig getifaddr en0
+
+// #[tauri::command]
+// #[specta::specta]
+// async fn get_mac_network_ip() -> Result<Output> {
+//     let a = Command::new("ipconfig")
+//         .args(vec!["getifaddr", "en0"])
+//         .output();
+
+//     match a {
+
+//     }
+// }
 
 #[tauri::command]
 #[specta::specta]
@@ -79,7 +95,12 @@ async fn main() {
 
     tauri::Builder::default()
         .manage(SoundEffect(Default::default()))
-        .invoke_handler(tauri::generate_handler![greet, system_sound, voice_say])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            system_sound,
+            voice_say,
+            // get_mac_network_ip
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

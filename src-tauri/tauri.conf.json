@@ -113,7 +113,11 @@
         "focus": true,
         "titleBarStyle": "Overlay",
         "width": 1080,
-        "height": 900
+        "height": 900,
+        "decorations": true,
+        "skipTaskbar": false,
+        "transparent": true,
+        "theme": "Dark"
       }
     ],
     "security": {
