@@ -40,6 +40,7 @@ import {
   getAllExporterKeys,
 } from "../../services/export/export";
 import { ariaLines } from "../../services/aria/aria";
+import { getMatches } from "@tauri-apps/api/cli";
 
 interface DocumentDetailProps {}
 
@@ -303,6 +304,12 @@ function DocumentDetail({}: DocumentDetailProps) {
   //     ? setStyleIndex(styleIndex + 1)
   //     : setStyleIndex(0);
   // });
+
+  useScopedAction("test feature flag", keyAction("7"), async () => {
+    console.log("getting flags...");
+    const flags = await getMatches();
+    console.log("Flags: ", flags);
+  });
 
   return (
     <div data-component-name="DocumentDetail">

@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "build:universal": "tauri build -- --target universal-apple-darwin",
     "preview": "vite preview",
-    "tauri": "tauri",
+    "tauri": "tauri  ",
+    "tauri:experimental": "tauri dev -- -- --feature export tactile;",
     "gen": "npx generate-react-cli component",
     "gen:block": "npx generate-react-cli component --type=block",
     "cargo": "cd src-tauri; cargo"
