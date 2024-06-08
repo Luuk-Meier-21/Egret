@@ -29,6 +29,7 @@ import { useScopedAction } from "../../services/actions/actions-hook";
 import {
   closeCompanionSocket,
   getLayoutState,
+  getMacNetworkIp,
   openCompanionSocket,
   setLayoutState,
   systemSound,
@@ -262,6 +263,11 @@ function DocumentDetail({}: DocumentDetailProps) {
     },
     true,
   );
+
+  useScopedAction("test", keyAction("8"), async () => {
+    const networkIp = await getMacNetworkIp();
+    console.log(networkIp);
+  });
 
   useEffect(() => {
     const focusCallback = (e: Event<any>) => {

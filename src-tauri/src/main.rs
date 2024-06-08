@@ -3,9 +3,9 @@
 
 mod companion;
 mod sound;
-
 use specta::collect_types;
 use std::fs;
+use std::process::Command;
 use tauri_specta::{self, ts};
 
 use sound::{system_sound, voice_say};
@@ -21,6 +21,30 @@ use companion::{
 #[specta::specta]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
+}
+
+#[derive(Debug)]
+pub enum CustomError {
+    CustomError { message: String },
+}
+
+// ipconfig getifaddr en0
+
+#[tauri::command]
+#[specta::specta]
+fn get_mac_network_ip() -> Result<String, String> {
+    let result = Command::new("ipconfig")
+        .args(vec!["getifaddr", "en0"])
+        .output();
+
+    if let Ok(output) = result {
+        return match String::from_utf8(output.stdout) {
+            Ok(data) => Ok(data),
+            Err(e) => Err(e.to_string()),
+        };
+    }
+
+    Err(String::from("Failed"))
 }
 
 #[tokio::main]
@@ -42,7 +66,8 @@ async fn main() {
             serve_companion_layout,
             abort_companion_layout,
             set_layout_state,
-            get_layout_state
+            get_layout_state,
+            get_mac_network_ip
         ],
         "../src/bindings.ts",
     )
@@ -63,6 +88,7 @@ async fn main() {
             abort_companion_layout,
             set_layout_state,
             get_layout_state,
+            get_mac_network_ip
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

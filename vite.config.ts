@@ -3,7 +3,7 @@ import { resolve } from "path";
 import { defineConfig } from "vite";
 
 // https://vitejs.dev/config/
-export default defineConfig(async () => ({
+export default defineConfig(async (env) => ({
   plugins: [react()],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
@@ -20,6 +20,7 @@ export default defineConfig(async () => ({
       ignored: ["**/src-tauri/**"],
     },
     proxy: {
+      "/tactile": `http://192.168.178.164:1420/windows/companion/index.html`,
       "/api/dummy-text": {
         target: "https://loripsum.net/api",
         changeOrigin: true,

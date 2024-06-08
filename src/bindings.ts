@@ -46,5 +46,9 @@ export function getLayoutState() {
     return invoke()<JSON>("get_layout_state")
 }
 
+export function getMacNetworkIp() {
+    return invoke()<string>("get_mac_network_ip")
+}
+
 export type MacOSSystemSound = "Basso" | "Blow" | "Bottle" | "Frog" | "Funk" | "Glass" | "Hero" | "Morse" | "Ping" | "Pop" | "Purr" | "Sosumi" | "Submarine" | "Tink"
 export type JSON = any

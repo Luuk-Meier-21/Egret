@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { LayoutBranchOrNode } from "../../components/LayoutBranch/LayoutBranch";
 import { Layout, SanitizedLayout } from "../../types/layout/layout";
+import { getMacNetworkIp } from "../../bindings";
 
-const connectWebsocket = (): WebSocket | undefined => {
+const connectWebsocket = async (): Promise<WebSocket | undefined> => {
   try {
-    return new WebSocket("ws://*:2000/socket");
+    const networkIp = await getMacNetworkIp();
+
+    return new WebSocket(`ws://${networkIp}:2000/socket`);
   } catch (error) {
     console.info(error);
     return;
@@ -24,8 +27,18 @@ const jsonToLayout = (
 };
 
 function App() {
-  const webSocket = useRef(connectWebsocket());
+  const webSocket = useRef<WebSocket>();
   const [layout, setLayout] = useState<Layout>();
+
+  useEffect(() => {
+    connectWebsocket().then((socket) => {
+      if (socket === undefined) {
+        return;
+      }
+
+      webSocket.current = socket;
+    });
+  }, []);
 
   const refreshLayout = (data: string) => {
     if (data === "refresh") {
