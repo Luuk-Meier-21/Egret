@@ -225,7 +225,7 @@ fn serve_eventfull_socket(
             let event_sender_clone = event_sender.clone();
 
             let listen = move |event: CompanionWsEvent| {
-                listen_companion_event(event, &app_clone, &event_sender_clone, &ws_out);
+                listen_companion_event(event, app_clone, event_sender_clone, &ws_out);
             };
 
             listen(CompanionWsEvent::RefreshClient);
@@ -310,12 +310,15 @@ async fn send(ws_out: Arc<async_runtime::Mutex<SplitSink<WebSocket, Message>>>, 
 
 fn listen_companion_event(
     event: CompanionWsEvent,
-    app: &tauri::AppHandle,
-    event_sender: &CompanionEventSender,
+    app: tauri::AppHandle,
+    event_sender: CompanionEventSender,
     ws_out: &CompanionClientWsOut,
 ) {
+    let sender = event_sender.clone();
+    let out = ws_out.clone();
+
     app.listen_global(&event.to_string(), move |_| {
-        if let Err(error) = event_sender.send((event.clone(), ws_out.clone())) {
+        if let Err(error) = sender.send((event.clone(), out.clone())) {
             println!("Send error for event: ({}): {}", event.to_string(), error);
         }
     });
