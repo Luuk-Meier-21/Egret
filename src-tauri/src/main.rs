@@ -1,24 +1,22 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod companion;
 mod sound;
-mod websocket;
+use std::fs;
+use std::process::Command;
 
-use serde::de::value::Error;
-use serde_json::Result;
-use sound::MacOSSystemSound;
 use specta::collect_types;
-use std::{
-    fs,
-    process::{Child, Command, Output},
-};
-use tauri::async_runtime::Mutex;
+
 use tauri_specta::{self, ts};
 
-#[derive(Clone, serde::Serialize)]
-struct Payload {
-    message: String,
-}
+use sound::{system_sound, voice_say};
+
+use companion::CompanionProcess;
+use companion::{
+    abort_companion_layout, close_companion_socket, get_layout_state, open_companion_socket,
+    serve_companion_layout, set_layout_state,
+};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -27,53 +25,29 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
-#[tauri::command]
-#[specta::specta]
-fn voice_say(message: String) -> () {
-    let script = format!(
-        "tell application \"VoiceOver\"
-            output \"{}\"
-        end tell",
-        message
-    );
-    let args = vec!["-e", script.as_str()];
-    let _ = Command::new("osascript").args(args).spawn();
+#[derive(Debug)]
+pub enum CustomError {
+    CustomError { message: String },
 }
 
 // ipconfig getifaddr en0
 
-// #[tauri::command]
-// #[specta::specta]
-// async fn get_mac_network_ip() -> Result<Output> {
-//     let a = Command::new("ipconfig")
-//         .args(vec!["getifaddr", "en0"])
-//         .output();
-
-//     match a {
-
-//     }
-// }
-
 #[tauri::command]
 #[specta::specta]
-fn system_sound(sound: MacOSSystemSound, speed: f32, volume: f64, time: f64) -> () {
-    let command = Command::new("afplay")
-        .args(vec![
-            sound.as_path().as_str(),
-            "-r",
-            speed.to_string().as_str(),
-            "-v",
-            volume.to_string().as_str(),
-            "-t",
-            time.to_string().as_str(),
-            "-q",
-            1.to_string().as_str(),
-        ])
-        .spawn()
-        .unwrap();
-}
+fn get_mac_network_ip() -> Result<String, String> {
+    let result = Command::new("ipconfig")
+        .args(vec!["getifaddr", "en0"])
+        .output();
 
-pub struct SoundEffect(Mutex<Option<Child>>);
+    if let Ok(output) = result {
+        return match String::from_utf8(output.stdout) {
+            Ok(data) => Ok(data),
+            Err(e) => Err(e.to_string()),
+        };
+    }
+
+    Err(String::from("Failed"))
+}
 
 #[tokio::main]
 async fn main() {
@@ -85,7 +59,18 @@ async fn main() {
 
     #[cfg(debug_assertions)]
     ts::export(
-        collect_types![greet, system_sound, voice_say],
+        collect_types![
+            greet,
+            system_sound,
+            voice_say,
+            open_companion_socket,
+            close_companion_socket,
+            serve_companion_layout,
+            abort_companion_layout,
+            set_layout_state,
+            get_layout_state,
+            get_mac_network_ip
+        ],
         "../src/bindings.ts",
     )
     .unwrap();
@@ -94,12 +79,18 @@ async fn main() {
     println!("DEV MODE");
 
     tauri::Builder::default()
-        .manage(SoundEffect(Default::default()))
+        .manage(CompanionProcess::default())
         .invoke_handler(tauri::generate_handler![
             greet,
             system_sound,
             voice_say,
-            // get_mac_network_ip
+            serve_companion_layout,
+            open_companion_socket,
+            close_companion_socket,
+            abort_companion_layout,
+            set_layout_state,
+            get_layout_state,
+            get_mac_network_ip
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

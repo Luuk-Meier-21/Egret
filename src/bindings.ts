@@ -22,4 +22,33 @@ export function voiceSay(message: string) {
     return invoke()<null>("voice_say", { message })
 }
 
+export function openCompanionSocket() {
+    return invoke()<null>("open_companion_socket")
+}
+
+export function closeCompanionSocket() {
+    return invoke()<null>("close_companion_socket")
+}
+
+export function serveCompanionLayout(json: any) {
+    return invoke()<null>("serve_companion_layout", { json })
+}
+
+export function abortCompanionLayout() {
+    return invoke()<null>("abort_companion_layout")
+}
+
+export function setLayoutState(json: JSON) {
+    return invoke()<JSON>("set_layout_state", { json })
+}
+
+export function getLayoutState() {
+    return invoke()<JSON>("get_layout_state")
+}
+
+export function getMacNetworkIp() {
+    return invoke()<string>("get_mac_network_ip")
+}
+
 export type MacOSSystemSound = "Basso" | "Blow" | "Bottle" | "Frog" | "Funk" | "Glass" | "Hero" | "Morse" | "Ping" | "Pop" | "Purr" | "Sosumi" | "Submarine" | "Tink"
+export type JSON = any

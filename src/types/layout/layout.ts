@@ -43,6 +43,14 @@ export type Layout = {
   tree: LayoutTree;
 };
 
+export type SanitizedLayout = {
+  id: string;
+  name: string;
+  description: string;
+  tree: LayoutTree;
+  clean: true;
+};
+
 // export type ContentfullLayout = Layout & {
 //   tree: LayoutTree<DocumentRegionData>;
 // };

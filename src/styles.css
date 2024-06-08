@@ -4,6 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
+
 @layer utilities {
   .input-hint .bn-block-content[data-is-empty-and-focused] .bn-inline-content:has(> .ProseMirror-trailingBreak)::before {
     content: unset;

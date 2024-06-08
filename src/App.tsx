@@ -1,6 +1,5 @@
 import { Outlet, RouterProvider } from "react-router";
 import { createBrowserRouter } from "react-router-dom";
-import DocumentDetail from "./components/DocumentDetail/DocumentDetail";
 import { isWithoutTauri } from "./utils/tauri";
 import PromptProvider from "./components/Prompt/PromptProvider";
 import Actions from "./components/Actions/Actions";
@@ -22,6 +21,7 @@ import { Keyword } from "./types/keywords";
 import { Suspense, lazy } from "react";
 
 const Env = lazy(() => import("./components/EnvProvider/EnvProvider"));
+import DocumentDetail from "./components/DocumentDetail/DocumentDetail";
 
 function App() {
   if (isWithoutTauri) {
