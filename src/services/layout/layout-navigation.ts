@@ -84,6 +84,7 @@ export function useLayoutNavigator(
 
   const focusRowDown = () => {
     const index = rows.findIndex((row) => row.id === rowId);
+    console.log(index);
     const nextRow = rows[index + 1];
     if (nextRow) {
       setRowId(nextRow.id);
@@ -115,6 +116,7 @@ export function useLayoutNavigator(
 
   const focusColumnRight = () => {
     const rowIndex = rows.findIndex((row) => row.id === rowId);
+    console.log(rowIndex);
 
     if (rowIndex < 0) {
       return;

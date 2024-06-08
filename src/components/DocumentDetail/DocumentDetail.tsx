@@ -1,17 +1,15 @@
-import { useNavigate } from "react-router";
-import { LayoutBranchOrNode } from "../LayoutBranch/LayoutBranch";
-import { DocumentRegionData } from "../../types/document/document";
-import { useLayoutNavigator } from "../../services/layout/layout-navigation";
-import { generateDocumentRegion } from "../../services/document/document-generator";
-import { useLayoutState } from "../../services/layout/layout-state";
+import { useEffect, useRef, useState } from "react";
 import { useLayoutBuilder } from "../../services/layout/layout-builder";
+import { flattenLayoutNodesByReference } from "../../services/layout/layout-content";
+import { useLayoutNavigator } from "../../services/layout/layout-navigation";
+import { useLayoutState } from "../../services/layout/layout-state";
+import { useDocumentViewLoader } from "../../services/loader/loader";
 import {
-  keyAction,
-  keyExplicitAction,
-  keyExplicitNavigation,
-  keyNavigation,
-} from "../../config/shortcut";
-import { LayoutNodeData } from "../../types/layout/layout";
+  Layout,
+  LayoutNodeData,
+  SanitizedLayout,
+} from "../../types/layout/layout";
+import { deepJSONClone } from "../../utils/object";
 import { useStateStore } from "../../services/store/store-hooks";
 import {
   concatPath,
@@ -19,17 +17,22 @@ import {
   pathInDirectory,
   pathOfDocumentsDirectory,
 } from "../../services/store/store";
-import DocumentRegion from "../DocumentRegion/DocumentRegion";
+import { useNavigate } from "react-router";
+import { DocumentRegionData } from "../../types/document/document";
 import { useScopedAction } from "../../services/actions/actions-hook";
-import { systemSound } from "../../bindings";
-import { useDocumentViewLoader } from "../../services/loader/loader";
-import { ariaItemOfList, ariaList } from "../../services/aria/label";
-import { announceError } from "../../utils/error";
-import { useStrictEffect } from "../../services/layout/layout-change";
-import { flattenLayoutNodesByReference } from "../../services/layout/layout-content";
+import {
+  keyAction,
+  keyExplicitAction,
+  keyExplicitNavigation,
+  keyNavigation,
+} from "../../config/shortcut";
+import {
+  closeCompanionSocket,
+  getMacNetworkIp,
+  openCompanionSocket,
+  systemSound,
+} from "../../bindings";
 import { selectSingle } from "../../services/window/window-manager";
-import { removeDir, writeTextFile } from "@tauri-apps/api/fs";
-import { save } from "@tauri-apps/api/dialog";
 import {
   ExportFormat,
   ExportSize,
@@ -39,10 +42,31 @@ import {
   getAllExportStyleKeys,
   getAllExporterKeys,
 } from "../../services/export/export";
-import { ariaLines } from "../../services/aria/aria";
+import { save } from "@tauri-apps/api/dialog";
+import { removeDir, writeTextFile } from "@tauri-apps/api/fs";
+import { announceError } from "../../utils/error";
+import { emit, listen } from "@tauri-apps/api/event";
 import { getMatches } from "@tauri-apps/api/cli";
+import { LayoutBranchOrNode } from "../LayoutBranch/LayoutBranch";
+import { generateDocumentRegion } from "../../services/document/document-generator";
+import { ariaLines } from "../../services/aria/aria";
+import { ariaItemOfList, ariaList } from "../../services/aria/label";
+import DocumentRegion from "../DocumentRegion/DocumentRegion";
 
 interface DocumentDetailProps {}
+
+function sanitizeLayout(layout: Layout): SanitizedLayout {
+  const cloneLayout: SanitizedLayout = {
+    ...deepJSONClone(layout),
+    clean: true,
+  };
+  const nodes = flattenLayoutNodesByReference(cloneLayout.tree);
+  nodes.forEach((node) => {
+    node.data = undefined;
+  });
+
+  return cloneLayout;
+}
 
 function DocumentDetail({}: DocumentDetailProps) {
   const [directory, _staticDocumentData, staticLayout, _keywords] =
@@ -52,25 +76,24 @@ function DocumentDetail({}: DocumentDetailProps) {
   const selection = useLayoutState(builder.layout);
   const navigator = useLayoutNavigator(selection, builder.layout);
 
+  const [isInCompanionMode, setCompanionMode] = useState(false);
+
+  const layoutCache = useRef(builder.layout);
+
   const saveDocument = useStateStore(
     builder.layout,
     pathInDirectory(directory, "layout.json"),
   );
 
-  // const exportToHtml = useLayoutHTMLExporter(staticDocumentData.name);
   const navigate = useNavigate();
 
-  // const [keywords, setKeywords] = useState<Keyword[]>(staticKeywords);
-
-  // useStateStore(keywords, keywordsRecordPath, keywordsRecordOptions);
-
-  useStrictEffect(
-    () => {
-      saveDocument();
-    },
-    ([layout]) => JSON.stringify(layout),
-    [builder.layout],
-  );
+  // useStrictEffect(
+  //   () => {
+  //     saveDocument();
+  //   },
+  //   ([layout]) => JSON.stringify(layout),
+  //   [builder.layout],
+  // );
 
   const handleSave = (region: DocumentRegionData, node: LayoutNodeData) => {
     builder.insertContent(region, node);
@@ -145,7 +168,6 @@ function DocumentDetail({}: DocumentDetailProps) {
         "Confirm deletion",
         `Type the word '${confirmText}' to confirm deletion`,
       );
-
       if (confirmText !== text) {
         announceError();
         return;
@@ -281,29 +303,60 @@ function DocumentDetail({}: DocumentDetailProps) {
     selection.setNodeId(nodeId);
   });
 
-  // useScopedAction(`Find landmark`, keyExplicitAction(""), async () => {
-  //   window.print();
-  // });
+  // companion mode start
+  useScopedAction(
+    "Start companion mode",
+    keyExplicitNavigation("left"),
+    async () => {
+      await openCompanionSocket();
+    },
+  );
 
-  // const setKeywordRelation = async (keyword: Keyword) => {
-  // const newKeywords = keywords;
-  // const hasRelation = keywordHasRelation(keyword, staticDocumentData);
-  // if (hasRelation) {
-  //   keywords.find((k) =>)
-  // }
-  // hasRelation
-  //   ? await dereferenceKeywordFromDocument(keyword, staticDocumentData)
-  //   : await referenceKeywordToDocument(keyword, staticDocumentData);
-  // await saveKeyword(keyword);
-  // const keywords = await fetchKeywords();
-  // setKeywords(keywords);
+  useScopedAction(
+    "Stop companion mode",
+    keyExplicitNavigation("left"),
+    async () => {
+      await closeCompanionSocket();
+    },
+  );
+
+  useScopedAction("Refresh event", keyExplicitNavigation("left"), async () => {
+    emit("refresh-client", "none");
+  });
+
+  useScopedAction("test", keyAction("8"), async () => {
+    const networkIp = await getMacNetworkIp();
+    console.log(networkIp);
+  });
+
+  useEffect(() => {
+    const focusCallback = (e: any) => {
+      navigator.focusColumn(e.payload.row_id, e.payload.column_id);
+    };
+
+    const unlistenFocus = listen("focus", focusCallback);
+    return () => {
+      unlistenFocus.then((f) => f());
+    };
+
+    // No dependancy array! Function needs to be redefined on every effect, otherwise it will use stale state when fired.
+    // https://stackoverflow.com/questions/57847594/accessing-up-to-date-state-from-within-a-callback
+  });
+
+  // const layoutIsChanged = (layout: SanitizedLayout): boolean => {
+  //   return (
+  //     layout.tree.length > 0 &&
+  //     JSON.stringify(layout) !== JSON.stringify(layoutCache.current)
+  //   );
   // };
 
-  // useScopedAction("Cycle styles", keyAction("t"), async () => {
-  //   styleIndex < STYLE_KEYS.length - 1
-  //     ? setStyleIndex(styleIndex + 1)
-  //     : setStyleIndex(0);
-  // });
+  // useEffect(() => {
+  //   console.log(layoutIsChanged(sanitizeLayout(builder.layout)));
+
+  //   setLayoutState(sanitizeLayout(builder.layout)).then(() => {});
+
+  //   layoutCache.current = builder.layout;
+  // }, [builder.layout]);
 
   useScopedAction("test feature flag", keyAction("7"), async () => {
     console.log("getting flags...");

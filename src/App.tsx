@@ -1,6 +1,5 @@
 import { Outlet, RouterProvider } from "react-router";
 import { createBrowserRouter } from "react-router-dom";
-import DocumentDetail from "./components/DocumentDetail/DocumentDetail";
 import { isWithoutTauri } from "./utils/tauri";
 import PromptProvider from "./components/Prompt/PromptProvider";
 import Actions from "./components/Actions/Actions";
@@ -19,6 +18,7 @@ import { validate } from "uuid";
 import { ONBOARDING_CONTENT } from "./config/onboarding";
 import { keywordsRecordOptions, keywordsRecordPath } from "./config/keywords";
 import { Keyword } from "./types/keywords";
+import DocumentDetail from "./components/DocumentDetail/DocumentDetail";
 
 function App() {
   if (isWithoutTauri) {
