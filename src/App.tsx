@@ -19,6 +19,9 @@ import { validate } from "uuid";
 import { ONBOARDING_CONTENT } from "./config/onboarding";
 import { keywordsRecordOptions, keywordsRecordPath } from "./config/keywords";
 import { Keyword } from "./types/keywords";
+import { Suspense, lazy } from "react";
+
+const Env = lazy(() => import("./components/EnvProvider/EnvProvider"));
 
 function App() {
   if (isWithoutTauri) {
@@ -145,11 +148,15 @@ function App() {
 
   return (
     <div data-component-name="App">
-      <DialogProvider>
-        <PromptProvider>
-          <RouterProvider router={router} />
-        </PromptProvider>
-      </DialogProvider>
+      <Suspense
+        fallback={<div className="h-full w-full bg-red-500">Loading...</div>}
+      >
+        <Env>
+          <DialogProvider>
+            <RouterProvider router={router} />
+          </DialogProvider>
+        </Env>
+      </Suspense>
     </div>
   );
 }

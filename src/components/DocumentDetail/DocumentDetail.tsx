@@ -41,6 +41,8 @@ import {
 } from "../../services/export/export";
 import { ariaLines } from "../../services/aria/aria";
 import { getMatches } from "@tauri-apps/api/cli";
+import { useContext } from "react";
+import { EnvContext } from "../EnvProvider/EnvProvider";
 
 interface DocumentDetailProps {}
 
@@ -57,12 +59,8 @@ function DocumentDetail({}: DocumentDetailProps) {
     pathInDirectory(directory, "layout.json"),
   );
 
-  // const exportToHtml = useLayoutHTMLExporter(staticDocumentData.name);
   const navigate = useNavigate();
-
-  // const [keywords, setKeywords] = useState<Keyword[]>(staticKeywords);
-
-  // useStateStore(keywords, keywordsRecordPath, keywordsRecordOptions);
+  const env = useContext(EnvContext);
 
   useStrictEffect(
     () => {
@@ -280,30 +278,6 @@ function DocumentDetail({}: DocumentDetailProps) {
     const nodeId = await selectSingle("label", "Landmark label", options);
     selection.setNodeId(nodeId);
   });
-
-  // useScopedAction(`Find landmark`, keyExplicitAction(""), async () => {
-  //   window.print();
-  // });
-
-  // const setKeywordRelation = async (keyword: Keyword) => {
-  // const newKeywords = keywords;
-  // const hasRelation = keywordHasRelation(keyword, staticDocumentData);
-  // if (hasRelation) {
-  //   keywords.find((k) =>)
-  // }
-  // hasRelation
-  //   ? await dereferenceKeywordFromDocument(keyword, staticDocumentData)
-  //   : await referenceKeywordToDocument(keyword, staticDocumentData);
-  // await saveKeyword(keyword);
-  // const keywords = await fetchKeywords();
-  // setKeywords(keywords);
-  // };
-
-  // useScopedAction("Cycle styles", keyAction("t"), async () => {
-  //   styleIndex < STYLE_KEYS.length - 1
-  //     ? setStyleIndex(styleIndex + 1)
-  //     : setStyleIndex(0);
-  // });
 
   useScopedAction("test feature flag", keyAction("7"), async () => {
     console.log("getting flags...");
