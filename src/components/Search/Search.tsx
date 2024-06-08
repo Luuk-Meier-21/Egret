@@ -2,12 +2,15 @@ import Fuse, { FuseOptionKey, IFuseOptions } from "fuse.js";
 import {
   ForwardedRef,
   KeyboardEvent,
+  MutableRefObject,
   forwardRef,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { useRegisterAction } from "../../services/actions/actions-registry";
-import { useHotkeyOverride } from "../../utils/hotkeys";
+import { keyAction } from "../../config/shortcut";
+import { useScopedAction } from "../../services/actions/actions-hook";
 
 interface SearchProps<T> {
   list: ReadonlyArray<T>;
@@ -27,14 +30,15 @@ function SearchInner<T>(
     onKeyDown = () => {},
     onConfirm = () => {},
   }: SearchProps<T>,
-  ref: ForwardedRef<HTMLInputElement>,
+  externalRef: ForwardedRef<HTMLInputElement>,
 ) {
+  const ref = (externalRef ||
+    useRef(null)) as MutableRefObject<HTMLInputElement | null>;
   const [query, setQuery] = useState<string | null>(null);
-  const [key, setKey] = useState<FuseOptionKey<T> | null>(null);
+  const [key, _setKey] = useState<FuseOptionKey<T> | null>(null);
 
   const focusSearch = () => {
-    // @ts-expect-error
-    const element = ref.current as HTMLInputElement;
+    const element = ref?.current;
 
     if (element === null) {
       return;
@@ -46,16 +50,6 @@ function SearchInner<T>(
   useRegisterAction("Search for document, by title or keyword", "cmd+f", () => {
     focusSearch();
   });
-
-  const { element: DeleteButton } = useRegisterAction(
-    "Delete search query",
-    "shift+cmd+f",
-    () => {
-      setQuery(null);
-      setKey(null);
-      focusSearch();
-    },
-  );
 
   useEffect(() => {
     const search = (query: string, key: FuseOptionKey<T> | null) => {
@@ -79,7 +73,13 @@ function SearchInner<T>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, key]);
 
-  useHotkeyOverride();
+  useScopedAction(`Remove search query ${label}`, "Backspace", () => {
+    setQuery(null);
+  });
+
+  useScopedAction(`Focus search ${label}`, keyAction("f"), () => {
+    focusSearch();
+  });
 
   return (
     <div
@@ -87,19 +87,20 @@ function SearchInner<T>(
       data-component-name="Search"
       id="search-box"
       aria-labelledby="search"
-      className="gap-2 p-4 ring-1 ring-white"
+      className="bento-light flex rounded-rem px-5 py-4 text-white focus-within:border-white"
     >
-      <label id="search" htmlFor="search-query">
+      <label id="search" htmlFor="search-query" className="hidden">
         {label}
       </label>
       <input
         id="search-query"
         ref={ref}
         type="search"
+        placeholder={`${label}...`}
         autoFocus
         spellCheck="false"
         autoCorrect="false"
-        className="bg-transparent"
+        className="w-full bg-transparent selection:outline-none placeholder:text-white/50 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
         onKeyDown={(event) => {
           onKeyDown(event);
 
@@ -117,6 +118,9 @@ function SearchInner<T>(
           setQuery(query.length > 0 ? query : null);
         }}
       />
+      <span role="tooltip" className="whitespace-nowrap text-white/50">
+        command + f
+      </span>
     </div>
   );
 }

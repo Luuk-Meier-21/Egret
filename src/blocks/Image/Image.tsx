@@ -1,11 +1,10 @@
 import { insertOrUpdateBlock } from "@blocknote/core";
 import { createReactBlockSpec } from "@blocknote/react";
 import { schema } from "../../blocks/schema";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 import { BlockComponentProps } from "../../types/block";
 import { useBlockSelection } from "../../utils/block";
 import { voiceSay } from "../../bindings";
-import { useOverrideScreenreader } from "../../utils/speech";
 import { useConditionalAction } from "../../services/actions/actions-hook";
 
 export const insertRow = (editor: typeof schema.BlockNoteEditor) => ({
@@ -38,7 +37,7 @@ function rowComponent({
   contentRef,
   editor,
 }: BlockComponentProps<typeof imageConfig, "image">): ReactNode {
-  const label = "Alt";
+  const label = "  Image";
   const src = block.props.src;
   // @ts-expect-error
   const alt = block.content.length > 0 ? block.content[0].text : "/n";
@@ -50,7 +49,7 @@ function rowComponent({
     contentRef(ref.current);
   }, []);
 
-  useOverrideScreenreader(`${label}, ${alt}`, isSelected);
+  // useOverrideScreenreader(`${label}, ${alt}`, isSelected); // Seems to cause voiceover losing focus
   useConditionalAction("Read out label", "cmd+shift+/", isSelected, () => {
     voiceSay(label);
   });
@@ -60,11 +59,12 @@ function rowComponent({
       <img
         className="object-cover"
         contentEditable={false}
+        aria-hidden="true"
         src={src}
         alt={alt}
       />
       <figcaption className="inline-content flex text-sm">
-        <span id="caption" role="textbox" ref={ref} contentEditable={true} />
+        <span id="caption" role="textbox" ref={ref} />
       </figcaption>
     </figure>
   );

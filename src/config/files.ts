@@ -7,6 +7,11 @@ export const FILE = {
   source: BaseDirectory.AppData,
 } as const;
 
+export const STYLE = {
+  path: "stylesheets",
+  source: BaseDirectory.AppData,
+} as const;
+
 export const DOCUMENTS = {
   path: "store/documents",
   source: BaseDirectory.AppData,

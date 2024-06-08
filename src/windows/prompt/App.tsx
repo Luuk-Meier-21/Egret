@@ -1,30 +1,13 @@
-import { emit } from "@tauri-apps/api/event";
 import { useHotkeys } from "../../utils/hotkeys";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { announceError } from "../../utils/error";
-import { PromiseWindowData } from "../../services/window/window-manager";
 import SearchList from "../../components/SearchList/SearchList";
-
-const getParams = (params: URLSearchParams): PromiseWindowData => {
-  const data = {} as PromiseWindowData;
-
-  console.log(params);
-
-  for (let [key, value] of params.entries() as IterableIterator<
-    [keyof PromiseWindowData, string]
-  >) {
-    console.log(key, value);
-    //@ts-ignore
-    data[key] = value.includes(",") ? value.split(",") : value;
-  }
-
-  return data;
-};
+import { useMultiWindow } from "../../services/window/window-manager";
 
 function App() {
+  const { data, resolve, reject } = useMultiWindow();
   const [input, setInput] = useState<string | null>(null);
-  const params = new URLSearchParams(window.location.search);
-  const data = getParams(params);
+  const ref = useRef(null);
 
   const submit = (targetInput: any = input) => {
     if (targetInput === null) {
@@ -32,11 +15,7 @@ function App() {
       return;
     }
 
-    emit("submit", targetInput);
-  };
-
-  const reject = () => {
-    emit("reject");
+    resolve(targetInput);
   };
 
   useHotkeys("Escape", () => {
@@ -58,7 +37,7 @@ function App() {
             type="text"
             className="flex h-full w-full bg-black"
             spellCheck="false"
-            placeholder="Document name"
+            placeholder={data.label}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
                 submit();
@@ -79,25 +58,30 @@ function App() {
         </div>
       )}
       {data.type === "select" &&
-        (Array.isArray(data.options) ? (
+        (Array.isArray(data.values) ? (
           <SearchList
-            list={data.options}
+            list={data.labels.map((label, index) => ({
+              label: label,
+              value: data.values[index],
+            }))}
             label={data.label}
-            searchKeys={[]}
+            searchKeys={["label"]}
             onKeyDown={(event) => {
               if (event.key === "Escape") {
                 reject();
               }
             }}
+            ref={ref}
             searchPosition="top"
             renderItem={(option) => (
               <button
+                className="bento-focus-light relative my-1 rounded-[1rem] px-3 py-1.5 outline-white"
                 onClick={() => {
-                  submit(option);
+                  submit(option.value);
                 }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
-                    submit(option);
+                    submit(option.value);
                   }
 
                   if (event.key === "Escape") {
@@ -105,18 +89,18 @@ function App() {
                   }
                 }}
               >
-                {option}
+                {option.label}
               </button>
             )}
           />
         ) : (
           <button
             onClick={() => {
-              submit(data.options);
+              submit(data.values);
             }}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
-                submit(data.options);
+                submit(data.values);
               }
 
               if (event.key === "Escape") {
@@ -124,7 +108,7 @@ function App() {
               }
             }}
           >
-            {data.options}
+            {data.labels}
           </button>
         ))}
     </div>

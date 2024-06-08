@@ -3,9 +3,11 @@
 
 mod companion;
 mod sound;
-use specta::collect_types;
 use std::fs;
 use std::process::Command;
+
+use specta::collect_types;
+
 use tauri_specta::{self, ts};
 
 use sound::{system_sound, voice_say};
@@ -50,9 +52,9 @@ fn get_mac_network_ip() -> Result<String, String> {
 #[tokio::main]
 async fn main() {
     std::panic::set_hook(Box::new(|info| {
+        println!("Panic! {:?}", info);
         let data = format!("{:?}", info);
-        println!("Panic: {:?}", info);
-        fs::write("/tmp/contextual-notes-panic-log", data).expect("Unable to write file");
+        fs::write("/tmp/egret-panic-log", data).expect("Unable to write file");
     }));
 
     #[cfg(debug_assertions)]

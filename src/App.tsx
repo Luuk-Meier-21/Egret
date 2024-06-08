@@ -5,14 +5,16 @@ import PromptProvider from "./components/Prompt/PromptProvider";
 import Actions from "./components/Actions/Actions";
 import AppDocumentsOverview from "./components/DocumentsOverview/AppDocumentsOverview";
 import { useHotkeyOverride } from "./utils/hotkeys";
-import { parseFileToDocumentDirectory } from "./services/document/document-generator";
+import {
+  generateDocumentMeta,
+  parseFileToDocumentDirectory,
+} from "./services/document/document-generator";
 import { generateLayoutWithContent } from "./services/layout/layout-content";
 import DialogProvider from "./components/Dialog/DialogProvider";
 import { documentsPath, pathInDirectory } from "./services/store/store";
 import { generateDefaultLayout } from "./config/layout";
 import { useAbstractStore } from "./services/store/store-hooks";
 import { validate } from "uuid";
-import { generateBlankDocument } from "./config/document";
 import { ONBOARDING_CONTENT } from "./config/onboarding";
 import { keywordsRecordOptions, keywordsRecordPath } from "./config/keywords";
 import { Keyword } from "./types/keywords";
@@ -84,7 +86,6 @@ function App() {
             }
 
             const directory = await getDocumentDirectoryOfId(params.id);
-            console.log(directory);
 
             if (directory === null) {
               return;
@@ -92,8 +93,8 @@ function App() {
 
             const layout = await store
               .loadStore(
-                pathInDirectory(directory, `${directory.name}.layout.json`),
-                generateLayoutWithContent(generateDefaultLayout("simple"), [
+                pathInDirectory(directory, "layout.json"),
+                generateLayoutWithContent(generateDefaultLayout("squares"), [
                   ONBOARDING_CONTENT,
                 ]),
               )
@@ -101,8 +102,10 @@ function App() {
 
             const document = await store
               .loadStore(
-                pathInDirectory(directory, `${directory.name}.document.json`),
-                generateBlankDocument(directory.name),
+                pathInDirectory(directory, "meta.json"),
+                generateDocumentMeta({
+                  name: directory.name,
+                }),
               )
               .then((store) => store.load());
 

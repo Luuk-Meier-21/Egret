@@ -1,6 +1,6 @@
 import react from "@vitejs/plugin-react";
 import { resolve } from "path";
-import { defineConfig } from "vite";
+import { UserConfig, defineConfig } from "vite";
 
 // https://vitejs.dev/config/
 export default defineConfig(async (env) => ({
@@ -21,18 +21,18 @@ export default defineConfig(async (env) => ({
     },
     proxy: {
       "/tactile": `http://192.168.178.164:1420/windows/companion/index.html`,
-      "/api/dummy-text": {
-        target: "https://loripsum.net/api",
-        changeOrigin: true,
-        secure: false,
-      },
     },
   },
   rollupOptions: {
-    input: {
-      main: resolve(__dirname, "index.html"),
-      nested: resolve(__dirname, "windows/prompt/index.html"),
-      companion: resolve(__dirname, "windows/companion/index.html"),
+    build: {
+      rollupOptions: {
+        input: {
+          main: resolve(__dirname, "index.html"),
+          prompt: resolve(__dirname, "window/prompt/index.html"),
+          export: resolve(__dirname, "window/export/index.html"),
+          companion: resolve(__dirname, "windows/companion/index.html"),
+        },
+      },
     },
   },
 }));

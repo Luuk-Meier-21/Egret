@@ -1,32 +1,11 @@
-import {
-  generateDocumentContentData,
-  generateDocumentData,
-  generateDocumentMetaData,
-  generateDocumentRegion,
-  generateDocumentView,
-} from "../services/document/document-generator";
-import { DocumentData } from "../types/document/document";
-import { ONBOARDING_BLOCKS } from "./onboarding";
+import { generateDocumentMeta } from "../services/document/document-generator";
+import { DocumentMeta } from "../types/document/document";
 
-export function generateBlankDocument(
+export function generateBlankDocumentMeta(
   name: string,
-  withOnboarding: boolean = true,
-): DocumentData {
-  return generateDocumentData({
+  _withOnboarding: boolean = true,
+): DocumentMeta {
+  return generateDocumentMeta({
     name,
-    data: generateDocumentContentData({
-      meta: generateDocumentMetaData({}),
-      views: [
-        generateDocumentView({
-          content: [
-            generateDocumentRegion({
-              blocks: withOnboarding
-                ? ONBOARDING_BLOCKS
-                : [{ type: "paragraph", content: [] }],
-            }),
-          ],
-        }),
-      ],
-    }),
   });
 }

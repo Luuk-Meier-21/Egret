@@ -1,27 +1,32 @@
-import { DocumentRegionData } from "../../types/document/document";
+import {
+  DocumentRegionData,
+  DocumentRegionUserLandmark,
+} from "../../types/document/document";
 import { schema } from "../../blocks/schema";
 import { shell } from "@tauri-apps/api";
-import { toggleBlock } from "../../utils/block";
+import { polyfillTiptapBreaking, toggleBlock } from "../../utils/block";
 import { useEditorAutoSaveHandle } from "../../utils/editor";
 import { IBlockEditor } from "../../types/block";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { keyAction, keyExplicitAction } from "../../config/shortcut";
 import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
 import { useConditionalAction } from "../../services/actions/actions-hook";
 import { insertOrUpdateBlock } from "@blocknote/core";
-import { open } from "@tauri-apps/api/dialog";
 import { voiceSay } from "../../bindings";
-import { convertFileSrc } from "@tauri-apps/api/tauri";
 import { toDataURL } from "../../utils/url";
 import { announceError } from "../../utils/error";
-import { copyFile } from "@tauri-apps/api/fs";
-import { ASSETS, DOCUMENTS } from "../../config/files";
+import { openAsset } from "../../utils/filesystem";
+import { prompt } from "../../services/window/window-manager";
 
 interface DocumentRegionProps {
   region: DocumentRegionData;
   onSave?: (region: DocumentRegionData, editor: IBlockEditor) => void;
   onChange?: (region: DocumentRegionData, editor: IBlockEditor) => void;
   onFocus: (region: DocumentRegionData, editor: IBlockEditor) => void;
+  onAddLandmark: (
+    region: DocumentRegionData,
+    landmark: DocumentRegionUserLandmark,
+  ) => void;
   onImplicitAnnounce?: (
     region: DocumentRegionData,
     editor: IBlockEditor,
@@ -32,19 +37,25 @@ interface DocumentRegionProps {
   ) => string | null;
   onBlur: (region: DocumentRegionData, editor: IBlockEditor) => void;
   isFocused: boolean;
+  label?: string;
 }
 
 function DocumentRegion({
   region,
   onSave = () => {},
   onChange = () => {},
+  onAddLandmark = () => {},
   onImplicitAnnounce = () => null,
   onExplicitAnnounce = () => null,
   isFocused = false,
   onFocus,
   onBlur,
+  label,
 }: DocumentRegionProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const editButton = useRef<HTMLButtonElement>(null);
+
+  const [isEditing, setEditing] = useState(false);
 
   const editor = useCreateBlockNote({
     schema,
@@ -56,12 +67,15 @@ function DocumentRegion({
     blocks: editor.document,
   });
 
-  useEditorAutoSaveHandle(editor, () => {
+  const autoSave = () => {
     onSave(regionWithCurrentBlock(), editor);
-  });
+  };
+
+  useEditorAutoSaveHandle(editor, autoSave);
 
   const focus = () => {
     try {
+      editButton.current?.focus();
       editor.focus();
       onImplicitAnnounce(region, editor);
     } catch (error) {
@@ -69,11 +83,19 @@ function DocumentRegion({
     }
   };
 
+  const startEdit = () => {
+    setEditing(true);
+  };
+
+  const stopEdit = () => {
+    setEditing(false);
+  };
+
   useEffect(() => {
     if (isFocused) {
       focus();
     }
-  }, [isFocused]);
+  }, [isFocused, isEditing]);
 
   useEffect(() => {
     editor._tiptapEditor.on("create", () => {
@@ -105,24 +127,6 @@ function DocumentRegion({
     shell.open(url);
   });
 
-  const pickImage = async () => {
-    const targetImage = await open({
-      title: "Image to insert",
-      directory: false,
-      multiple: false,
-      filters: [
-        {
-          name: "Image",
-          extensions: ["png", "jpg", "jpeg", "pdf", "svg"],
-        },
-      ],
-    });
-
-    const src = `${Array.isArray(targetImage) ? targetImage[0] : targetImage}`;
-
-    return convertFileSrc(src);
-  };
-
   useConditionalAction(
     "Insert image by url",
     keyAction("o"),
@@ -133,7 +137,12 @@ function DocumentRegion({
       }
 
       try {
-        const url = await pickImage();
+        const url = await openAsset("Select a Image", [
+          {
+            name: "Image",
+            extensions: ["png", "jpg", "jpeg", "pdf", "svg"],
+          },
+        ]);
 
         insertOrUpdateBlock(editor, {
           type: "image",
@@ -160,13 +169,50 @@ function DocumentRegion({
       }
 
       try {
-        const url = await pickImage();
+        const url = await openAsset("Select a Image", [
+          {
+            name: "Image",
+            extensions: ["png", "jpg", "jpeg", "pdf", "svg"],
+          },
+        ]);
         const dataUrl = await toDataURL(url);
 
         insertOrUpdateBlock(editor, {
           type: "image",
           props: {
             src: dataUrl,
+          },
+        });
+
+        editor.focus();
+      } catch (error) {
+        announceError();
+        console.error(error);
+      }
+    },
+  );
+
+  useConditionalAction(
+    "Insert audio fragment",
+    keyAction("i"),
+    isFocused,
+    async () => {
+      if (!editor.isFocused()) {
+        return;
+      }
+
+      try {
+        const url = await openAsset("Select a Image", [
+          {
+            name: "Audio",
+            extensions: ["png", "jpg", "jpeg", "pdf", "svg"],
+          },
+        ]);
+
+        insertOrUpdateBlock(editor, {
+          type: "image",
+          props: {
+            src: url,
           },
         });
 
@@ -206,7 +252,7 @@ function DocumentRegion({
 
   useConditionalAction(
     "Speak current position",
-    keyExplicitAction("i"),
+    keyExplicitAction("/"),
     isFocused,
     async () => {
       if (!editor.isFocused()) {
@@ -223,35 +269,130 @@ function DocumentRegion({
     },
   );
 
+  useConditionalAction(
+    `Add landmark`,
+    keyExplicitAction("l"),
+    isFocused,
+    async () => {
+      const label = await prompt("label", "Landmark label");
+
+      if (label === null) {
+        announceError();
+        return;
+      }
+
+      onAddLandmark(region, {
+        label,
+      });
+    },
+  );
+
+  const getPreviewText = (): string | undefined => {
+    const maxWords = 5;
+
+    if (polyfillTiptapBreaking(editor)) {
+      return;
+    }
+
+    const innerText = editor.domElement.innerText;
+    const words = innerText.match(/([^\s]+)/g) || [];
+
+    if (words.join(" ").length <= 0) {
+      return;
+    }
+
+    if (words.length > maxWords) {
+      return `${words.slice(0, maxWords).join(" ")}…`;
+    }
+
+    return words.join(" ");
+  };
+
+  /**
+   * Component renders a visual and a voice assisted (VA) version.
+   * - VA:      a button containing x words from the editors content, finetuned for VA users.
+   * - Visual:  the complete editor content is shown to visual users or collaborators.
+   *
+   * In both cases a user needs to confirm edit to change the content.
+   * */
+
   return (
     <section
       data-component-name="DocumentDetail"
       aria-current="page"
+      lang="en"
       data-focused={isFocused || undefined}
+      data-editing={isEditing || undefined}
       ref={ref}
-      className="input-hint relative  w-full p-4 text-white outline-none data-[focused]:bg-white data-[focused]:text-black"
+      tabIndex={0}
+      onFocus={() => {
+        onFocus(region, editor);
+        focus();
+      }}
+      onBlur={() => {
+        onBlur(region, editor);
+        stopEdit();
+      }}
+      aria-label={label}
+      className="input-hint group relative w-full p-5 data-[focused]:bg-gray-400"
     >
-      <BlockNoteView
-        id={region.id}
-        data-editor
-        onFocus={() => {
-          onFocus(region, editor);
-        }}
-        onBlur={() => {
-          onBlur(region, editor);
-        }}
-        className="mx-auto flex h-full w-full max-w-[46em] outline-none focus:outline-none [&_*]:outline-none"
-        editor={editor}
-        slashMenu={false}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") {
-            editor;
-          }
-        }}
-        sideMenu={false}
-        formattingToolbar={false}
-        hyperlinkToolbar={false}
-      />
+      {region.landmark && (
+        <span
+          aria-hidden="true"
+          className="absolute left-4 right-4 top-0 block text-sm opacity-50"
+        >
+          Landmark: {region.landmark?.label}
+        </span>
+      )}
+      <div aria-hidden={!isEditing ? "true" : undefined}>
+        <BlockNoteView
+          id={region.id}
+          data-editor
+          className="mx-auto flex h-full w-full max-w-[46em] rounded-sm outline-none ring-1 ring-transparent ring-transparent group-data-[editing]:ring-white/50 [&_*]:outline-none"
+          editor={editor}
+          slashMenu={false}
+          sideMenu={false}
+          formattingToolbar={false}
+          hyperlinkToolbar={false}
+          editable={isEditing}
+          aria-hidden={!isEditing ? "true" : undefined}
+          onKeyDown={(event) => {
+            onFocus(region, editor);
+            if (event.key === "Escape") {
+              onSave(region, editor);
+              stopEdit();
+            }
+          }}
+          onFocus={() => {
+            onFocus(region, editor);
+            focus();
+          }}
+          onBlur={() => {
+            onBlur(region, editor);
+            stopEdit();
+          }}
+        />
+      </div>
+      {!isEditing && (
+        <button
+          ref={editButton}
+          className="absolute inset-0 text-left outline-none"
+          onClick={() => {
+            onFocus(region, editor);
+            focus();
+            startEdit();
+          }}
+          onFocus={() => {
+            onFocus(region, editor);
+            focus();
+          }}
+          onBlur={() => {
+            onBlur(region, editor);
+            stopEdit();
+          }}
+          aria-label={getPreviewText() || "Blank"}
+        ></button>
+      )}
     </section>
   );
 }

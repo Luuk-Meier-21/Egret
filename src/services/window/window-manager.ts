@@ -1,6 +1,7 @@
-import { listen } from "@tauri-apps/api/event";
+import { emit, listen } from "@tauri-apps/api/event";
 import { WebviewWindow, WindowOptions } from "@tauri-apps/api/window";
 import { slugify } from "../../utils/url";
+import { ExportWindowProps } from "../export/export";
 
 export type PromiseWindowData = {
   type: string;
@@ -12,8 +13,10 @@ export type PromiseWindowData = {
   | {
       type: "select";
       label: string;
-      options: string[];
+      values: string[];
+      labels: string[];
     }
+  | ExportWindowProps
 );
 
 // Currently Tauri has no good way of sharing data between windows: https://github.com/tauri-apps/tauri/issues/5979
@@ -21,15 +24,15 @@ export function promiseWindow(
   title: string,
   data: PromiseWindowData,
   options: WindowOptions = {},
+  windowEndpoint: string = "prompt",
 ): Promise<string> {
   let resolve = (_: any) => {};
   let reject = () => {};
   let windowLabel: string;
 
   const params = new URLSearchParams(data as Record<string, any>);
-
   const webview = new WebviewWindow(slugify(title), {
-    url: `windows/prompt/index.html?${params.toString()}`,
+    url: `window/${windowEndpoint}/index.html?${params.toString()}`,
     focus: true,
     alwaysOnTop: true,
     resizable: false,
@@ -39,6 +42,7 @@ export function promiseWindow(
     height: options.height || 300,
     ...options,
   });
+  console.log(webview);
 
   webview.once("tauri://created", (event) => {
     windowLabel = event.windowLabel;
@@ -89,14 +93,22 @@ export function prompt(prompt: string, promptDescription: string) {
 export function selectSingle(
   prompt: string,
   promptDescription: string,
-  options: string[],
+  options: { label: string; value: string }[],
 ) {
+  let labels: string[] = [];
+  let values = options.map(({ label, value }) => {
+    labels.push(label);
+    return value;
+  });
+
+  // Data has to be send over url query params, tauri currently supports no alternaltive
   return promiseWindow(
     prompt,
     {
       type: "select",
       label: promptDescription,
-      options: options,
+      values: values,
+      labels: labels,
     },
     {
       width: 600,
@@ -104,3 +116,29 @@ export function selectSingle(
     },
   );
 }
+
+const resolveMultiWindowParams = (params: URLSearchParams) => {
+  const data = {} as PromiseWindowData;
+
+  for (let [key, value] of params.entries() as IterableIterator<
+    [keyof PromiseWindowData, string]
+  >) {
+    //@ts-ignore
+    data[key] = value.includes(",") ? value.split(",") : value;
+  }
+
+  return data;
+};
+
+export const useMultiWindow = (overwriteParams?: URLSearchParams) => {
+  const params = overwriteParams || new URLSearchParams(window.location.search);
+  const data = resolveMultiWindowParams(params);
+  const resolve = (value: string) => emit("submit", value);
+  const reject = () => emit("reject");
+
+  return {
+    data,
+    resolve,
+    reject,
+  } as const;
+};

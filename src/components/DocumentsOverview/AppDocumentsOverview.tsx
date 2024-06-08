@@ -1,19 +1,15 @@
-import { useLoaderData, useNavigate } from "react-router";
-import { DocumentReference } from "../../types/documents";
-import { Keyword } from "../../types/keywords";
+import { useNavigate } from "react-router";
 import DocumentsOverview from "./DocumentsOverview";
+import { useDocumentsOverviewLoader } from "../../services/loader/loader";
 
 function AppDocumentsOverview() {
-  const [documentReferences, keywords] = useLoaderData() as [
-    DocumentReference[],
-    Keyword[],
-  ];
+  const [documentDirectories, keywords] = useDocumentsOverviewLoader();
   const navigate = useNavigate();
 
   return (
     <DocumentsOverview
       onDocumentClick={(document) => navigate(`/documents/${document.id}`)}
-      documentReferences={documentReferences}
+      directories={documentDirectories}
       keywords={keywords}
     />
   );

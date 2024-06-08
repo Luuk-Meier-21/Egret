@@ -5,9 +5,10 @@ import {
 } from "../services/layout/layout-generator";
 import { Layout } from "../types/layout/layout";
 
-const defaultLayoutMapping = {
-  website: generateLayoutWebsite,
-  simple: generateLayoutSimple,
+export const defaultLayoutMapping = {
+  squares: generateLayoutSimple,
+  grid: generateLayoutGrid,
+  triangle: generateLayoutTriangle,
 };
 
 export function generateDefaultLayout(key: keyof typeof defaultLayoutMapping) {
@@ -18,44 +19,6 @@ export function generateDefaultLayout(key: keyof typeof defaultLayoutMapping) {
   }
 
   return generator();
-}
-
-function generateLayoutWebsite(): Layout {
-  return generateLayout({
-    name: "Website",
-    tree: [
-      generateLayoutBranch({
-        flow: "wrap",
-        children: [
-          generateLayoutNode({}),
-          generateLayoutNode({}),
-          generateLayoutNode({}),
-          generateLayoutNode({}),
-          generateLayoutNode({}),
-        ],
-      }),
-      generateLayoutNode({}),
-      generateLayoutNode({}),
-      generateLayoutBranch({
-        flow: "horizontal",
-        children: [generateLayoutNode({}), generateLayoutNode({})],
-      }),
-      generateLayoutBranch({
-        flow: "horizontal",
-        children: [generateLayoutNode({}), generateLayoutNode({})],
-      }),
-      generateLayoutBranch({
-        flow: "wrap",
-        children: [
-          generateLayoutNode({}),
-          generateLayoutNode({}),
-          generateLayoutNode({}),
-          generateLayoutNode({}),
-          generateLayoutNode({}),
-        ],
-      }),
-    ],
-  });
 }
 
 function generateLayoutSimple(): Layout {
@@ -69,6 +32,68 @@ function generateLayoutSimple(): Layout {
       generateLayoutBranch({
         flow: "horizontal",
         children: [generateLayoutNode({}), generateLayoutNode({})],
+      }),
+    ],
+  });
+}
+
+function generateLayoutGrid(): Layout {
+  return generateLayout({
+    name: "Grid 3 by 3",
+    tree: [
+      generateLayoutBranch({
+        flow: "horizontal",
+        children: [
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+        ],
+      }),
+      generateLayoutBranch({
+        flow: "horizontal",
+        children: [
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+        ],
+      }),
+      generateLayoutBranch({
+        flow: "horizontal",
+        children: [
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+        ],
+      }),
+    ],
+  });
+}
+
+function generateLayoutTriangle(): Layout {
+  return generateLayout({
+    name: "Triangle 5 to 1",
+    tree: [
+      generateLayoutBranch({
+        flow: "horizontal",
+        children: [
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+        ],
+      }),
+      generateLayoutBranch({
+        flow: "horizontal",
+        children: [
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+          generateLayoutNode({}),
+        ],
+      }),
+      generateLayoutBranch({
+        flow: "horizontal",
+        children: [generateLayoutNode({})],
       }),
     ],
   });

@@ -47,12 +47,10 @@ export function useTauriShortcut(
     .map((key) => (key === "cmd" ? "CommandOrControl" : key))
     .map((key) => capitalize(key))
     .join("+");
-  console.log(parsedShortcut);
 
   useEffect(() => {
     isRegistered(parsedShortcut)
       .then((isRegistered) => {
-        console.log(isRegistered);
         if (isRegistered === false) {
           register(parsedShortcut, callback);
         }

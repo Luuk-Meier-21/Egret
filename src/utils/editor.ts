@@ -21,11 +21,7 @@ export function useEditorAutoSaveHandle(
 ) {
   const unsavedChangesCount = useRef(0);
 
-  const handleSave = (type: string = "unknown") => {
-    console.info(
-      `🪝 ~ autosave, event: ${type}, after:`,
-      unsavedChangesCount.current,
-    );
+  const handleSave = (_type: string = "unknown") => {
     onSave();
     unsavedChangesCount.current = 0;
   };
@@ -95,7 +91,6 @@ export function useEditorAutosave(
     }
 
     await saveDocument(getCurrentDocument());
-    console.log("🚀 ~ save ~ after:", unsavedChangesCount.current);
     unsavedChangesCount.current = 0;
   };
 

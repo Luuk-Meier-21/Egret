@@ -42,8 +42,7 @@ export function blocksHaveContent<
   IT extends Record<string, InlineContentConfig>,
   SST extends Record<string, StyleConfig>,
 >(blocks: IBlock<ST, IT, SST>[]): boolean {
-  console.log(blocks);
-  const a = blocks.some((block) => {
+  return blocks.some((block) => {
     //@ts-expect-error
     if (block.content[0]?.text === "-") {
       return false;
@@ -52,8 +51,6 @@ export function blocksHaveContent<
     //@ts-expect-error
     return block?.content?.length > 0 || block?.children?.length > 0;
   });
-  console.log(a);
-  return a;
 }
 
 // export function getInlineContentText<
@@ -109,4 +106,12 @@ export function useBlockSelection<
   }, []);
 
   return isSelected;
+}
+
+export function polyfillTiptapBreaking(editor: IBlockEditor): boolean {
+  const isBreaking =
+    editor._tiptapEditor?.view === undefined ||
+    editor._tiptapEditor?.view?.dom === undefined;
+
+  return isBreaking;
 }

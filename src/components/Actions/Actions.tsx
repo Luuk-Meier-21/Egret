@@ -1,20 +1,11 @@
-import {
-  ReactNode,
-  createContext,
-  useContext,
-  useReducer,
-  useRef,
-} from "react";
+import { ReactNode, createContext, useReducer, useRef } from "react";
 import { useNavigate } from "react-router";
-import {
-  ActionConfiguration,
-  action,
-} from "../../services/actions/actions-registry";
+import { ActionConfiguration } from "../../services/actions/actions-registry";
 import { handleError, handleSucces } from "../../utils/announce";
-import { DialogContext } from "../Dialog/DialogProvider";
 import { useAbstractStore } from "../../services/store/store-hooks";
 import {
   documentsPath,
+  pathInDirectory,
   pathOfDocumentsDirectory,
 } from "../../services/store/store";
 import {
@@ -32,14 +23,20 @@ import {
   ActionReducerAction,
   actionsReducer,
 } from "../../services/actions/actions-reducer";
-import {
-  useInjectedAction,
-  useScopedAction,
-} from "../../services/actions/actions-hook";
+import { useInjectedAction } from "../../services/actions/actions-hook";
 import { keyAction, keyExplicitAction } from "../../config/shortcut";
-import { formatShortcutsForSpeech } from "../../utils/speech";
 import { prompt, selectSingle } from "../../services/window/window-manager";
 import { announceError } from "../../utils/error";
+import { navigateDropState } from "../../utils/navigation";
+import { formatShortcutsForSpeech } from "../../utils/speech";
+import { generateLayoutWithContent } from "../../services/layout/layout-content";
+import {
+  defaultLayoutMapping,
+  generateDefaultLayout,
+} from "../../config/layout";
+import { ONBOARDING_CONTENT } from "../../config/onboarding";
+import { AriaDetail, setAriaDetail } from "../../services/aria/detail";
+import { Enum } from "../../utils/enum";
 
 interface ActionsProps {
   children: ReactNode | ReactNode[];
@@ -73,6 +70,17 @@ function Actions({ children }: ActionsProps) {
     return action;
   };
 
+  window.addEventListener("keydown", (event) => {
+    if (
+      event.key === "Backspace" &&
+      //@ts-ignore
+      (event.target.tagName === "BODY" || event.target.tagName === "BUTTON")
+    ) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  });
+
   const { elementWithShortcut: NewDocument } = useInjectedAction(
     dispatch,
     "New document",
@@ -87,12 +95,28 @@ function Actions({ children }: ActionsProps) {
           parseFileToDocumentDirectory,
         );
 
-        // TODO: share succes state
-        setTimeout(() => {
-          navigate(`/`);
-          handleSucces();
-          navigate(`/documents/${directory.id}`);
-        }, 100);
+        const layoutOptions = Object.keys(defaultLayoutMapping).map((key) => ({
+          value: key,
+          label: key,
+        }));
+
+        const layoutKey = (await selectSingle(
+          "Document layout",
+          "Select a document layout",
+          layoutOptions,
+        )) as keyof typeof defaultLayoutMapping;
+
+        await store
+          .createStore(
+            generateLayoutWithContent(generateDefaultLayout(layoutKey), [
+              ONBOARDING_CONTENT,
+            ]),
+            pathInDirectory(directory, "layout.json"),
+          )
+          .save();
+
+        navigateDropState(navigate, `/documents/${directory.id}`);
+        handleSucces();
       } catch (error) {
         handleError("Failed to create document: ", error);
       }
@@ -119,7 +143,7 @@ function Actions({ children }: ActionsProps) {
 
         if (matchingKeyword) {
           throw Error("Keyword of name found");
-        } // merge
+        }
 
         const keyword = generateKeyword({ label });
 
@@ -147,26 +171,17 @@ function Actions({ children }: ActionsProps) {
         return;
       }
 
-      const documentName = await selectSingle(
+      const documentId = await selectSingle(
         "Open document",
         "Search for documents",
-        documents.map((document) => document.name),
-      );
-      const document = documents.find(
-        (value) => slugify(value.name) === slugify(documentName),
+        documents.map((document) => ({
+          label: document.name,
+          value: document.id,
+        })),
       );
 
-      if (document === undefined) {
-        announceError();
-        return;
-      }
-
-      navigate("/");
-      setTimeout(() => {
-        navigate(`/documents/${document?.id}`);
-      }, 100);
+      navigateDropState(navigate, `/documents/${documentId}`);
     },
-    true,
   );
 
   const { elementWithShortcut: OpenActionsPanel } = useInjectedAction(
@@ -177,50 +192,62 @@ function Actions({ children }: ActionsProps) {
       const actionLabel = await selectSingle(
         "Execute action",
         "Search for actions",
-        actions.map((action) => action.label),
+        actions.map((action) => ({
+          label: `${action.label} (${formatShortcutsForSpeech(action.shortcut.split("+")).join(" + ")})`,
+          value: action.label,
+        })),
       );
       const action = getActionBySlug(slugify(actionLabel));
       action?.callback();
     },
-    true,
   );
 
+  const { elementWithShortcut: SetDetailLevel } = useInjectedAction(
+    dispatch,
+    "Set detail level",
+    keyExplicitAction("y"),
+    async () => {
+      const detailString = await selectSingle(
+        "Set aria detail level",
+        "Aria detail levels",
+        Enum.entries(AriaDetail).map(([key, value]) => ({
+          label: `${key} aria detail`,
+          value: `${value}`,
+        })),
+      );
+      ``;
+      const detail = parseInt(detailString) as AriaDetail;
+      if (!Enum.values(AriaDetail).includes(detail)) {
+        announceError();
+        return;
+      }
+      setAriaDetail(detail);
+      window.location.reload();
+    },
+  );
+
+  const elements = [OpenActionsPanel, NewDocument, NewKeyword, SetDetailLevel];
+
   return (
-    <div data-component-name="Actions" className="flex flex-col p-4">
+    <div
+      data-component-name="Actions"
+      className="flex min-h-screen flex-col gap-y-5 p-4 pt-8"
+    >
       <ActionsContext.Provider value={[actions, dispatch, getActionBySlug]}>
-        <div ref={mainRef}>{children}</div>
+        <div className="flex flex-1 flex-col" ref={mainRef}>
+          {children}
+        </div>
         <ul
           aria-label="Actions"
-          className="flex flex-col items-start p-4 opacity-50 focus-within:opacity-100  "
+          className="bento-light sr-only flex flex-col divide-y-[1px] divide-white/20 py-1 focus-within:not-sr-only"
           role="menu"
           ref={actionsRef}
         >
-          <li>
-            <OpenActionsPanel />
-          </li>
-          <li>
-            <NewDocument />
-          </li>
-          <li>
-            <NewKeyword />
-          </li>
-          {/* {actions.map((action) => (
-            <button
-              className="block"
-              onClick={() => {
-                action.callback();
-              }}
-            >
-              {action.label}{" "}
-              <em className="text-white/40">
-                (
-                {formatShortcutsForSpeech(action.shortcut.split("+")).join(
-                  ", ",
-                )}
-                )
-              </em>
-            </button>
-          ))} */}
+          {elements.map((Element) => (
+            <li>
+              <Element className="bento-focus-light my-1 rounded-[1rem] px-5 py-1.5" />
+            </li>
+          ))}
         </ul>
       </ActionsContext.Provider>
     </div>
