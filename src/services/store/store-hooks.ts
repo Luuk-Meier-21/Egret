@@ -1,4 +1,9 @@
-import { FileEntry, FsOptions, readDir } from "@tauri-apps/api/fs";
+import {
+  FileEntry,
+  FsOptions,
+  readDir,
+  writeTextFile,
+} from "@tauri-apps/api/fs";
 import { Store, decodeJSON, encodeJSON } from "./store";
 import { DOCUMENTS } from "../../config/files";
 import { requireDir } from "../../utils/filesystem";
@@ -18,12 +23,18 @@ export function useStateStore<T>(
   ).setOptions(options);
 
   const forceSave = async () => {
-    return store
-      .set(state)
-      .save()
-      .then(() => {
-        // console.info("💾 ~ store saved to: ", path);
-      });
+    console.log("force save");
+    await requireDir(DOCUMENTS.path, {
+      dir: DOCUMENTS.source,
+    });
+
+    await writeTextFile(path, encodeJSON(state), options);
+    // return store
+    //   .set(state)
+    //   .save()
+    //   .then(() => {
+    //     // console.info("💾 ~ store saved to: ", path);
+    //   });
   };
 
   return forceSave;

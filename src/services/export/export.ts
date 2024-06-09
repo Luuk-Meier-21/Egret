@@ -1,6 +1,10 @@
 import clsx from "clsx";
-import { promiseWindow } from "../window/window-manager";
+import { promiseWindow, selectSingle } from "../window/window-manager";
 import { exportToSvg } from "./export-svg";
+import { concatPath } from "../store/store";
+import { save } from "@tauri-apps/api/dialog";
+import { DocumentDirectory } from "../../types/documents";
+import { writeTextFile } from "@tauri-apps/api/fs";
 
 export type ExportFormat = keyof typeof exportFormatMapping;
 export type ExportSize = keyof typeof exportSizeMapping;
@@ -73,4 +77,43 @@ export function exportDocument(
     },
     "export",
   );
+}
+
+export async function exportDocumentByDirectory(directory: DocumentDirectory) {
+  const format = (await selectSingle(
+    "Select format",
+    "Export format",
+    getAllExporterKeys().map((key) => ({ label: key, value: key })),
+  )) as ExportFormat;
+  const size = (await selectSingle(
+    "Select size",
+    "Export size",
+    getAllExportSizeKeys().map((key) => ({ label: key, value: key })),
+  )) as ExportSize;
+  const style = (await selectSingle(
+    "Select style preset",
+    "Export style",
+    getAllExportStyleKeys().map((key) => ({ label: key, value: key })),
+  )) as ExportStyle;
+
+  const layoutFilePath = concatPath(directory.filePath, "layout.json");
+
+  const svg = await exportDocument(layoutFilePath, format, size, style);
+
+  const path = await save({
+    title: `Save as ${format}`,
+    defaultPath: `~/Documents/${directory.name}`,
+    filters: [
+      {
+        name: "Export",
+        extensions: [format],
+      },
+    ],
+  });
+
+  if (path === null) {
+    return Promise.reject("Path invalid");
+  }
+
+  await writeTextFile(path, svg);
 }

@@ -18,7 +18,7 @@ import { validate } from "uuid";
 import { ONBOARDING_CONTENT } from "./config/onboarding";
 import { keywordsRecordOptions, keywordsRecordPath } from "./config/keywords";
 import { Keyword } from "./types/keywords";
-import { Suspense, lazy } from "react";
+import { StrictMode, Suspense, lazy } from "react";
 
 const Env = lazy(() => import("./components/EnvProvider/EnvProvider"));
 import DocumentDetail from "./components/DocumentDetail/DocumentDetail";
@@ -103,6 +103,8 @@ function App() {
               )
               .then((store) => store.load());
 
+            console.log("loaded state: ", layout);
+
             const document = await store
               .loadStore(
                 pathInDirectory(directory, "meta.json"),
@@ -147,17 +149,19 @@ function App() {
   useHotkeyOverride();
 
   return (
-    <div data-component-name="App">
-      <Suspense
-        fallback={<div className="h-full w-full bg-red-500">Loading...</div>}
-      >
-        <Env>
-          <DialogProvider>
-            <RouterProvider router={router} />
-          </DialogProvider>
-        </Env>
-      </Suspense>
-    </div>
+    <StrictMode>
+      <div data-component-name="App">
+        <Suspense
+          fallback={<div className="h-full w-full bg-red-500">Loading...</div>}
+        >
+          <Env>
+            <DialogProvider>
+              <RouterProvider router={router} />
+            </DialogProvider>
+          </Env>
+        </Suspense>
+      </div>
+    </StrictMode>
   );
 }
 

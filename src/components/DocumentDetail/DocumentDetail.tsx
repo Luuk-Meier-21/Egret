@@ -1,18 +1,17 @@
-import { useEffect, useRef, useState } from "react";
-import { useLayoutBuilder } from "../../services/layout/layout-builder";
+import { useEffect } from "react";
+import {
+  layoutDeleteNode,
+  layoutInsertColumn,
+  layoutInsertRow,
+  useLayoutBuilder,
+} from "../../services/layout/layout-builder";
 import { flattenLayoutNodesByReference } from "../../services/layout/layout-content";
 import { useLayoutNavigator } from "../../services/layout/layout-navigation";
 import { useLayoutState } from "../../services/layout/layout-state";
 import { useDocumentViewLoader } from "../../services/loader/loader";
-import {
-  Layout,
-  LayoutNodeData,
-  SanitizedLayout,
-} from "../../types/layout/layout";
-import { deepJSONClone } from "../../utils/object";
+import { LayoutNodeData } from "../../types/layout/layout";
 import { useStateStore } from "../../services/store/store-hooks";
 import {
-  concatPath,
   defaultFsOptions,
   pathInDirectory,
   pathOfDocumentsDirectory,
@@ -31,25 +30,14 @@ import {
 } from "../../config/shortcut";
 import {
   closeCompanionSocket,
-  getMacNetworkIp,
   openCompanionSocket,
   systemSound,
 } from "../../bindings";
 import { selectSingle } from "../../services/window/window-manager";
-import {
-  ExportFormat,
-  ExportSize,
-  ExportStyle,
-  exportDocument,
-  getAllExportSizeKeys,
-  getAllExportStyleKeys,
-  getAllExporterKeys,
-} from "../../services/export/export";
-import { save } from "@tauri-apps/api/dialog";
-import { removeDir, writeTextFile } from "@tauri-apps/api/fs";
+import { exportDocumentByDirectory } from "../../services/export/export";
+import { removeDir } from "@tauri-apps/api/fs";
 import { announceError } from "../../utils/error";
 import { emit, listen } from "@tauri-apps/api/event";
-import { getMatches } from "@tauri-apps/api/cli";
 import { useContext } from "react";
 import { EnvContext } from "../EnvProvider/EnvProvider";
 import { LayoutBranchOrNode } from "../LayoutBranch/LayoutBranch";
@@ -57,49 +45,60 @@ import { generateDocumentRegion } from "../../services/document/document-generat
 import { ariaItemOfList, ariaList } from "../../services/aria/label";
 import DocumentRegion from "../DocumentRegion/DocumentRegion";
 import { ariaLines } from "../../services/aria/aria";
+import { useLayoutAutoSaveHandle } from "../../services/layout/layout-saving";
 
 interface DocumentDetailProps {}
 
-function sanitizeLayout(layout: Layout): SanitizedLayout {
-  const cloneLayout: SanitizedLayout = {
-    ...deepJSONClone(layout),
-    clean: true,
-  };
-  const nodes = flattenLayoutNodesByReference(cloneLayout.tree);
-  nodes.forEach((node) => {
-    node.data = undefined;
-  });
-
-  return cloneLayout;
-}
+// update is sync with state when document is open
+// when navigating out of document to / or other document state updates to (presumably) the state that was active when first opend
 
 function DocumentDetail({}: DocumentDetailProps) {
   const [directory, _staticDocumentData, staticLayout, _keywords] =
     useDocumentViewLoader();
 
   const env = useContext(EnvContext);
-
   const builder = useLayoutBuilder(staticLayout);
   const selection = useLayoutState(builder.layout);
   const navigator = useLayoutNavigator(selection, builder.layout);
 
-  // const [isInCompanionMode, setCompanionMode] = useState(false);
-
-  // const layoutCache = useRef(builder.layout);
-
-  const saveDocument = useStateStore(
+  const navigate = useNavigate();
+  const save = useStateStore(
     builder.layout,
     pathInDirectory(directory, "layout.json"),
   );
 
-  const navigate = useNavigate();
+  useLayoutAutoSaveHandle(builder.layout, save);
 
-  const handleSave = (region: DocumentRegionData, node: LayoutNodeData) => {
+  // useStrictEffect(
+  //   () => {
+  //     save();
+  //   },
+  //   ([layout]) =>
+  //     deepJSONClone(flattenLayoutNodesByReference(layout.tree)).length,
+  //   [builder.layout],
+  // );
+
+  const hasFeature = (key: string) =>
+    env?.features?.value ? env?.features?.value?.includes(key) ?? false : false;
+
+  const deleteNode = (force: boolean = false) =>
+    layoutDeleteNode(navigator, builder, selection, force);
+  const insertRow = (position: "before" | "after") =>
+    layoutInsertRow(navigator, builder, selection, position);
+  const insertColumn = (position: "before" | "after") =>
+    layoutInsertColumn(navigator, builder, selection, position);
+
+  const handleRegionSave = (
+    region: DocumentRegionData,
+    node: LayoutNodeData,
+  ) => {
     builder.insertContent(region, node);
-    saveDocument();
+    save();
   };
-
-  const handleChange = (region: DocumentRegionData, node: LayoutNodeData) => {
+  const handleRegionChange = (
+    region: DocumentRegionData,
+    node: LayoutNodeData,
+  ) => {
     builder.insertContent(region, node);
   };
 
@@ -107,56 +106,33 @@ function DocumentDetail({}: DocumentDetailProps) {
     "Navigate to home",
     keyAction("Escape"),
     async () => {
+      // await save();
+      // console.log("saved: ", builder.layout);
       navigate("/");
     },
   );
 
   useScopedAction("Save document", keyAction("s"), async () => {
-    await saveDocument();
+    await save();
     systemSound("Glass", 1, 1, 1);
   });
 
-  useScopedAction("Preview document", keyAction("e"), async () => {
-    await saveDocument();
+  useConditionalAction(
+    "Export document",
+    keyAction("e"),
+    hasFeature("export"),
+    async () => {
+      try {
+        await save();
+        await exportDocumentByDirectory(directory);
 
-    const format = (await selectSingle(
-      "Select format",
-      "Export format",
-      getAllExporterKeys().map((key) => ({ label: key, value: key })),
-    )) as ExportFormat;
-    const size = (await selectSingle(
-      "Select size",
-      "Export size",
-      getAllExportSizeKeys().map((key) => ({ label: key, value: key })),
-    )) as ExportSize;
-    const style = (await selectSingle(
-      "Select style preset",
-      "Export style",
-      getAllExportStyleKeys().map((key) => ({ label: key, value: key })),
-    )) as ExportStyle;
-
-    const layoutFilePath = concatPath(directory.filePath, "layout.json");
-
-    const svg = await exportDocument(layoutFilePath, format, size, style);
-
-    const path = await save({
-      title: `Save as ${format}`,
-      defaultPath: `~/Documents/${directory.name}`,
-      filters: [
-        {
-          name: "Export",
-          extensions: [format],
-        },
-      ],
-    });
-
-    if (path === null) {
-      return;
-    }
-
-    await writeTextFile(path, svg);
-    systemSound("Glass", 1, 1, 1);
-  });
+        systemSound("Glass", 1, 1, 1);
+      } catch (error) {
+        console.error(error);
+        announceError();
+      }
+    },
+  );
 
   useScopedAction(
     "Delete document",
@@ -196,54 +172,6 @@ function DocumentDetail({}: DocumentDetailProps) {
   useScopedAction("Move right", keyNavigation("right"), async () => {
     navigator.focusColumnRight();
   });
-
-  const deleteNode = (force: boolean = false) => {
-    const currentRow = navigator.getCurrentRow();
-    const currentNode = navigator.getCurrentNode();
-
-    if (currentRow === null || currentNode === null) {
-      announceError();
-      return;
-    }
-
-    if (currentRow.type === "branch") {
-      const node = builder.removeNodeFromRow(currentRow, currentNode, force);
-      selection.setNodeId(node.id);
-    } else {
-      const node = builder.removeRow(currentRow, force);
-      selection.setNodeId(node.id);
-    }
-  };
-
-  const insertRow = (position: "before" | "after") => {
-    const currentRow = navigator.getCurrentRow();
-
-    if (currentRow === null) {
-      announceError();
-      return;
-    }
-
-    const newNode = builder.insertRow(currentRow, position);
-    selection.setNodeId(newNode.id);
-  };
-
-  const insertColumn = (position: "before" | "after") => {
-    const currentRow = navigator.getCurrentRow();
-    const currentNode = navigator.getCurrentNode();
-
-    if (currentRow === null || currentNode === null) {
-      announceError();
-      return;
-    }
-
-    if (currentRow.type === "branch") {
-      const newNode = builder.insertColumn(currentRow, currentNode, position);
-      selection.setNodeId(newNode.id);
-    } else {
-      const newNode = builder.addColumnToNodeRow(currentRow, position);
-      selection.setNodeId(newNode.id);
-    }
-  };
 
   useScopedAction("Delete node", keyNavigation("backspace"), async () => {
     deleteNode();
@@ -285,28 +213,33 @@ function DocumentDetail({}: DocumentDetailProps) {
     },
   );
 
-  useScopedAction(`Find landmark`, keyExplicitAction("l"), async () => {
-    const options = flattenLayoutNodesByReference(builder.layout.tree)
-      .filter((value) => value.data?.landmark !== undefined)
-      .map((value) => ({
-        value: value.id,
-        label: value.data?.landmark?.label || "",
-      }));
+  useConditionalAction(
+    `Find landmark`,
+    keyExplicitAction("l"),
+    hasFeature("landmarks"),
+    async () => {
+      const options = flattenLayoutNodesByReference(builder.layout.tree)
+        .filter((value) => value.data?.landmark !== undefined)
+        .map((value) => ({
+          value: value.id,
+          label: value.data?.landmark?.label || "",
+        }));
 
-    if (options.length <= 0) {
-      announceError();
-      return;
-    }
+      if (options.length <= 0) {
+        announceError();
+        return;
+      }
 
-    const nodeId = await selectSingle("label", "Landmark label", options);
-    selection.setNodeId(nodeId);
-  });
+      const nodeId = await selectSingle("label", "Landmark label", options);
+      selection.setNodeId(nodeId);
+    },
+  );
 
   // Companion mode
   useConditionalAction(
     "Start tactile mode",
     keyExplicitNavigation("left"),
-    env.features.value.includes("tactile"),
+    hasFeature("tactile"),
     async () => {
       await openCompanionSocket();
     },
@@ -315,7 +248,7 @@ function DocumentDetail({}: DocumentDetailProps) {
   useConditionalAction(
     "Stop tactile mode",
     keyExplicitNavigation("left"),
-    env.features.value.includes("tactile"),
+    hasFeature("tactile"),
     async () => {
       await closeCompanionSocket();
     },
@@ -324,14 +257,14 @@ function DocumentDetail({}: DocumentDetailProps) {
   useConditionalAction(
     "Refresh event",
     keyExplicitNavigation("left"),
-    env.features.value.includes("tactile"),
+    hasFeature("tactile"),
     async () => {
       emit("refresh-client", "none");
     },
   );
 
   useEffect(() => {
-    if (env.features.value.includes("tactile")) {
+    if (hasFeature("tactile")) {
       const focusCallback = (e: any) => {
         navigator.focusColumn(e.payload.row_id, e.payload.column_id);
       };
@@ -387,10 +320,10 @@ function DocumentDetail({}: DocumentDetailProps) {
                   <DocumentRegion
                     label={label}
                     onSave={(region, _editor) => {
-                      handleSave(region, node);
+                      handleRegionSave(region, node);
                     }}
                     onChange={(region) => {
-                      handleChange(region, node);
+                      handleRegionChange(region, node);
                     }}
                     onAddLandmark={(_region, landmark) => {
                       builder.addLandmark(node, landmark);

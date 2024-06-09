@@ -7,6 +7,7 @@ import {
   LayoutCommon,
   LayoutNodeData,
   LayoutTreeTrunk,
+  SanitizedLayout,
 } from "../../types/layout/layout";
 import { layoutReducer } from "./layout-builder-reducer";
 import {
@@ -19,6 +20,10 @@ import { announceError } from "../../utils/error";
 import { useHistoryState } from "./layout-history";
 import { useObservableEffect } from "./layout-change";
 import { useScopedAction } from "../actions/actions-hook";
+import { useLayoutNavigator } from "./layout-navigation";
+import { useLayoutState } from "./layout-state";
+import { deepJSONClone } from "../../utils/object";
+import { flattenLayoutNodesByReference } from "./layout-content";
 
 export type LayoutBuilderCallback = (layout: Layout) => void;
 
@@ -222,3 +227,79 @@ export function useLayoutBuilder(staticLayout: Layout) {
 }
 
 export type LayoutBuilder = ReturnType<typeof useLayoutBuilder>;
+
+export function layoutDeleteNode(
+  navigator: ReturnType<typeof useLayoutNavigator>,
+  builder: ReturnType<typeof useLayoutBuilder>,
+  selection: ReturnType<typeof useLayoutState>,
+  force: boolean = false,
+): void {
+  const currentRow = navigator.getCurrentRow();
+  const currentNode = navigator.getCurrentNode();
+
+  if (currentRow === null || currentNode === null) {
+    announceError();
+    return;
+  }
+
+  if (currentRow.type === "branch") {
+    const node = builder.removeNodeFromRow(currentRow, currentNode, force);
+    selection.setNodeId(node.id);
+  } else {
+    const node = builder.removeRow(currentRow, force);
+    selection.setNodeId(node.id);
+  }
+}
+
+export function layoutInsertRow(
+  navigator: ReturnType<typeof useLayoutNavigator>,
+  builder: ReturnType<typeof useLayoutBuilder>,
+  selection: ReturnType<typeof useLayoutState>,
+  position: "before" | "after",
+): void {
+  const currentRow = navigator.getCurrentRow();
+
+  if (currentRow === null) {
+    announceError();
+    return;
+  }
+
+  const newNode = builder.insertRow(currentRow, position);
+  selection.setNodeId(newNode.id);
+}
+
+export function layoutInsertColumn(
+  navigator: ReturnType<typeof useLayoutNavigator>,
+  builder: ReturnType<typeof useLayoutBuilder>,
+  selection: ReturnType<typeof useLayoutState>,
+  position: "before" | "after",
+): void {
+  const currentRow = navigator.getCurrentRow();
+  const currentNode = navigator.getCurrentNode();
+
+  if (currentRow === null || currentNode === null) {
+    announceError();
+    return;
+  }
+
+  if (currentRow.type === "branch") {
+    const newNode = builder.insertColumn(currentRow, currentNode, position);
+    selection.setNodeId(newNode.id);
+  } else {
+    const newNode = builder.addColumnToNodeRow(currentRow, position);
+    selection.setNodeId(newNode.id);
+  }
+}
+
+export function sanitizeLayout(layout: Layout): SanitizedLayout {
+  const cloneLayout: SanitizedLayout = {
+    ...deepJSONClone(layout),
+    clean: true,
+  };
+  const nodes = flattenLayoutNodesByReference(cloneLayout.tree);
+  nodes.forEach((node) => {
+    node.data = undefined;
+  });
+
+  return cloneLayout;
+}
