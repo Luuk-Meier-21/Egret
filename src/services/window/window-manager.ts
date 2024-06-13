@@ -13,7 +13,7 @@ export type PromiseWindowData = {
   | {
       type: "select";
       label: string;
-      values: string[];
+      values: (string | number)[];
       labels: string[];
     }
   | ExportWindowProps
@@ -93,7 +93,7 @@ export function prompt(prompt: string, promptDescription: string) {
 export function selectSingle(
   prompt: string,
   promptDescription: string,
-  options: { label: string; value: string }[],
+  options: { label: string; value: string | number }[],
 ) {
   let labels: string[] = [];
   let values = options.map(({ label, value }) => {

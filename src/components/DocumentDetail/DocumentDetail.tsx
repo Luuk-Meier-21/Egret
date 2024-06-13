@@ -3,6 +3,7 @@ import {
   layoutDeleteNode,
   layoutInsertColumn,
   layoutInsertRow,
+  sanitizeLayout,
   useLayoutBuilder,
 } from "../../services/layout/layout-builder";
 import { flattenLayoutNodesByReference } from "../../services/layout/layout-content";
@@ -19,7 +20,7 @@ import {
 import { useNavigate } from "react-router";
 import { DocumentRegionData } from "../../types/document/document";
 import {
-  useConditionalAction,
+  useConditionalScopedAction,
   useScopedAction,
 } from "../../services/actions/actions-hook";
 import {
@@ -31,6 +32,7 @@ import {
 import {
   closeCompanionSocket,
   openCompanionSocket,
+  setLayoutState,
   systemSound,
 } from "../../bindings";
 import { selectSingle } from "../../services/window/window-manager";
@@ -45,7 +47,12 @@ import { generateDocumentRegion } from "../../services/document/document-generat
 import { ariaItemOfList, ariaList } from "../../services/aria/label";
 import DocumentRegion from "../DocumentRegion/DocumentRegion";
 import { ariaLines } from "../../services/aria/aria";
-import { useLayoutAutoSaveHandle } from "../../services/layout/layout-saving";
+
+import { clientEndpoint } from "../../services/socket/tactile-socket";
+import { useStrictEffect } from "../../services/layout/layout-change";
+import { deepJSONClone } from "../../utils/object";
+import { FOCUS_MODE_MAPPING, setFocusMode } from "../../services/focus/focus";
+import { selectConfigFromMapping } from "../../utils/config";
 
 interface DocumentDetailProps {}
 
@@ -67,7 +74,7 @@ function DocumentDetail({}: DocumentDetailProps) {
     pathInDirectory(directory, "layout.json"),
   );
 
-  useLayoutAutoSaveHandle(builder.layout, save);
+  // useLayoutAutoSaveHandle(builder.layout, save);
 
   // useStrictEffect(
   //   () => {
@@ -93,8 +100,8 @@ function DocumentDetail({}: DocumentDetailProps) {
     node: LayoutNodeData,
   ) => {
     builder.insertContent(region, node);
-    save();
   };
+
   const handleRegionChange = (
     region: DocumentRegionData,
     node: LayoutNodeData,
@@ -113,16 +120,18 @@ function DocumentDetail({}: DocumentDetailProps) {
   );
 
   useScopedAction("Save document", keyAction("s"), async () => {
+    console.log("manual save");
     await save();
     systemSound("Glass", 1, 1, 1);
   });
 
-  useConditionalAction(
+  useConditionalScopedAction(
     "Export document",
     keyAction("e"),
     hasFeature("export"),
     async () => {
       try {
+        console.log("export save");
         await save();
         await exportDocumentByDirectory(directory);
 
@@ -173,9 +182,13 @@ function DocumentDetail({}: DocumentDetailProps) {
     navigator.focusColumnRight();
   });
 
-  useScopedAction("Delete node", keyNavigation("backspace"), async () => {
-    deleteNode();
-  });
+  useScopedAction(
+    "Delete empty column",
+    keyNavigation("backspace"),
+    async () => {
+      deleteNode();
+    },
+  );
 
   useScopedAction(
     "Force delete node",
@@ -213,7 +226,17 @@ function DocumentDetail({}: DocumentDetailProps) {
     },
   );
 
-  useConditionalAction(
+  useScopedAction(`Set focus contrast`, keyExplicitAction("0"), async () => {
+    const succes = await selectConfigFromMapping(
+      FOCUS_MODE_MAPPING,
+      setFocusMode,
+    );
+    if (!succes) {
+      announceError();
+    }
+  });
+
+  useConditionalScopedAction(
     `Find landmark`,
     keyExplicitAction("l"),
     hasFeature("landmarks"),
@@ -236,25 +259,27 @@ function DocumentDetail({}: DocumentDetailProps) {
   );
 
   // Companion mode
-  useConditionalAction(
+  useConditionalScopedAction(
     "Start tactile mode",
-    keyExplicitNavigation("left"),
+    keyExplicitNavigation("9"),
     hasFeature("tactile"),
     async () => {
       await openCompanionSocket();
+
+      console.log(clientEndpoint(window.location.hostname));
     },
   );
 
-  useConditionalAction(
+  useConditionalScopedAction(
     "Stop tactile mode",
-    keyExplicitNavigation("left"),
+    keyExplicitNavigation("8"),
     hasFeature("tactile"),
     async () => {
       await closeCompanionSocket();
     },
   );
 
-  useConditionalAction(
+  useConditionalScopedAction(
     "Refresh event",
     keyExplicitNavigation("left"),
     hasFeature("tactile"),
@@ -264,16 +289,15 @@ function DocumentDetail({}: DocumentDetailProps) {
   );
 
   useEffect(() => {
-    if (hasFeature("tactile")) {
-      const focusCallback = (e: any) => {
-        navigator.focusColumn(e.payload.row_id, e.payload.column_id);
-      };
+    const focusCallback = (e: any) => {
+      navigator.focusColumn(e.payload.row_id, e.payload.column_id);
+    };
 
-      const unlistenFocus = listen("focus", focusCallback);
-      return () => {
-        unlistenFocus.then((f) => f());
-      };
-    }
+    const unlistenFocus = listen("focus", focusCallback);
+    return () => {
+      unlistenFocus.then((f) => f());
+    };
+
     // No dependancy array! Function needs to be redefined on every effect, otherwise it will use stale state when fired.
     // https://stackoverflow.com/questions/57847594/accessing-up-to-date-state-from-within-a-callback
   });
@@ -286,13 +310,15 @@ function DocumentDetail({}: DocumentDetailProps) {
   //   );
   // };
 
-  // useEffect(() => {
-  //   console.log(layoutIsChanged(sanitizeLayout(builder.layout)));
-
-  //   setLayoutState(sanitizeLayout(builder.layout)).then(() => {});
-
-  //   layoutCache.current = builder.layout;
-  // }, [builder.layout]);
+  useStrictEffect(
+    () => {
+      console.log("SET");
+      setLayoutState(sanitizeLayout(builder.layout)).then(() => {});
+    },
+    ([layout]) =>
+      deepJSONClone(flattenLayoutNodesByReference(layout.tree)).length,
+    [builder.layout],
+  );
 
   return (
     <div data-component-name="DocumentDetail">

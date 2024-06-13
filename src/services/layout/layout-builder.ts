@@ -194,7 +194,6 @@ export function useLayoutBuilder(staticLayout: Layout) {
 
     dispatch({ type: "remove-column-from-row", row, column });
     announceDeletion();
-
     return (
       row.children[nodeIndex + 1] ||
       row.children[nodeIndex - 1] ||

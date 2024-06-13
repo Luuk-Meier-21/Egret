@@ -1,7 +1,6 @@
 import { Outlet, RouterProvider } from "react-router";
 import { createBrowserRouter } from "react-router-dom";
 import { isWithoutTauri } from "./utils/tauri";
-import PromptProvider from "./components/Prompt/PromptProvider";
 import Actions from "./components/Actions/Actions";
 import AppDocumentsOverview from "./components/DocumentsOverview/AppDocumentsOverview";
 import { useHotkeyOverride } from "./utils/hotkeys";
@@ -151,9 +150,7 @@ function App() {
   return (
     <StrictMode>
       <div data-component-name="App">
-        <Suspense
-          fallback={<div className="h-full w-full bg-red-500">Loading...</div>}
-        >
+        <Suspense>
           <Env>
             <DialogProvider>
               <RouterProvider router={router} />

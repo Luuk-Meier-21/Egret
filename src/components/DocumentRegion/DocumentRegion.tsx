@@ -7,16 +7,27 @@ import { shell } from "@tauri-apps/api";
 import { polyfillTiptapBreaking, toggleBlock } from "../../utils/block";
 import { useEditorAutoSaveHandle } from "../../utils/editor";
 import { IBlockEditor } from "../../types/block";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { keyAction, keyExplicitAction } from "../../config/shortcut";
 import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
-import { useConditionalAction } from "../../services/actions/actions-hook";
+import {
+  useConditionalScopedAction,
+  useScopedAction,
+} from "../../services/actions/actions-hook";
 import { insertOrUpdateBlock } from "@blocknote/core";
 import { voiceSay } from "../../bindings";
 import { toDataURL } from "../../utils/url";
 import { announceError } from "../../utils/error";
 import { openAsset } from "../../utils/filesystem";
-import { prompt } from "../../services/window/window-manager";
+import { prompt, selectSingle } from "../../services/window/window-manager";
+import { EnvContext } from "../EnvProvider/EnvProvider";
+import clsx from "clsx";
+import {
+  FOCUS_MODE_MAPPING,
+  FocusMode,
+  getFocusMode,
+  setFocusMode,
+} from "../../services/focus/focus";
 
 interface DocumentRegionProps {
   region: DocumentRegionData;
@@ -52,10 +63,15 @@ function DocumentRegion({
   onBlur,
   label,
 }: DocumentRegionProps) {
+  const env = useContext(EnvContext);
+
   const ref = useRef<HTMLDivElement>(null);
   const editButton = useRef<HTMLButtonElement>(null);
 
   const [isEditing, setEditing] = useState(false);
+
+  const hasFeature = (key: string) =>
+    env?.features?.value ? env?.features?.value?.includes(key) ?? false : false;
 
   const editor = useCreateBlockNote({
     schema,
@@ -109,25 +125,48 @@ function DocumentRegion({
     onChange(regionWithCurrentBlock(), editor);
   });
 
-  useConditionalAction("Selection to title", "cmd+b", isFocused, () => {
-    if (!editor.isFocused()) {
-      return;
-    }
-    const selectedBlock = editor.getTextCursorPosition().block;
-    toggleBlock(editor, selectedBlock, {
-      type: "title",
-    });
-  });
+  useConditionalScopedAction(
+    "Selection to title",
+    keyAction("b"),
+    isFocused,
+    () => {
+      if (!editor.isFocused()) {
+        return;
+      }
+      const selectedBlock = editor.getTextCursorPosition().block;
+      toggleBlock(editor, selectedBlock, {
+        type: "title",
+      });
+    },
+  );
 
-  useConditionalAction("Open selected url", "cmd+u", isFocused, () => {
-    const url = editor.getSelectedLinkUrl();
-    if (url === undefined) {
-      return;
-    }
-    shell.open(url);
-  });
+  useConditionalScopedAction(
+    "Open selected url",
+    keyAction("u"),
+    isFocused,
+    () => {
+      const url = editor.getSelectedLinkUrl();
+      if (url === undefined) {
+        return;
+      }
+      shell.open(url);
+    },
+  );
 
-  useConditionalAction(
+  useConditionalScopedAction(
+    "Open selected url",
+    keyExplicitAction("u"),
+    isFocused,
+    () => {
+      const url = editor.getSelectedLinkUrl();
+      if (url === undefined) {
+        return;
+      }
+      shell.open(url);
+    },
+  );
+
+  useConditionalScopedAction(
     "Insert image by url",
     keyAction("o"),
     isFocused,
@@ -159,7 +198,7 @@ function DocumentRegion({
     },
   );
 
-  useConditionalAction(
+  useConditionalScopedAction(
     "Insert image as embed",
     keyExplicitAction("o"),
     isFocused,
@@ -192,7 +231,7 @@ function DocumentRegion({
     },
   );
 
-  useConditionalAction(
+  useConditionalScopedAction(
     "Insert audio fragment",
     keyAction("i"),
     isFocused,
@@ -224,7 +263,7 @@ function DocumentRegion({
     },
   );
 
-  useConditionalAction(
+  useConditionalScopedAction(
     "Insert dummy text",
     keyExplicitAction("'"),
     isFocused,
@@ -250,7 +289,7 @@ function DocumentRegion({
     },
   );
 
-  useConditionalAction(
+  useConditionalScopedAction(
     "Speak current position",
     keyExplicitAction("/"),
     isFocused,
@@ -269,10 +308,10 @@ function DocumentRegion({
     },
   );
 
-  useConditionalAction(
+  useConditionalScopedAction(
     `Add landmark`,
     keyExplicitAction("l"),
-    isFocused,
+    isFocused && hasFeature("landmark"),
     async () => {
       const label = await prompt("label", "Landmark label");
 
@@ -308,6 +347,14 @@ function DocumentRegion({
     return words.join(" ");
   };
 
+  const focusMode = getFocusMode();
+  const classes = clsx({
+    "input-hint group relative w-full p-5 data-[focused]:text-black data-[focused]:bg-white":
+      focusMode === FocusMode.High,
+    "input-hint group relative w-full p-5 data-[focused]:bg-gray-400":
+      focusMode === FocusMode.Low,
+  });
+
   /**
    * Component renders a visual and a voice assisted (VA) version.
    * - VA:      a button containing x words from the editors content, finetuned for VA users.
@@ -334,7 +381,7 @@ function DocumentRegion({
         stopEdit();
       }}
       aria-label={label}
-      className="input-hint group relative w-full p-5 data-[focused]:bg-gray-400"
+      className={classes}
     >
       {region.landmark && (
         <span

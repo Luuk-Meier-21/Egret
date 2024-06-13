@@ -21,7 +21,7 @@
           "short": "f",
           "takesValue": true,
           "multiple": true,
-          "possibleValues": ["tactile", "export"]
+          "possibleValues": ["tactile", "export", "landmark"]
         }
       ]
     },

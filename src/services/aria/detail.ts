@@ -1,13 +1,28 @@
 export const ARIA_DETAIL_STORAGE_KEY = "aria-detail-level";
 
 export enum AriaDetail {
-  Low = 1, // Auditive clues only
-  Medium = 2, // Clues + short labels
-  High = 3, // Clues + detailed labels
+  Low = 0, // Auditive clues only
+  Medium = 1, // Clues + short labels
+  High = 2, // Clues + detailed labels
 }
 
+export const ARIA_DETAIL_MAPPING = [
+  {
+    value: AriaDetail.Low,
+    label: "Low detail",
+  },
+  {
+    value: AriaDetail.Medium,
+    label: "Medium detail",
+  },
+  {
+    value: AriaDetail.High,
+    label: "High detail",
+  },
+];
+
 export function ariaDetail(): AriaDetail {
-  const detailNumber = Number(localStorage.getItem("aria-detail-level"));
+  const detailNumber = Number(localStorage.getItem(ARIA_DETAIL_STORAGE_KEY));
 
   return Object.values(AriaDetail).includes(detailNumber)
     ? detailNumber

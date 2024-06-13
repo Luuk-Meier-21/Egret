@@ -23,7 +23,7 @@ import {
   ActionReducerAction,
   actionsReducer,
 } from "../../services/actions/actions-reducer";
-import { useInjectedAction } from "../../services/actions/actions-hook";
+import { useInjectedScopedAction } from "../../services/actions/actions-hook";
 import { keyAction, keyExplicitAction } from "../../config/shortcut";
 import { prompt, selectSingle } from "../../services/window/window-manager";
 import { announceError } from "../../utils/error";
@@ -35,8 +35,13 @@ import {
   generateDefaultLayout,
 } from "../../config/layout";
 import { ONBOARDING_CONTENT } from "../../config/onboarding";
-import { AriaDetail, setAriaDetail } from "../../services/aria/detail";
+import {
+  ARIA_DETAIL_MAPPING,
+  AriaDetail,
+  setAriaDetail,
+} from "../../services/aria/detail";
 import { Enum } from "../../utils/enum";
+import { selectConfigFromMapping } from "../../utils/config";
 
 interface ActionsProps {
   children: ReactNode | ReactNode[];
@@ -81,7 +86,7 @@ function Actions({ children }: ActionsProps) {
     }
   });
 
-  const { elementWithShortcut: NewDocument } = useInjectedAction(
+  const { elementWithShortcut: NewDocument } = useInjectedScopedAction(
     dispatch,
     "New document",
     keyAction("n"),
@@ -123,7 +128,7 @@ function Actions({ children }: ActionsProps) {
     },
   );
 
-  const { elementWithShortcut: NewKeyword } = useInjectedAction(
+  const { elementWithShortcut: NewKeyword } = useInjectedScopedAction(
     dispatch,
     "New keyword",
     keyAction("m"),
@@ -156,7 +161,7 @@ function Actions({ children }: ActionsProps) {
     },
   );
 
-  useInjectedAction(
+  useInjectedScopedAction(
     dispatch,
     "Open documents panel",
     keyAction("p"),
@@ -184,7 +189,7 @@ function Actions({ children }: ActionsProps) {
     },
   );
 
-  const { elementWithShortcut: OpenActionsPanel } = useInjectedAction(
+  const { elementWithShortcut: OpenActionsPanel } = useInjectedScopedAction(
     dispatch,
     "Open action panel",
     keyExplicitAction("p"),
@@ -202,29 +207,37 @@ function Actions({ children }: ActionsProps) {
     },
   );
 
-  const { elementWithShortcut: SetDetailLevel } = useInjectedAction(
+  const { elementWithShortcut: SetDetailLevel } = useInjectedScopedAction(
     dispatch,
     "Set detail level",
-    keyExplicitAction("y"),
+    keyExplicitAction("1"),
     async () => {
-      const detailString = await selectSingle(
-        "Set aria detail level",
-        "Aria detail levels",
-        Enum.entries(AriaDetail).map(([key, value]) => ({
-          label: `${key} aria detail`,
-          value: `${value}`,
-        })),
+      const succes = await selectConfigFromMapping(
+        ARIA_DETAIL_MAPPING,
+        setAriaDetail,
       );
-      ``;
-      const detail = parseInt(detailString) as AriaDetail;
-      if (!Enum.values(AriaDetail).includes(detail)) {
+      if (!succes) {
         announceError();
-        return;
       }
-      setAriaDetail(detail);
-      window.location.reload();
     },
   );
+
+  // useScopedAction(`Set focus contrast`, keyExplicitAction("0"), async () => {
+  //   const focusModeString = await selectSingle(
+  //     "Select contrast",
+  //     "Focus constrast",
+  //     FOCUS_MODE_MAPPING,
+  //   );
+  //   const focusMode: number = Number(focusModeString);
+
+  //   if (!FOCUS_MODE_MAPPING.map(({ value }) => value).includes(focusMode)) {
+  //     announceError();
+  //     return;
+  //   }
+
+  //   setFocusMode(focusMode);
+  //   window.location.reload();
+  // });
 
   const elements = [OpenActionsPanel, NewDocument, NewKeyword, SetDetailLevel];
 

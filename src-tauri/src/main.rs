@@ -30,6 +30,19 @@ pub enum CustomError {
     CustomError { message: String },
 }
 
+// #[specta::specta]
+// #[tauri::command]
+// pub fn println(message: &'static str) -> () {
+//     println!("{}", message);
+
+// }
+
+// #[specta::specta]
+// #[tauri::command]
+// pub fn json_println(json: JSON) -> () {
+//     println
+// }
+
 // ipconfig getifaddr en0
 
 #[tauri::command]

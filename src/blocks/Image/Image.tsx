@@ -5,7 +5,7 @@ import { ReactNode, useEffect, useRef } from "react";
 import { BlockComponentProps } from "../../types/block";
 import { useBlockSelection } from "../../utils/block";
 import { voiceSay } from "../../bindings";
-import { useConditionalAction } from "../../services/actions/actions-hook";
+import { useConditionalScopedAction } from "../../services/actions/actions-hook";
 
 export const insertRow = (editor: typeof schema.BlockNoteEditor) => ({
   title: "Image",
@@ -50,9 +50,14 @@ function rowComponent({
   }, []);
 
   // useOverrideScreenreader(`${label}, ${alt}`, isSelected); // Seems to cause voiceover losing focus
-  useConditionalAction("Read out label", "cmd+shift+/", isSelected, () => {
-    voiceSay(label);
-  });
+  useConditionalScopedAction(
+    "Read out label",
+    "cmd+shift+/",
+    isSelected,
+    () => {
+      voiceSay(label);
+    },
+  );
 
   return (
     <figure className="inline-content inline-block w-full max-w-[600px]">

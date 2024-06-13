@@ -124,7 +124,7 @@ export function renderActionWithShortcut({
       {...props}
     >
       {label}{" "}
-      <em>({formatShortcutsForSpeech(shortcut.split("+")).join(", ")})</em>
+      <em>({formatShortcutsForSpeech(shortcut.split("+")).join(" + ")})</em>
     </button>
   );
 }

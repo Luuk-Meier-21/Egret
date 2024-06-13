@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { LayoutBranchOrNode } from "../../components/LayoutBranch/LayoutBranch";
 import { Layout, SanitizedLayout } from "../../types/layout/layout";
-import { getMacNetworkIp } from "../../bindings";
+import { socketEndpoint } from "../../services/socket/tactile-socket";
 
-const connectWebsocket = async (): Promise<WebSocket | undefined> => {
+const connectWebsocket = (): WebSocket | undefined => {
   try {
-    const networkIp = await getMacNetworkIp();
-
-    return new WebSocket(`ws://${networkIp}:2000/socket`);
+    return new WebSocket(socketEndpoint(window.location.hostname));
   } catch (error) {
     console.info(error);
     return;
@@ -27,18 +25,8 @@ const jsonToLayout = (
 };
 
 function App() {
-  const webSocket = useRef<WebSocket>();
+  const webSocket = useRef(connectWebsocket());
   const [layout, setLayout] = useState<Layout>();
-
-  useEffect(() => {
-    connectWebsocket().then((socket) => {
-      if (socket === undefined) {
-        return;
-      }
-
-      webSocket.current = socket;
-    });
-  }, []);
 
   const refreshLayout = (data: string) => {
     if (data === "refresh") {
@@ -94,11 +82,11 @@ function App() {
         test
       </button>
       {layout ? (
-        layout.tree.map((branchOrNode, rowIndex) => (
+        layout.tree.map((branchOrNode, _rowIndex) => (
           <LayoutBranchOrNode
             key={branchOrNode.id}
             value={branchOrNode}
-            renderNode={(node, columnIndex) => {
+            renderNode={(node, _columnIndex) => {
               return (
                 <button
                   onClick={() => focusColumn(node.id, branchOrNode.id)}

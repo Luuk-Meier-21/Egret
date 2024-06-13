@@ -5,7 +5,6 @@ import { UserConfig, defineConfig } from "vite";
 // https://vitejs.dev/config/
 export default defineConfig(async (env) => ({
   plugins: [react()],
-
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
   // 1. prevent vite from obscuring rust errors
@@ -20,18 +19,16 @@ export default defineConfig(async (env) => ({
       ignored: ["**/src-tauri/**"],
     },
     proxy: {
-      "/tactile": `http://192.168.178.164:1420/windows/companion/index.html`,
+      // "/tactile": `http://192.168.178.164:1420/windows/companion/index.html`,
     },
   },
-  rollupOptions: {
-    build: {
-      rollupOptions: {
-        input: {
-          main: resolve(__dirname, "index.html"),
-          prompt: resolve(__dirname, "window/prompt/index.html"),
-          export: resolve(__dirname, "window/export/index.html"),
-          companion: resolve(__dirname, "windows/companion/index.html"),
-        },
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, "index.html"),
+        prompt: resolve(__dirname, "window/prompt/index.html"),
+        export: resolve(__dirname, "window/export/index.html"),
+        companion: resolve(__dirname, "window/companion/index.html"),
       },
     },
   },

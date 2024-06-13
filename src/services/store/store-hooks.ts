@@ -15,6 +15,7 @@ export function useStateStore<T>(
     dir: DOCUMENTS.source,
   },
 ): () => Promise<void> {
+  //@ts-ignore
   const store: Store<T> = new Store(
     state,
     path,
@@ -23,7 +24,8 @@ export function useStateStore<T>(
   ).setOptions(options);
 
   const forceSave = async () => {
-    console.log("force save");
+    console.log("force save: ", state);
+
     await requireDir(DOCUMENTS.path, {
       dir: DOCUMENTS.source,
     });

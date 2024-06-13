@@ -1,6 +1,5 @@
 import { getMatches } from "@tauri-apps/api/cli";
-import { ReactNode, createContext, lazy, useEffect, useState } from "react";
-import { useAsyncValue, useBlocker } from "react-router";
+import { ReactNode, createContext, useState } from "react";
 
 interface EnvProviderProps {
   children: ReactNode | ReactNode[];
