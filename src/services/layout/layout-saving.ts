@@ -1,32 +1,39 @@
+import { useEffect } from "react";
 import { Layout } from "../../types/layout/layout";
+import { DocumentEvent, DocumentEventPayload } from "../document/event";
+import { Event, listen, TauriEvent } from "@tauri-apps/api/event";
+import { useStrictEffect } from "./layout-change";
+import { deepJSONClone } from "../../utils/object";
+import { flattenLayoutNodesByReference } from "./layout-content";
 
-export function useLayoutAutoSaveHandle(layout: Layout, onSave: () => void) {
-  //@ts-ignore
-  const saveLayout = () => {
-    console.log("save: ", layout);
-    onSave();
-  };
+export function useLayoutAutoSaveHandle(layout: Layout, save: () => void) {
+  useEffect(() => {
+    const unlistenCloseDocument = listen<DocumentEventPayload>(
+      DocumentEvent.CLOSE,
+      (_event: Event<DocumentEventPayload>) => {
+        save();
+      },
+    );
 
-  // useEffect(() => {
-  //   let unlisten = () => {};
+    const unlistenClose = listen(
+      TauriEvent.WINDOW_CLOSE_REQUESTED,
+      async () => {
+        await save();
+      },
+    );
 
-  //   listen(TauriEvent.WINDOW_CLOSE_REQUESTED, async () => {
-  //     await onSave();
-  //   }).then((callback) => {
-  //     unlisten = callback;
-  //   });
+    return () => {
+      unlistenCloseDocument.then((func) => func());
+      unlistenClose.then((func) => func());
+    };
+  }, [listen, save]);
 
-  //   return () => {
-  //     unlisten();
-  //   };
-  // }, [onSave, layout]);
-
-  // useStrictEffect(
-  //   () => {
-  //     saveLayout();
-  //   },
-  //   ([layout]) =>
-  //     deepJSONClone(flattenLayoutNodesByReference(layout.tree)).length,
-  //   [layout],
-  // );
+  useStrictEffect(
+    () => {
+      save();
+    },
+    ([layout]) =>
+      deepJSONClone(flattenLayoutNodesByReference(layout.tree)).length,
+    [layout],
+  );
 }

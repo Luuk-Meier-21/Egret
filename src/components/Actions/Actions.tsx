@@ -35,13 +35,13 @@ import {
   generateDefaultLayout,
 } from "../../config/layout";
 import { ONBOARDING_CONTENT } from "../../config/onboarding";
-import {
-  ARIA_DETAIL_MAPPING,
-  AriaDetail,
-  setAriaDetail,
-} from "../../services/aria/detail";
-import { Enum } from "../../utils/enum";
+import { ARIA_DETAIL_MAPPING, setAriaDetail } from "../../services/aria/detail";
 import { selectConfigFromMapping } from "../../utils/config";
+import { emit } from "@tauri-apps/api/event";
+import {
+  DocumentEvent,
+  emitDocumentEvent,
+} from "../../services/document/event";
 
 interface ActionsProps {
   children: ReactNode | ReactNode[];
@@ -58,11 +58,8 @@ export const ActionsContext = createContext<
 function Actions({ children }: ActionsProps) {
   const mainRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLUListElement>(null);
-
   const store = useAbstractStore();
-
   const [actions, dispatch] = useReducer(actionsReducer, []);
-
   const navigate = useNavigate();
 
   const getActionBySlug = (slug: string): ActionConfiguration | null => {
@@ -85,6 +82,26 @@ function Actions({ children }: ActionsProps) {
       event.stopImmediatePropagation();
     }
   });
+
+  const { elementWithShortcut: GoToHome } = useInjectedScopedAction(
+    dispatch,
+    "Navigate to home",
+    keyAction("Escape"),
+    async () => {
+      const path = window.location.pathname;
+
+      if (path.includes("documents/")) {
+        emit(
+          ...emitDocumentEvent(
+            DocumentEvent.CLOSE,
+            path.split("/").pop() || "-1",
+          ),
+        );
+      }
+
+      navigate("/");
+    },
+  );
 
   const { elementWithShortcut: NewDocument } = useInjectedScopedAction(
     dispatch,
@@ -222,24 +239,13 @@ function Actions({ children }: ActionsProps) {
     },
   );
 
-  // useScopedAction(`Set focus contrast`, keyExplicitAction("0"), async () => {
-  //   const focusModeString = await selectSingle(
-  //     "Select contrast",
-  //     "Focus constrast",
-  //     FOCUS_MODE_MAPPING,
-  //   );
-  //   const focusMode: number = Number(focusModeString);
-
-  //   if (!FOCUS_MODE_MAPPING.map(({ value }) => value).includes(focusMode)) {
-  //     announceError();
-  //     return;
-  //   }
-
-  //   setFocusMode(focusMode);
-  //   window.location.reload();
-  // });
-
-  const elements = [OpenActionsPanel, NewDocument, NewKeyword, SetDetailLevel];
+  const elements = [
+    GoToHome,
+    OpenActionsPanel,
+    NewDocument,
+    NewKeyword,
+    SetDetailLevel,
+  ];
 
   return (
     <div

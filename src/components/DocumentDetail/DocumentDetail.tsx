@@ -1,12 +1,9 @@
-import { useEffect } from "react";
 import {
   layoutDeleteNode,
   layoutInsertColumn,
   layoutInsertRow,
-  sanitizeLayout,
   useLayoutBuilder,
 } from "../../services/layout/layout-builder";
-import { flattenLayoutNodesByReference } from "../../services/layout/layout-content";
 import { useLayoutNavigator } from "../../services/layout/layout-navigation";
 import { useLayoutState } from "../../services/layout/layout-state";
 import { useDocumentViewLoader } from "../../services/loader/loader";
@@ -19,28 +16,17 @@ import {
 } from "../../services/store/store";
 import { useNavigate } from "react-router";
 import { DocumentRegionData } from "../../types/document/document";
-import {
-  useConditionalScopedAction,
-  useScopedAction,
-} from "../../services/actions/actions-hook";
+import { useScopedAction } from "../../services/actions/actions-hook";
 import {
   keyAction,
   keyExplicitAction,
   keyExplicitNavigation,
   keyNavigation,
 } from "../../config/shortcut";
-import {
-  closeCompanionSocket,
-  openCompanionSocket,
-  setLayoutState,
-  systemSound,
-} from "../../bindings";
-import { selectSingle } from "../../services/window/window-manager";
-import { exportDocumentByDirectory } from "../../services/export/export";
+import { systemSound } from "../../bindings";
 import { removeDir } from "@tauri-apps/api/fs";
 import { announceError } from "../../utils/error";
-import { emit, listen } from "@tauri-apps/api/event";
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { EnvContext } from "../EnvProvider/EnvProvider";
 import { LayoutBranchOrNode } from "../LayoutBranch/LayoutBranch";
 import { generateDocumentRegion } from "../../services/document/document-generator";
@@ -48,11 +34,20 @@ import { ariaItemOfList, ariaList } from "../../services/aria/label";
 import DocumentRegion from "../DocumentRegion/DocumentRegion";
 import { ariaLines } from "../../services/aria/aria";
 
-import { clientEndpoint } from "../../services/socket/tactile-socket";
-import { useStrictEffect } from "../../services/layout/layout-change";
-import { deepJSONClone } from "../../utils/object";
 import { FOCUS_MODE_MAPPING, setFocusMode } from "../../services/focus/focus";
 import { selectConfigFromMapping } from "../../utils/config";
+import useExportFeatures from "../../services/features/export";
+import useFindLandmarkFeatures from "../../services/features/landmark";
+import useTactileFeatures from "../../services/features/tactile";
+import { useLayoutAutoSaveHandle } from "../../services/layout/layout-saving";
+import { useStrictEffect } from "../../services/layout/layout-change";
+import { flattenLayoutNodesByReference } from "../../services/layout/layout-content";
+import { deepJSONClone } from "../../utils/object";
+import { Event, listen } from "@tauri-apps/api/event";
+import {
+  DocumentEvent,
+  DocumentEventPayload,
+} from "../../services/document/event";
 
 interface DocumentDetailProps {}
 
@@ -74,19 +69,7 @@ function DocumentDetail({}: DocumentDetailProps) {
     pathInDirectory(directory, "layout.json"),
   );
 
-  // useLayoutAutoSaveHandle(builder.layout, save);
-
-  // useStrictEffect(
-  //   () => {
-  //     save();
-  //   },
-  //   ([layout]) =>
-  //     deepJSONClone(flattenLayoutNodesByReference(layout.tree)).length,
-  //   [builder.layout],
-  // );
-
-  const hasFeature = (key: string) =>
-    env?.features?.value ? env?.features?.value?.includes(key) ?? false : false;
+  useLayoutAutoSaveHandle(builder.layout, save);
 
   const deleteNode = (force: boolean = false) =>
     layoutDeleteNode(navigator, builder, selection, force);
@@ -109,39 +92,10 @@ function DocumentDetail({}: DocumentDetailProps) {
     builder.insertContent(region, node);
   };
 
-  const { elementWithShortcut: GoToHome } = useScopedAction(
-    "Navigate to home",
-    keyAction("Escape"),
-    async () => {
-      // await save();
-      // console.log("saved: ", builder.layout);
-      navigate("/");
-    },
-  );
-
   useScopedAction("Save document", keyAction("s"), async () => {
-    console.log("manual save");
     await save();
     systemSound("Glass", 1, 1, 1);
   });
-
-  useConditionalScopedAction(
-    "Export document",
-    keyAction("e"),
-    hasFeature("export"),
-    async () => {
-      try {
-        console.log("export save");
-        await save();
-        await exportDocumentByDirectory(directory);
-
-        systemSound("Glass", 1, 1, 1);
-      } catch (error) {
-        console.error(error);
-        announceError();
-      }
-    },
-  );
 
   useScopedAction(
     "Delete document",
@@ -236,96 +190,13 @@ function DocumentDetail({}: DocumentDetailProps) {
     }
   });
 
-  useConditionalScopedAction(
-    `Find landmark`,
-    keyExplicitAction("l"),
-    hasFeature("landmarks"),
-    async () => {
-      const options = flattenLayoutNodesByReference(builder.layout.tree)
-        .filter((value) => value.data?.landmark !== undefined)
-        .map((value) => ({
-          value: value.id,
-          label: value.data?.landmark?.label || "",
-        }));
-
-      if (options.length <= 0) {
-        announceError();
-        return;
-      }
-
-      const nodeId = await selectSingle("label", "Landmark label", options);
-      selection.setNodeId(nodeId);
-    },
-  );
-
-  // Companion mode
-  useConditionalScopedAction(
-    "Start tactile mode",
-    keyExplicitNavigation("9"),
-    hasFeature("tactile"),
-    async () => {
-      await openCompanionSocket();
-
-      console.log(clientEndpoint(window.location.hostname));
-    },
-  );
-
-  useConditionalScopedAction(
-    "Stop tactile mode",
-    keyExplicitNavigation("8"),
-    hasFeature("tactile"),
-    async () => {
-      await closeCompanionSocket();
-    },
-  );
-
-  useConditionalScopedAction(
-    "Refresh event",
-    keyExplicitNavigation("left"),
-    hasFeature("tactile"),
-    async () => {
-      emit("refresh-client", "none");
-    },
-  );
-
-  useEffect(() => {
-    const focusCallback = (e: any) => {
-      navigator.focusColumn(e.payload.row_id, e.payload.column_id);
-    };
-
-    const unlistenFocus = listen("focus", focusCallback);
-    return () => {
-      unlistenFocus.then((f) => f());
-    };
-
-    // No dependancy array! Function needs to be redefined on every effect, otherwise it will use stale state when fired.
-    // https://stackoverflow.com/questions/57847594/accessing-up-to-date-state-from-within-a-callback
-  });
-  // }
-
-  // const layoutIsChanged = (layout: SanitizedLayout): boolean => {
-  //   return (
-  //     layout.tree.length > 0 &&
-  //     JSON.stringify(layout) !== JSON.stringify(layoutCache.current)
-  //   );
-  // };
-
-  useStrictEffect(
-    () => {
-      console.log("SET");
-      setLayoutState(sanitizeLayout(builder.layout)).then(() => {});
-    },
-    ([layout]) =>
-      deepJSONClone(flattenLayoutNodesByReference(layout.tree)).length,
-    [builder.layout],
-  );
+  // Experimental features:
+  useExportFeatures(env, directory);
+  useFindLandmarkFeatures(env, builder.layout, selection);
+  useTactileFeatures(env, builder.layout, navigator);
 
   return (
     <div data-component-name="DocumentDetail">
-      <div className="sr-only focus-within:not-sr-only">
-        <GoToHome className="bento-focus-light my-1 mb-3 rounded-[1rem] px-3 py-1.5 text-white" />
-      </div>
-
       <main className="bento-dark overflow-hidden font-serif text-base tracking-[0.01em] text-white prose-headings:mb-3 prose-headings:text-2xl prose-headings:font-normal prose-p:mb-3 prose-a:text-yellow-500 prose-a:underline [&_figcaption]:mt-1 [&_figcaption]:italic [&_img]:rounded-sm">
         <div className="divide-y-[1px] divide-white/20">
           {builder.layout.tree.map((branchOrNode, rowIndex) => (

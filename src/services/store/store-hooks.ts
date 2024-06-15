@@ -24,8 +24,6 @@ export function useStateStore<T>(
   ).setOptions(options);
 
   const forceSave = async () => {
-    console.log("force save: ", state);
-
     await requireDir(DOCUMENTS.path, {
       dir: DOCUMENTS.source,
     });

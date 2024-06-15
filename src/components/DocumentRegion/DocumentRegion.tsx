@@ -10,24 +10,16 @@ import { IBlockEditor } from "../../types/block";
 import { useContext, useEffect, useRef, useState } from "react";
 import { keyAction, keyExplicitAction } from "../../config/shortcut";
 import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
-import {
-  useConditionalScopedAction,
-  useScopedAction,
-} from "../../services/actions/actions-hook";
+import { useConditionalScopedAction } from "../../services/actions/actions-hook";
 import { insertOrUpdateBlock } from "@blocknote/core";
 import { voiceSay } from "../../bindings";
 import { toDataURL } from "../../utils/url";
 import { announceError } from "../../utils/error";
 import { openAsset } from "../../utils/filesystem";
-import { prompt, selectSingle } from "../../services/window/window-manager";
+import { prompt } from "../../services/window/window-manager";
 import { EnvContext } from "../EnvProvider/EnvProvider";
 import clsx from "clsx";
-import {
-  FOCUS_MODE_MAPPING,
-  FocusMode,
-  getFocusMode,
-  setFocusMode,
-} from "../../services/focus/focus";
+import { FocusMode, getFocusMode } from "../../services/focus/focus";
 
 interface DocumentRegionProps {
   region: DocumentRegionData;
