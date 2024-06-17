@@ -1,7 +1,8 @@
-import { emit, listen } from "@tauri-apps/api/event";
+import { emit, listen, TauriEvent } from "@tauri-apps/api/event";
 import { WebviewWindow, WindowOptions } from "@tauri-apps/api/window";
 import { slugify } from "../../utils/url";
 import { ExportWindowProps } from "../export/export";
+import { v4 as uuidv4 } from "uuid";
 
 export type PromiseWindowData = {
   type: string;
@@ -28,30 +29,35 @@ export function promiseWindow(
 ): Promise<string> {
   let resolve = (_: any) => {};
   let reject = () => {};
-  let windowLabel: string;
 
+  const windowLabel: string = slugify(title);
   const params = new URLSearchParams(data as Record<string, any>);
-  const webview = new WebviewWindow(slugify(title), {
-    url: `window/${windowEndpoint}/index.html?${params.toString()}`,
-    focus: true,
-    alwaysOnTop: true,
-    resizable: false,
-    minimizable: false,
-    title,
-    width: options.width || 300,
-    height: options.height || 300,
-    ...options,
-  });
-  console.log(webview);
 
-  webview.once("tauri://created", (event) => {
-    windowLabel = event.windowLabel;
+  const webview =
+    WebviewWindow.getByLabel(windowLabel) ??
+    new WebviewWindow(windowLabel, {
+      url: `window/${windowEndpoint}/index.html?${params.toString()}`,
+      focus: true,
+      alwaysOnTop: true,
+      resizable: false,
+      minimizable: false,
+      title,
+      width: options.width || 300,
+      height: options.height || 300,
+      ...options,
+    });
+
+  // webview.once("tauri://created", (event) => {});
+
+  webview.once(TauriEvent.WINDOW_DESTROYED, () => {
+    reject();
+    webview.close();
   });
 
   webview.once("tauri://error", (e) => {
     console.error(e);
     reject();
-    webview.close();
+    webview?.close();
   });
 
   webview.once("tauri://close-requested", () => {

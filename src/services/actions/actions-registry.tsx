@@ -7,11 +7,9 @@ import { useHotkeys } from "../../utils/hotkeys";
 import { formatShortcutsForSpeech } from "../../utils/speech";
 import { IBlockEditor } from "../../types/block";
 
-export type ActionCallback = () =>
-  | boolean
-  | void
-  | Promise<boolean>
-  | Promise<void>;
+export type ActionCallback = (
+  action: ActionConfiguration,
+) => boolean | void | Promise<boolean> | Promise<void>;
 
 export interface ActionConfiguration {
   label: string;
@@ -66,7 +64,7 @@ export function useRegisterAction(
 
   useHotkeys(shortcut, (event) => {
     event.preventDefault();
-    callback();
+    callback(newAction);
   });
 
   // useTauriShortcut(shortcut, callback);
@@ -90,20 +88,21 @@ export function useRegisterEditorAction(
 ) {
   useRegisterAction(label, shortcut, () => {
     if (editor.isFocused() && editor.isEditable) {
-      callback();
+      callback(action(label, shortcut, callback));
     }
   });
 }
 
 export function renderAction({
   label,
+  shortcut,
   callback,
   ...props
 }: ActionConfiguration & ComponentPropsWithoutRef<"button">) {
   return (
     <button
       className=" w-full text-left underline"
-      onClick={callback}
+      onClick={() => callback(action(label, shortcut, callback))}
       {...props}
     >
       {label}
@@ -120,7 +119,7 @@ export function renderActionWithShortcut({
   return (
     <button
       className=" w-full text-left underline"
-      onClick={callback}
+      onClick={() => callback(action(label, shortcut, callback))}
       {...props}
     >
       {label}{" "}

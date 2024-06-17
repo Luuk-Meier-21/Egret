@@ -210,17 +210,23 @@ function Actions({ children }: ActionsProps) {
     dispatch,
     "Open action panel",
     keyExplicitAction("p"),
-    async () => {
-      const actionLabel = await selectSingle(
+    async (config) => {
+      const availableActions = actions
+        .map((action) => ({
+          label: `${action.label} (${formatShortcutsForSpeech(action.shortcut.split("+")).join(" + ")})`,
+          value: slugify(action.label),
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label))
+        .filter((action) => action.value !== slugify(config.label));
+
+      const actionSlug = await selectSingle(
         "Execute action",
         "Search for actions",
-        actions.map((action) => ({
-          label: `${action.label} (${formatShortcutsForSpeech(action.shortcut.split("+")).join(" + ")})`,
-          value: action.label,
-        })),
+        availableActions,
       );
-      const action = getActionBySlug(slugify(actionLabel));
-      action?.callback();
+
+      const action = getActionBySlug(actionSlug);
+      action?.callback(action);
     },
   );
 

@@ -41,7 +41,7 @@ export function useInjectedScopedAction(
 ) {
   const wrappedCallback = () => {
     if (condition) {
-      callback();
+      callback(action);
     }
   };
 
