@@ -6,7 +6,7 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "Egret (Alpha)",
+    "productName": "Egret",
     "version": "0.2.0"
   },
   "tauri": {
@@ -126,7 +126,7 @@
     "bundle": {
       "active": true,
       "targets": "all",
-      "identifier": "com.contextualnotes.dev",
+      "identifier": "com.egret.macos",
       "macOS": {
         "minimumSystemVersion": "10.13"
       },

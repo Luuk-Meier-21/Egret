@@ -26,7 +26,7 @@ import {
 import { systemSound } from "../../bindings";
 import { removeDir } from "@tauri-apps/api/fs";
 import { announceError } from "../../utils/error";
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import { EnvContext } from "../EnvProvider/EnvProvider";
 import { LayoutBranchOrNode } from "../LayoutBranch/LayoutBranch";
 import { generateDocumentRegion } from "../../services/document/document-generator";
@@ -40,14 +40,6 @@ import useExportFeatures from "../../services/features/export";
 import useFindLandmarkFeatures from "../../services/features/landmark";
 import useTactileFeatures from "../../services/features/tactile";
 import { useLayoutAutoSaveHandle } from "../../services/layout/layout-saving";
-import { useStrictEffect } from "../../services/layout/layout-change";
-import { flattenLayoutNodesByReference } from "../../services/layout/layout-content";
-import { deepJSONClone } from "../../utils/object";
-import { Event, listen } from "@tauri-apps/api/event";
-import {
-  DocumentEvent,
-  DocumentEventPayload,
-} from "../../services/document/event";
 
 interface DocumentDetailProps {}
 

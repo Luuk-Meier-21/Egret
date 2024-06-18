@@ -2,7 +2,6 @@ import { emit, listen, TauriEvent } from "@tauri-apps/api/event";
 import { WebviewWindow, WindowOptions } from "@tauri-apps/api/window";
 import { slugify } from "../../utils/url";
 import { ExportWindowProps } from "../export/export";
-import { v4 as uuidv4 } from "uuid";
 
 export type PromiseWindowData = {
   type: string;
