@@ -20,6 +20,7 @@ import { prompt } from '../../services/window/window-manager'
 import { EnvContext } from '../EnvProvider/EnvProvider'
 import clsx from 'clsx'
 import { FocusMode, getFocusMode } from '../../services/focus/focus'
+import { emitEvent, regionInEditEvent } from '../../services/document/event'
 
 interface DocumentRegionProps {
 	region: DocumentRegionData
@@ -32,6 +33,7 @@ interface DocumentRegionProps {
 	) => void
 	onBlur: (region: DocumentRegionData, editor: IBlockEditor) => void
 	isFocused: boolean
+	isEditing: boolean
 	label?: string
 }
 
@@ -41,6 +43,7 @@ function DocumentRegion({
 	onChange = () => {},
 	onAddLandmark = () => {},
 	isFocused = false,
+	isEditing = false,
 	onFocus,
 	onBlur,
 	label,
@@ -49,8 +52,6 @@ function DocumentRegion({
 
 	const ref = useRef<HTMLDivElement>(null)
 	const editButton = useRef<HTMLButtonElement>(null)
-
-	const [isEditing, setEditing] = useState(false)
 
 	const hasFeature = (key: string) =>
 		env?.features?.value ? env?.features?.value?.includes(key) ?? false : false
@@ -78,14 +79,6 @@ function DocumentRegion({
 		} catch (error) {
 			console.info(`Unable to focus: (${region.label || region.id})`)
 		}
-	}
-
-	const startEdit = () => {
-		setEditing(true)
-	}
-
-	const stopEdit = () => {
-		setEditing(false)
 	}
 
 	useEffect(() => {
@@ -333,15 +326,6 @@ function DocumentRegion({
 			data-focused={isFocused || undefined}
 			data-editing={isEditing || undefined}
 			ref={ref}
-			tabIndex={0}
-			// onFocus={() => {
-			//   onFocus(region, editor);
-			//   focus();
-			// }}
-			// onBlur={() => {
-			//   onBlur(region, editor);
-			//   stopEdit();
-			// }}
 			aria-label={label}
 			className={classes}
 		>
@@ -366,19 +350,14 @@ function DocumentRegion({
 					editable={isEditing}
 					aria-hidden={!isEditing ? 'true' : undefined}
 					onKeyDown={(event) => {
-						// onFocus(region, editor);
 						if (event.key === 'Escape') {
 							onSave(region, editor)
-							stopEdit()
 						}
 					}}
-					onFocus={() => {
-						onFocus(region, editor)
-						focus()
-					}}
 					onBlur={() => {
-						onBlur(region, editor)
-						stopEdit()
+						if (!isFocused) {
+							onBlur(region, editor)
+						}
 					}}
 				/>
 			</div>
@@ -389,7 +368,7 @@ function DocumentRegion({
 					onClick={() => {
 						onFocus(region, editor)
 						focus()
-						startEdit()
+						emitEvent(regionInEditEvent(region))
 					}}
 					onFocus={() => {
 						onFocus(region, editor)
@@ -397,7 +376,7 @@ function DocumentRegion({
 					}}
 					onBlur={() => {
 						onBlur(region, editor)
-						stopEdit()
+						// stopEdit()
 					}}
 					aria-label={getPreviewText() || 'Blank'}
 				></button>

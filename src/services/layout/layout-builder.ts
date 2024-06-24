@@ -29,18 +29,11 @@ export type LayoutBuilderCallback = (layout: Layout) => void
 
 export function useLayoutBuilder(staticLayout: Layout) {
 	const [layout, dispatch] = useReducer(layoutReducer, staticLayout)
-	const layoutHistory = useHistoryState(layout)
-
-	useScopedAction('undo layout change', 'cmd+z', () => {
-		layoutHistory.undo()
-
-		console.log(layoutHistory.pointer)
-	})
 
 	//@test
 	// useEffect(() => {
-	//   handleRowChildrenChange(layout.tree);
-	// }, [layout]);
+	// 	handleRowChildrenChange(layout.tree)
+	// }, [layout])
 
 	const announceCreation = () => {
 		systemSound('Frog', 1.5, 1, 0.1)

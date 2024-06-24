@@ -26,12 +26,11 @@ import {
 import { systemSound } from '../../bindings'
 import { removeDir } from '@tauri-apps/api/fs'
 import { announceError } from '../../utils/error'
-import { Suspense, useContext } from 'react'
+import { Suspense, useContext, useEffect, useMemo } from 'react'
 import { EnvContext } from '../EnvProvider/EnvProvider'
 import { LayoutBranchOrNode } from '../LayoutBranch/LayoutBranch'
 import { generateDocumentRegion } from '../../services/document/document-generator'
 import { ariaItemOfList, ariaList } from '../../services/aria/label'
-import DocumentRegion from '../DocumentRegion/DocumentRegion'
 import { ariaLines } from '../../services/aria/aria'
 
 import { FOCUS_MODE_MAPPING, setFocusMode } from '../../services/focus/focus'
@@ -40,7 +39,9 @@ import useExportFeatures from '../../services/features/export'
 import useFindLandmarkFeatures from '../../services/features/landmark'
 import useTactileFeatures from '../../services/features/tactile'
 import { useLayoutAutoSaveHandle } from '../../services/layout/layout-saving'
-import { flattenLayoutNodesByReference } from '../../services/layout/layout-content'
+import DocumentRegion from '../DocumentRegion/DocumentRegion'
+import { listen } from '@tauri-apps/api/event'
+import { RegionEvent, RegionEventPayload } from '../../services/document/event'
 
 interface DocumentDetailProps {}
 
@@ -188,85 +189,73 @@ function DocumentDetail({}: DocumentDetailProps) {
 	useFindLandmarkFeatures(env, builder.layout, selection)
 	useTactileFeatures(env, builder.layout, navigator)
 
+	const memoizedLayoutTree = useMemo(
+		() => builder.layout.tree,
+		[builder.layout],
+	)
+
+	useEffect(() => {
+		const unlisten = listen<RegionEventPayload>(
+			RegionEvent.IN_EDIT,
+			(event) => {
+				if (event.payload.region) {
+					selection.setEditing(true)
+				} else {
+					selection.setEditing(false)
+				}
+			},
+		)
+
+		return () => {
+			unlisten.then((func) => func())
+		}
+	}, [])
+
 	return (
 		<div data-component-name="DocumentDetail">
 			<main className="bento-dark overflow-hidden font-serif text-base tracking-[0.01em] text-white prose-headings:mb-3 prose-headings:text-2xl prose-headings:font-normal prose-p:mb-3 prose-a:text-yellow-500 prose-a:underline [&_figcaption]:mt-1 [&_figcaption]:italic [&_img]:rounded-sm">
 				<div className="divide-y-[1px] divide-white/20">
-					{/* {flattenLayoutNodesByReference(builder.layout.tree).map((node) => {
-						const isFocused = node.id === selection.nodeId
+					{memoizedLayoutTree.map((branchOrNode, rowIndex) => (
+						<LayoutBranchOrNode
+							key={branchOrNode.id}
+							value={branchOrNode}
+							renderNode={(node, columnIndex, columnLength) => {
+								const isFocused = node.id === selection.nodeId
+								const isEditing = isFocused && selection.isEditing
+								const data = node.data || generateDocumentRegion({})
+								const label = ariaLines({
+									[`${data.landmark?.label}`]: data.landmark !== undefined,
+									[ariaList(columnLength)]: columnIndex <= 0 && isFocused,
+									[ariaItemOfList(columnIndex + 1, columnLength)]:
+										columnLength > 1,
+								})
 
-						return (
-							<DocumentRegion
-								label={'label'}
-								isFocused={isFocused}
-								region={node.data ?? generateDocumentRegion({})}
-								onSave={(region, _editor) => {
-									handleRegionSave(region, node)
-								}}
-								onChange={(region) => {
-									handleRegionChange(region, node)
-								}}
-								onAddLandmark={(_region, landmark) => {
-									builder.addLandmark(node, landmark)
-								}}
-								onFocus={() => {
-									// navigator.focusColumn(branchOrNode.id, node.id)
-								}}
-								onBlur={() => {
-									// navigator.blurColumn();
-								}}
-							/>
-						)
-					})} */}
-
-					<Suspense>
-						{builder.layout.tree.map((branchOrNode, rowIndex) => (
-							<LayoutBranchOrNode
-								key={branchOrNode.id}
-								value={branchOrNode}
-								renderNode={(node, columnIndex, columnLength) => {
-									const isFocused = node.id === selection.nodeId
-									const data = node.data || generateDocumentRegion({})
-									const label = ariaLines({
-										[`${data.landmark?.label}`]: data.landmark !== undefined,
-										[ariaList(columnLength)]: columnIndex <= 0 && isFocused,
-										[ariaItemOfList(columnIndex + 1, columnLength)]:
-											columnLength > 1,
-									})
-
-									return (
-										<div>test</div>
-										// <DocumentRegion
-										// 	label={label}
-										// 	isFocused={isFocused}
-										// 	onSave={(region, _editor) => {
-										// 		handleRegionSave(region, node)
-										// 	}}
-										// 	onChange={(region) => {
-										// 		handleRegionChange(region, node)
-										// 	}}
-										// 	onAddLandmark={(_region, landmark) => {
-										// 		builder.addLandmark(node, landmark)
-										// 	}}
-										// 	onExplicitAnnounce={() => {
-										// 		return `Item ${columnIndex + 1} of Row ${rowIndex + 1} from the top`
-										// 	}}
-										// 	onImplicitAnnounce={() => {
-										// 		return null
-										// 	}}
-										// 	onFocus={() => {
-										// 		navigator.focusColumn(branchOrNode.id, node.id)
-										// 	}}
-										// 	onBlur={() => {
-										// 		// navigator.blurColumn();
-										// 	}}
-										// 	region={data}
-										// />
-									)
-								}}
-							/>
-						))}
-					</Suspense>
+								return (
+									<DocumentRegion
+										label={label}
+										isFocused={isFocused}
+										isEditing={isEditing}
+										onSave={(region, _editor) => {
+											handleRegionSave(region, node)
+										}}
+										onChange={(region) => {
+											handleRegionChange(region, node)
+										}}
+										onAddLandmark={(_region, landmark) => {
+											builder.addLandmark(node, landmark)
+										}}
+										onFocus={() => {
+											navigator.focusColumn(branchOrNode.id, node.id)
+										}}
+										onBlur={() => {
+											navigator.blurColumn()
+										}}
+										region={data}
+									/>
+								)
+							}}
+						/>
+					))}
 				</div>
 			</main>
 		</div>

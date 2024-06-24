@@ -1,142 +1,142 @@
 {
-  "build": {
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build",
-    "devPath": "http://localhost:1420",
-    "distDir": "../dist"
-  },
-  "package": {
-    "productName": "Egret",
-    "version": "0.2.0"
-  },
-  "tauri": {
-    "cli": {
-      "description": "",
-      "longDescription": "",
-      "beforeHelp": "",
-      "afterHelp": "",
-      "args": [
-        {
-          "name": "feature",
-          "short": "f",
-          "takesValue": true,
-          "multiple": true,
-          "possibleValues": ["tactile", "export", "landmark"]
-        }
-      ]
-    },
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "all": false,
-        "open": "^((mailto:\\w+)|(tel:\\w+)|(https?://\\w+)|(data:application/pdf;base64,\\w+)).+"
-      },
-      "globalShortcut": {
-        "all": true
-      },
-      "protocol": {
-        "all": true,
-        "asset": true,
-        "assetScope": ["**/*"]
-      },
-      "dialog": {
-        "all": false,
-        "ask": false,
-        "confirm": false,
-        "message": false,
-        "open": true,
-        "save": true
-      },
-      "fs": {
-        "scope": [
-          "$APPDATA/**/*",
-          "$APPDATA/.bin/**/*",
-          "$RESOURCE/audio/*",
-          "**"
-        ],
-        "all": true,
-        "readFile": false,
-        "writeFile": false,
-        "readDir": false,
-        "copyFile": false,
-        "createDir": false,
-        "removeDir": false,
-        "removeFile": false,
-        "renameFile": false,
-        "exists": false
-      },
-      "clipboard": {
-        "all": false,
-        "readText": true,
-        "writeText": true
-      },
-      "window": {
-        "all": true,
-        "center": false,
-        "close": true,
-        "create": true,
-        "hide": false,
-        "maximize": false,
-        "minimize": false,
-        "print": true,
-        "requestUserAttention": false,
-        "setAlwaysOnTop": true,
-        "setClosable": false,
-        "setContentProtected": false,
-        "setCursorGrab": false,
-        "setCursorIcon": false,
-        "setCursorPosition": false,
-        "setCursorVisible": false,
-        "setDecorations": false,
-        "setFocus": false,
-        "setFullscreen": false,
-        "setIcon": false,
-        "setIgnoreCursorEvents": false,
-        "setMaxSize": false,
-        "setMaximizable": false,
-        "setMinSize": false,
-        "setMinimizable": false,
-        "setPosition": false,
-        "setResizable": false,
-        "setSize": false,
-        "setSkipTaskbar": false,
-        "setTitle": false,
-        "show": false,
-        "startDragging": true,
-        "unmaximize": false,
-        "unminimize": false
-      }
-    },
-    "windows": [
-      {
-        "title": "Egret",
-        "focus": true,
-        "titleBarStyle": "Overlay",
-        "width": 1080,
-        "height": 900,
-        "decorations": true,
-        "skipTaskbar": false,
-        "transparent": true,
-        "theme": "Dark"
-      }
-    ],
-    "security": {
-      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost"
-    },
-    "bundle": {
-      "active": true,
-      "targets": "all",
-      "identifier": "com.egret.macos",
-      "macOS": {
-        "minimumSystemVersion": "10.13"
-      },
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ]
-    }
-  }
+	"build": {
+		"beforeDevCommand": "npm run dev",
+		"beforeBuildCommand": "npm run build",
+		"devPath": "http://localhost:1420",
+		"distDir": "../dist"
+	},
+	"package": {
+		"productName": "Egret",
+		"version": "0.2.0"
+	},
+	"tauri": {
+		"cli": {
+			"description": "",
+			"longDescription": "",
+			"beforeHelp": "",
+			"afterHelp": "",
+			"args": [
+				{
+					"name": "feature",
+					"short": "f",
+					"takesValue": true,
+					"multiple": true,
+					"possibleValues": ["tactile", "export", "landmark"]
+				}
+			]
+		},
+		"allowlist": {
+			"all": false,
+			"shell": {
+				"all": false,
+				"open": "^((mailto:\\w+)|(tel:\\w+)|(https?://\\w+)|(data:application/pdf;base64,\\w+)).+"
+			},
+			"globalShortcut": {
+				"all": true
+			},
+			"protocol": {
+				"all": true,
+				"asset": true,
+				"assetScope": ["**/*"]
+			},
+			"dialog": {
+				"all": false,
+				"ask": false,
+				"confirm": false,
+				"message": false,
+				"open": true,
+				"save": true
+			},
+			"fs": {
+				"scope": [
+					"$APPDATA/**/*",
+					"$APPDATA/.bin/**/*",
+					"$RESOURCE/audio/*",
+					"**"
+				],
+				"all": true,
+				"readFile": false,
+				"writeFile": false,
+				"readDir": false,
+				"copyFile": false,
+				"createDir": false,
+				"removeDir": false,
+				"removeFile": false,
+				"renameFile": false,
+				"exists": false
+			},
+			"clipboard": {
+				"all": false,
+				"readText": true,
+				"writeText": true
+			},
+			"window": {
+				"all": true,
+				"center": false,
+				"close": true,
+				"create": true,
+				"hide": false,
+				"maximize": false,
+				"minimize": false,
+				"print": true,
+				"requestUserAttention": false,
+				"setAlwaysOnTop": true,
+				"setClosable": false,
+				"setContentProtected": false,
+				"setCursorGrab": false,
+				"setCursorIcon": false,
+				"setCursorPosition": false,
+				"setCursorVisible": false,
+				"setDecorations": false,
+				"setFocus": false,
+				"setFullscreen": false,
+				"setIcon": false,
+				"setIgnoreCursorEvents": false,
+				"setMaxSize": false,
+				"setMaximizable": false,
+				"setMinSize": false,
+				"setMinimizable": false,
+				"setPosition": false,
+				"setResizable": false,
+				"setSize": false,
+				"setSkipTaskbar": false,
+				"setTitle": false,
+				"show": false,
+				"startDragging": true,
+				"unmaximize": false,
+				"unminimize": false
+			}
+		},
+		"windows": [
+			{
+				"title": "",
+				"focus": true,
+				"titleBarStyle": "Overlay",
+				"width": 1080,
+				"height": 900,
+				"decorations": true,
+				"skipTaskbar": false,
+				"transparent": true,
+				"theme": "Dark"
+			}
+		],
+		"security": {
+			"csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost"
+		},
+		"bundle": {
+			"active": true,
+			"targets": "all",
+			"identifier": "com.egret.macos",
+			"macOS": {
+				"minimumSystemVersion": "10.13"
+			},
+			"icon": [
+				"icons/32x32.png",
+				"icons/128x128.png",
+				"icons/128x128@2x.png",
+				"icons/icon.icns",
+				"icons/icon.ico"
+			]
+		}
+	}
 }

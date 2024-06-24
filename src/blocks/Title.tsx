@@ -34,11 +34,11 @@ export const Title = createReactBlockSpec(
 			return (
 				<p
 					role="heading"
-					aria-level={4}
+					aria-level={1}
 					className="flex text-xl font-bold"
 					ref={props.contentRef}
 				/>
 			)
 		},
-	}
+	},
 )
