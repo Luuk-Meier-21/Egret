@@ -16,7 +16,10 @@ import {
 } from '../../services/store/store'
 import { useNavigate } from 'react-router'
 import { DocumentRegionData } from '../../types/document/document'
-import { useScopedAction } from '../../services/actions/actions-hook'
+import {
+	useEffectAction,
+	useScopedAction,
+} from '../../services/actions/actions-hook'
 import {
 	keyAction,
 	keyExplicitAction,
@@ -30,7 +33,6 @@ import { Suspense, useContext, useEffect, useMemo } from 'react'
 import { EnvContext } from '../EnvProvider/EnvProvider'
 import { LayoutBranchOrNode } from '../LayoutBranch/LayoutBranch'
 import { generateDocumentRegion } from '../../services/document/document-generator'
-import { ariaItemOfList, ariaList } from '../../services/aria/label'
 import { ariaLines } from '../../services/aria/aria'
 
 import { FOCUS_MODE_MAPPING, setFocusMode } from '../../services/focus/focus'
@@ -42,6 +44,7 @@ import { useLayoutAutoSaveHandle } from '../../services/layout/layout-saving'
 import DocumentRegion from '../DocumentRegion/DocumentRegion'
 import { listen } from '@tauri-apps/api/event'
 import { RegionEvent, RegionEventPayload } from '../../services/document/event'
+import { useAriaLabel } from '../../services/aria/detail'
 
 interface DocumentDetailProps {}
 
@@ -56,6 +59,7 @@ function DocumentDetail({}: DocumentDetailProps) {
 	const builder = useLayoutBuilder(staticLayout)
 	const selection = useLayoutState(builder.layout)
 	const navigator = useLayoutNavigator(selection, builder.layout)
+	const aria = useAriaLabel()
 
 	const navigate = useNavigate()
 	const save = useStateStore(
@@ -114,64 +118,94 @@ function DocumentDetail({}: DocumentDetailProps) {
 		},
 	)
 
-	useScopedAction('Move up', keyNavigation('up'), async () => {
-		navigator.focusRowUp()
-	})
+	useEffectAction(
+		'Move up',
+		keyNavigation('up'),
+		async () => {
+			navigator.focusRowUp()
+		},
+		[selection.rowId, selection.nodeId],
+	)
 
-	useScopedAction('Move down', keyNavigation('down'), async () => {
-		navigator.focusRowDown()
-	})
+	useEffectAction(
+		'Move down',
+		keyNavigation('down'),
+		async () => {
+			navigator.focusRowDown()
+		},
+		[selection.rowId, selection.nodeId],
+	)
 
-	useScopedAction('Move left', keyNavigation('left'), async () => {
-		navigator.focusColumnLeft()
-	})
+	useEffectAction(
+		'Move left',
+		keyNavigation('left'),
+		async () => {
+			navigator.focusColumnLeft()
+		},
+		[selection.rowId, selection.nodeId],
+	)
 
-	useScopedAction('Move right', keyNavigation('right'), async () => {
-		navigator.focusColumnRight()
-	})
+	useEffectAction(
+		'Move right',
+		keyNavigation('right'),
+		async () => {
+			navigator.focusColumnRight()
+		},
+		[selection.rowId, selection.nodeId],
+	)
 
-	useScopedAction(
+	useEffectAction(
 		'Delete empty column',
 		keyNavigation('backspace'),
 		async () => {
 			deleteNode()
 		},
+		[selection.rowId, selection.nodeId],
 	)
 
-	useScopedAction(
+	useEffectAction(
 		'Force delete node',
 		keyExplicitNavigation('backspace'),
 		async () => {
 			deleteNode(true)
 		},
+		[selection.rowId, selection.nodeId],
 	)
 
-	useScopedAction('Insert row above', keyExplicitNavigation('up'), async () => {
-		insertRow('before')
-	})
+	useEffectAction(
+		'Insert row above',
+		keyExplicitNavigation('up'),
+		async () => {
+			insertRow('before')
+		},
+		[selection.rowId, selection.nodeId],
+	)
 
-	useScopedAction(
+	useEffectAction(
 		'Insert row under',
 		keyExplicitNavigation('down'),
 		async () => {
 			insertRow('after')
 		},
+		[selection.rowId, selection.nodeId],
 	)
 
-	useScopedAction(
+	useEffectAction(
 		'Insert column left',
 		keyExplicitNavigation('left'),
 		async () => {
 			insertColumn('before')
 		},
+		[selection.rowId, selection.nodeId],
 	)
 
-	useScopedAction(
+	useEffectAction(
 		'Insert column right',
 		keyExplicitNavigation('right'),
 		async () => {
 			insertColumn('after')
 		},
+		[selection.rowId, selection.nodeId],
 	)
 
 	useScopedAction(`Set focus contrast`, keyExplicitAction('0'), async () => {
@@ -189,13 +223,8 @@ function DocumentDetail({}: DocumentDetailProps) {
 	useFindLandmarkFeatures(env, builder.layout, selection)
 	useTactileFeatures(env, builder.layout, navigator)
 
-	const memoizedLayoutTree = useMemo(
-		() => builder.layout.tree,
-		[builder.layout],
-	)
-
 	useEffect(() => {
-		const unlisten = listen<RegionEventPayload>(
+		const inEditListener = listen<RegionEventPayload>(
 			RegionEvent.IN_EDIT,
 			(event) => {
 				if (event.payload.region) {
@@ -207,7 +236,7 @@ function DocumentDetail({}: DocumentDetailProps) {
 		)
 
 		return () => {
-			unlisten.then((func) => func())
+			inEditListener.then((func) => func())
 		}
 	}, [])
 
@@ -215,7 +244,7 @@ function DocumentDetail({}: DocumentDetailProps) {
 		<div data-component-name="DocumentDetail">
 			<main className="bento-dark overflow-hidden font-serif text-base tracking-[0.01em] text-white prose-headings:mb-3 prose-headings:text-2xl prose-headings:font-normal prose-p:mb-3 prose-a:text-yellow-500 prose-a:underline [&_figcaption]:mt-1 [&_figcaption]:italic [&_img]:rounded-sm">
 				<div className="divide-y-[1px] divide-white/20">
-					{memoizedLayoutTree.map((branchOrNode, rowIndex) => (
+					{builder.layout.tree.map((branchOrNode, rowIndex) => (
 						<LayoutBranchOrNode
 							key={branchOrNode.id}
 							value={branchOrNode}
@@ -225,8 +254,8 @@ function DocumentDetail({}: DocumentDetailProps) {
 								const data = node.data || generateDocumentRegion({})
 								const label = ariaLines({
 									[`${data.landmark?.label}`]: data.landmark !== undefined,
-									[ariaList(columnLength)]: columnIndex <= 0 && isFocused,
-									[ariaItemOfList(columnIndex + 1, columnLength)]:
+									[aria.list(columnLength)]: columnIndex <= 0 && isFocused,
+									[aria.itemOfList(columnIndex + 1, columnLength)]:
 										columnLength > 1,
 								})
 

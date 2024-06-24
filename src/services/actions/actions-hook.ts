@@ -1,13 +1,18 @@
-import { ComponentPropsWithoutRef, useContext, useEffect } from "react";
 import {
-  ActionCallback,
-  ActionConfiguration,
-  renderAction,
-  renderActionWithShortcut,
-} from "./actions-registry";
-import { ActionsContext } from "../../components/Actions/Actions";
-import { ActionReducerAction } from "./actions-reducer";
-import { useHotkeys } from "../../utils/hotkeys";
+	ComponentPropsWithoutRef,
+	DependencyList,
+	useContext,
+	useEffect,
+} from 'react'
+import {
+	ActionCallback,
+	ActionConfiguration,
+	renderAction,
+	renderActionWithShortcut,
+} from './actions-registry'
+import { ActionsContext } from '../../components/Actions/Actions'
+import { ActionReducerAction } from './actions-reducer'
+import { useHotkeys } from '../../utils/hotkeys'
 
 // function actionCallbackWithAnnounce(callback: ActionCallback) {
 //   const announce = (value: boolean) => {
@@ -33,74 +38,94 @@ import { useHotkeys } from "../../utils/hotkeys";
 // }
 
 export function useInjectedScopedAction(
-  dispatch: React.Dispatch<ActionReducerAction>,
-  label: string,
-  shortcut: string,
-  callback: ActionCallback,
-  condition: boolean = true,
+	dispatch: React.Dispatch<ActionReducerAction>,
+	label: string,
+	shortcut: string,
+	callback: ActionCallback,
+	condition = true,
+	dependancies: DependencyList = [],
 ) {
-  const wrappedCallback = () => {
-    if (condition) {
-      callback(action);
-    }
-  };
+	const wrappedCallback = () => {
+		if (condition) {
+			callback(action)
+		}
+	}
 
-  const action: ActionConfiguration = {
-    label,
-    shortcut,
-    callback: wrappedCallback,
-    hidden: false,
-  };
+	const action: ActionConfiguration = {
+		label,
+		shortcut,
+		callback: wrappedCallback,
+		hidden: false,
+	}
 
-  useHotkeys(shortcut, wrappedCallback);
-  useEffect(() => {
-    if (condition) {
-      dispatch({ type: "register", action });
-    }
+	useHotkeys(shortcut, wrappedCallback)
+	useEffect(() => {
+		if (condition) {
+			dispatch({ type: 'register', action })
+		}
 
-    return () => {
-      dispatch({ type: "unscope", action });
-    };
-  }, [condition]);
+		return () => {
+			dispatch({ type: 'unscope', action })
+		}
+	}, [condition, ...dependancies])
 
-  const element = (props: ComponentPropsWithoutRef<"button">) =>
-    renderAction({ ...action, ...props });
+	const element = (props: ComponentPropsWithoutRef<'button'>) =>
+		renderAction({ ...action, ...props })
 
-  const elementWithShortcut = (props: ComponentPropsWithoutRef<"button">) =>
-    renderActionWithShortcut({ ...action, ...props });
+	const elementWithShortcut = (props: ComponentPropsWithoutRef<'button'>) =>
+		renderActionWithShortcut({ ...action, ...props })
 
-  return { callback, element, elementWithShortcut } as const;
+	return { callback, element, elementWithShortcut } as const
 }
 
 export function useConditionalScopedAction(
-  label: string,
-  shortcut: string,
-  condition: boolean,
-  callback: ActionCallback,
+	label: string,
+	shortcut: string,
+	condition: boolean,
+	callback: ActionCallback,
 ) {
-  const [_, dispatch] = useContext(ActionsContext);
-  const { element, elementWithShortcut } = useInjectedScopedAction(
-    dispatch,
-    label,
-    shortcut,
-    callback,
-    condition,
-  );
+	const [_, dispatch] = useContext(ActionsContext)
+	const { element, elementWithShortcut } = useInjectedScopedAction(
+		dispatch,
+		label,
+		shortcut,
+		callback,
+		condition,
+	)
 
-  return { callback, element, elementWithShortcut } as const;
+	return { callback, element, elementWithShortcut } as const
 }
 
 export function useScopedAction(
-  label: string,
-  shortcut: string,
-  callback: ActionCallback,
+	label: string,
+	shortcut: string,
+	callback: ActionCallback,
 ) {
-  const { element, elementWithShortcut } = useConditionalScopedAction(
-    label,
-    shortcut,
-    true,
-    callback,
-  );
+	const { element, elementWithShortcut } = useConditionalScopedAction(
+		label,
+		shortcut,
+		true,
+		callback,
+	)
 
-  return { callback, element, elementWithShortcut } as const;
+	return { callback, element, elementWithShortcut } as const
+}
+
+export function useEffectAction(
+	label: string,
+	shortcut: string,
+	callback: ActionCallback,
+	dependancies: DependencyList,
+) {
+	const [_, dispatch] = useContext(ActionsContext)
+	const { element, elementWithShortcut } = useInjectedScopedAction(
+		dispatch,
+		label,
+		shortcut,
+		callback,
+		true,
+		dependancies,
+	)
+
+	return { callback, element, elementWithShortcut } as const
 }

@@ -17,8 +17,7 @@ export const FOCUS_MODE_MAPPING = [
 export const FOCUS_STORAGE_KEY = 'focus-high-contrast'
 
 export function getFocusMode(): FocusMode {
-	// const focusNumber = Number(localStorage.getItem(FOCUS_STORAGE_KEY));
-	const focusNumber = 0
+	const focusNumber = Number(localStorage.getItem(FOCUS_STORAGE_KEY))
 
 	return focusNumber || FocusMode.Low
 }
