@@ -30,29 +30,18 @@ function rowComponent({
 	block,
 }: BlockComponentProps<typeof buttonConfig, 'button'>): ReactNode {
 	const ref = useRef<HTMLElement>(null);
-	const isSelected = useBlockSelection(editor, block);
-
-	const text = ref.current?.textContent || '\n';
-	const label = `button, ${text}`;
 
 	useEffect(() => {
 		contentRef(ref.current);
 	}, []);
 
-	useEffect(() => {
-		if (isSelected) {
-			const destructor = ariaAnnounce(label);
-
-			return () => {
-				destructor();
-			};
-		}
-	}, [isSelected]);
-
 	return (
 		<button
+			role="button"
+			type="button"
+			onClick={() => {}}
 			data-block="Button"
-			className="mb-2 rounded-lg bg-yellow-500 px-4 py-2 text-left text-gray-800 shadow-sm ring-1 ring-yellow-300"
+			className="mb-2 mr-auto flex rounded-lg bg-yellow-500 px-4 py-2 text-left text-gray-800 shadow-sm ring-1 ring-yellow-300"
 		>
 			<span ref={ref} />
 		</button>

@@ -12,6 +12,7 @@ import { Link } from './Link';
 import { Reference } from './Reference/Reference';
 import { Image } from './Image/Image';
 import { Button } from './Button/Button';
+import { Audio } from './Audio/Audio';
 
 export type BlockData = PartialBlock<
 	BlockSchemaFromSpecs<typeof schema.blockSpecs>
@@ -27,6 +28,7 @@ export const schema = BlockNoteSchema.create({
 		alert: Alert,
 		title: Title,
 		image: Image,
+		audio: Audio,
 		url: Link,
 		reference: Reference,
 		button: Button,

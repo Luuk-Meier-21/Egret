@@ -256,9 +256,16 @@ function Actions({ children }: ActionsProps) {
 				role="region"
 				aria-live="assertive"
 				aria-atomic="true"
-				id="live-region"
+				id="live-region-assertive"
 				className="sr-only"
-			></div>
+			/>
+			<div
+				role="region"
+				aria-live="polite"
+				aria-atomic="true"
+				id="live-region-polite"
+				className="sr-only"
+			/>
 			<ActionsContext.Provider value={[actions, dispatch, getActionBySlug]}>
 				<div className="flex flex-1 flex-col" ref={mainRef}>
 					{children}

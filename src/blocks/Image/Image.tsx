@@ -3,7 +3,7 @@ import { createReactBlockSpec } from '@blocknote/react';
 import { schema } from '../../blocks/schema';
 import { ReactNode, useEffect, useRef } from 'react';
 import { BlockComponentProps } from '../../types/block';
-import { useBlockSelection } from '../../utils/block';
+import { useBlockLive, useBlockSelection } from '../../utils/block';
 import { voiceSay } from '../../bindings';
 import { useConditionalScopedAction } from '../../services/actions/actions-hook';
 import { ariaAnnounce } from '../../services/aria/aria-announce';
@@ -43,7 +43,6 @@ function rowComponent({
 
 	const alt = ref.current?.textContent || '\n';
 	const src = block.props.src;
-	const label = `image, ${alt}`;
 
 	useEffect(() => {
 		contentRef(ref.current);
@@ -51,29 +50,10 @@ function rowComponent({
 		editor.focus();
 	}, []);
 
-	useEffect(() => {
-		console.log(ref.current?.textContent);
-		if (isSelected) {
-			const destructor = ariaAnnounce(label);
-
-			return () => {
-				destructor();
-			};
-		}
-	}, [isSelected]);
-
-	// useOverrideScreenreader(`${label}, ${alt}`, isSelected); // Seems to cause voiceover losing focus
-	useConditionalScopedAction(
-		'Read out label',
-		'cmd+shift+/',
-		isSelected,
-		() => {
-			voiceSay(label);
-		},
-	);
+	useBlockLive(`image, ${alt}`, isSelected);
 
 	return (
-		<figure className="inline-content inline-block w-full max-w-[600px]">
+		<figure className="inline-content inline-block w-full">
 			<img
 				className="object-cover"
 				contentEditable={false}

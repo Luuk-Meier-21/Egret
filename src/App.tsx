@@ -1,25 +1,29 @@
-import { Outlet, RouterProvider } from 'react-router'
-import { createBrowserRouter } from 'react-router-dom'
-import Actions from './components/Actions/Actions'
-import AppDocumentsOverview from './components/DocumentsOverview/AppDocumentsOverview'
-import { useHotkeyOverride } from './utils/hotkeys'
+import { Outlet, RouterProvider } from 'react-router';
+import { createBrowserRouter } from 'react-router-dom';
+import Actions from './components/Actions/Actions';
+import AppDocumentsOverview from './components/DocumentsOverview/AppDocumentsOverview';
+import { useHotkeyOverride } from './utils/hotkeys';
 import {
 	generateDocumentMeta,
 	parseFileToDocumentDirectory,
-} from './services/document/document-generator'
-import { generateLayoutWithContent } from './services/layout/layout-content'
-import DialogProvider from './components/Dialog/DialogProvider'
-import { documentsPath, pathInDirectory } from './services/store/store'
-import { generateDefaultLayout } from './config/layout'
-import { useAbstractStore } from './services/store/store-hooks'
-import { validate } from 'uuid'
-import { ONBOARDING_CONTENT } from './config/onboarding'
-import { keywordsRecordOptions, keywordsRecordPath } from './config/keywords'
-import { Keyword } from './types/keywords'
-import { StrictMode, Suspense, lazy } from 'react'
+} from './services/document/document-generator';
+import { generateLayoutWithContent } from './services/layout/layout-content';
+import DialogProvider from './components/Dialog/DialogProvider';
+import { documentsPath, pathInDirectory } from './services/store/store';
+import { generateDefaultLayout } from './config/layout';
+import { useAbstractStore } from './services/store/store-hooks';
+import { validate } from 'uuid';
+import { ONBOARDING_CONTENT } from './config/onboarding';
+import { keywordsRecordOptions, keywordsRecordPath } from './config/keywords';
+import { Keyword } from './types/keywords';
+import { StrictMode, Suspense, lazy } from 'react';
 
-const Env = lazy(() => import('./components/EnvProvider/EnvProvider'))
-import DocumentDetail from './components/DocumentDetail/DocumentDetail'
+const Env = lazy(() => import('./components/EnvProvider/EnvProvider'));
+import DocumentDetail from './components/DocumentDetail/DocumentDetail';
+import {
+	getDocumentDirectories,
+	getDocumentDirectoryOfId,
+} from './services/document/document-utils';
 
 function App() {
 	// if (isWithoutTauri) {
@@ -30,27 +34,7 @@ function App() {
 	//   );
 	// }
 
-	const store = useAbstractStore()
-
-	const getDocumentDirectories = async () => {
-		return await store.searchDirectory(
-			documentsPath(),
-			parseFileToDocumentDirectory,
-		)
-	}
-
-	const getDocumentDirectoryOfId = async (id: string) => {
-		if (!validate(id)) {
-			return null
-		}
-
-		const dirs = await store.searchDirectory(
-			documentsPath(),
-			parseFileToDocumentDirectory,
-		)
-
-		return dirs.find((dir) => dir.id === id) || null
-	}
+	const store = useAbstractStore();
 
 	const router = createBrowserRouter([
 		{
@@ -65,7 +49,7 @@ function App() {
 					path: '/',
 					element: <AppDocumentsOverview />,
 					loader: async ({}) => {
-						const refs = await getDocumentDirectories()
+						const refs = await getDocumentDirectories();
 
 						const keywords = await store
 							.loadStore(
@@ -73,9 +57,9 @@ function App() {
 								[] as Keyword[],
 								keywordsRecordOptions,
 							)
-							.then((store) => store.load())
+							.then((store) => store.load());
 
-						return [refs, keywords]
+						return [refs, keywords];
 					},
 				},
 				{
@@ -83,13 +67,13 @@ function App() {
 					element: <DocumentDetail />,
 					loader: async ({ params }) => {
 						if (params.id === undefined) {
-							return
+							return;
 						}
 
-						const directory = await getDocumentDirectoryOfId(params.id)
+						const directory = await getDocumentDirectoryOfId(params.id);
 
 						if (directory === null) {
-							return
+							return;
 						}
 
 						const layout = await store
@@ -99,9 +83,9 @@ function App() {
 									ONBOARDING_CONTENT,
 								]),
 							)
-							.then((store) => store.load())
+							.then((store) => store.load());
 
-						console.log('loaded state: ', layout)
+						console.log('loaded state: ', layout);
 
 						const document = await store
 							.loadStore(
@@ -110,7 +94,7 @@ function App() {
 									name: directory.name,
 								}),
 							)
-							.then((store) => store.load())
+							.then((store) => store.load());
 
 						const keywords = await store
 							.loadStore(
@@ -118,7 +102,7 @@ function App() {
 								[] as Keyword[],
 								keywordsRecordOptions,
 							)
-							.then((store) => store.load())
+							.then((store) => store.load());
 
 						// const relationsStore = await store.loadStore<
 						//   RegionLayoutRelation[]
@@ -137,14 +121,14 @@ function App() {
 						//   )
 						//   .save();
 
-						return [directory, document, layout, keywords]
+						return [directory, document, layout, keywords];
 					},
 				},
 			],
 		},
-	])
+	]);
 
-	useHotkeyOverride()
+	useHotkeyOverride();
 
 	return (
 		<StrictMode>
@@ -158,7 +142,7 @@ function App() {
 				</Suspense>
 			</div>
 		</StrictMode>
-	)
+	);
 }
 
-export default App
+export default App;

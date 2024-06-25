@@ -1,90 +1,93 @@
-import { insertOrUpdateBlock } from "@blocknote/core";
-import { createReactBlockSpec } from "@blocknote/react";
-import { schema } from "../../blocks/schema";
-import { validate } from "uuid";
-import { fetchDocumentById } from "../../utils/documents";
+import { insertOrUpdateBlock } from '@blocknote/core';
+import { createReactBlockSpec } from '@blocknote/react';
+import { schema } from '../../blocks/schema';
+import { ReactNode, useEffect, useRef } from 'react';
+import { BlockComponentProps } from '../../types/block';
+import { ariaAnnounce } from '../../services/aria/aria-announce';
+import { useBlockLive, useBlockSelection } from '../../utils/block';
+import { useConditionalScopedAction } from '../../services/actions/actions-hook';
+import { keyAction, keyExplicitAction } from '../../config/shortcut';
+import { useNavigate } from 'react-router';
+import { navigateDropState } from '../../utils/navigation';
 
-const setReferenceName = async (
-  documentId: string,
-  editor: any,
-  block: any,
-) => {
-  if (!validate(documentId)) {
-    return;
-  }
-
-  const document = await fetchDocumentById(documentId);
-
-  if (document === null) {
-    return;
-  }
-
-  const currBlock = editor.getTextCursorPosition().block;
-  editor.updateBlock(currBlock, {
-    type: "reference",
-    content: document.name,
-    props: {
-      fetchName: false,
-      documentId: block.props.documentId,
-    },
-  });
-};
-
-export const insertReference = (editor: typeof schema.BlockNoteEditor) => ({
-  title: "Reference",
-  onItemClick: () => {
-    insertOrUpdateBlock(editor, {
-      // @ts-ignore
-      type: "reference",
-    });
-  },
-  aliases: ["Reference"],
-  group: "Other",
+export const insertRow = (editor: typeof schema.BlockNoteEditor) => ({
+	title: 'Reference',
+	onItemClick: () => {
+		insertOrUpdateBlock(editor, {
+			// @ts-ignore
+			type: 'reference',
+		});
+	},
+	aliases: ['Reference'],
+	group: 'Other',
 });
 
-export const Reference = createReactBlockSpec(
-  {
-    type: "reference",
-    propSchema: {
-      documentId: {
-        default: "",
-      },
-      fetchName: {
-        default: true,
-      },
-    },
-    content: "inline",
-  },
-  {
-    render: (props) => {
-      if (props.block.props.fetchName) {
-        setReferenceName(
-          props.block.props.documentId,
-          props.editor,
-          props.block,
-        );
-      }
+const referenceConfig = {
+	type: 'reference',
+	propSchema: {
+		documentId: {
+			default: '',
+		},
+	},
+	content: 'inline',
+} as const;
 
-      return (
-        <div
-          className="underline"
-          data-block="Reference"
-          role="link"
-          data-reference={props.block.props.documentId}
-        >
-          <p className="flex before:[content:'']" ref={props.contentRef} />
-        </div>
-      );
-    },
-    parse: (element) => {
-      const isValidId = validate(element.textContent ?? "");
-      if (!isValidId) {
-        return undefined;
-      }
+function rowComponent({
+	contentRef,
+	editor,
+	block,
+}: BlockComponentProps<typeof referenceConfig, 'reference'>): ReactNode {
+	const ref = useRef<HTMLElement>(null);
+	const isSelected = useBlockSelection(editor, block);
+	const navigate = useNavigate();
 
-      return {
-        documentId: element.textContent || "",
-      };
-    },
-  },
-);
+	const text = ref.current?.textContent || '\n';
+	const url = `/documents/${block.props.documentId}`;
+
+	useEffect(() => {
+		contentRef(ref.current);
+
+		editor.focus();
+	}, []);
+
+	const goToDocument = () => {
+		navigateDropState(navigate, url);
+	};
+
+	useConditionalScopedAction(
+		'Go to selected reference',
+		keyAction('u'),
+		isSelected,
+		async () => {
+			goToDocument();
+		},
+	);
+
+	useBlockLive(`reference, ${text}, press (command + u) to open`, isSelected);
+
+	return (
+		<a
+			onClick={() => {
+				goToDocument();
+			}}
+			data-block="Reference"
+			href={url}
+			className="inline-block cursor-pointer text-yellow-500 !no-underline"
+		>
+			<span className="flex">
+				<span className="flex" ref={ref} />
+				<span
+					className="ml-1 flex font-sans"
+					contentEditable={false}
+					aria-hidden
+				>
+					→
+				</span>
+			</span>
+		</a>
+	);
+}
+
+export const Reference = createReactBlockSpec(referenceConfig, {
+	render: (props) => rowComponent(props),
+});

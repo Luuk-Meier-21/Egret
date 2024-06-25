@@ -16,11 +16,18 @@ import { voiceSay } from '../../bindings';
 import { toDataURL } from '../../utils/url';
 import { announceError } from '../../utils/error';
 import { openAsset } from '../../utils/filesystem';
-import { prompt } from '../../services/window/window-manager';
+import { prompt, selectSingle } from '../../services/window/window-manager';
 import { EnvContext } from '../EnvProvider/EnvProvider';
 import clsx from 'clsx';
 import { FocusMode, getFocusMode } from '../../services/focus/focus';
 import { emitEvent, regionInEditEvent } from '../../services/document/event';
+import { useAbstractStore } from '../../services/store/store-hooks';
+import { documentsPath } from '../../services/store/store';
+import { parseFileToDocumentDirectory } from '../../services/document/document-generator';
+import { getDocumentDirectoryOfId } from '../../services/document/document-utils';
+import { navigateDropState } from '../../utils/navigation';
+import { useNavigate } from 'react-router';
+import { lchown } from 'fs';
 
 interface DocumentRegionProps {
 	region: DocumentRegionData;
@@ -52,6 +59,10 @@ function DocumentRegion({
 
 	const ref = useRef<HTMLDivElement>(null);
 	const editButton = useRef<HTMLButtonElement>(null);
+
+	const store = useAbstractStore();
+
+	const navigate = useNavigate();
 
 	const hasFeature = (key: string) =>
 		env?.features?.value ? env?.features?.value?.includes(key) ?? false : false;
@@ -135,23 +146,90 @@ function DocumentRegion({
 		isFocused,
 		() => {
 			const url = editor.getSelectedLinkUrl();
+
+			console.log(url);
 			if (url === undefined) {
 				return;
 			}
-			shell.open(url);
+			console.log(url);
+			if (url.includes('http')) {
+				shell.open(url);
+			} else {
+				navigateDropState(navigate, url);
+			}
 		},
 	);
 
 	useConditionalScopedAction(
-		'Open selected url',
-		keyExplicitAction('u'),
+		'Insert reference',
+		keyAction('8'),
 		isFocused,
-		() => {
-			const url = editor.getSelectedLinkUrl();
-			if (url === undefined) {
+		async () => {
+			const documents = await store.searchDirectory(
+				documentsPath(),
+				parseFileToDocumentDirectory,
+			);
+
+			if (documents.length <= 0) {
+				announceError();
 				return;
 			}
-			shell.open(url);
+
+			const documentId = await selectSingle(
+				'Reference document',
+				'Search for documents',
+				documents.map((document) => ({
+					label: document.name,
+					value: document.id,
+				})),
+			);
+
+			const directory = await getDocumentDirectoryOfId(documentId);
+			const content = `Go to ${directory?.name || 'reference'}`;
+
+			insertOrUpdateBlock(editor, {
+				type: 'reference',
+				props: {
+					documentId,
+				},
+				content,
+			});
+		},
+	);
+
+	useConditionalScopedAction(
+		'Insert audio fragment',
+		keyAction('l'),
+		isFocused,
+		async () => {
+			if (!editor.isFocused()) {
+				return;
+			}
+
+			try {
+				const url = await openAsset('Select a audio fragment', [
+					{
+						name: 'Audio',
+						extensions: ['woff', 'mp3'],
+					},
+				]);
+
+				if (url === null) {
+					throw Error('Not a valid audio file');
+				}
+
+				insertOrUpdateBlock(editor, {
+					type: 'audio',
+					props: {
+						src: url,
+					},
+				});
+
+				editor.focus();
+			} catch (error) {
+				announceError();
+				console.error(error);
+			}
 		},
 	);
 
@@ -171,6 +249,10 @@ function DocumentRegion({
 						extensions: ['png', 'jpg', 'jpeg', 'pdf', 'svg'],
 					},
 				]);
+
+				if (url === null) {
+					throw Error('Not a valid image');
+				}
 
 				insertOrUpdateBlock(editor, {
 					type: 'image',
@@ -203,6 +285,11 @@ function DocumentRegion({
 						extensions: ['png', 'jpg', 'jpeg', 'pdf', 'svg'],
 					},
 				]);
+
+				if (url === null) {
+					throw Error('Not a valid image');
+				}
+
 				const dataUrl = await toDataURL(url);
 
 				insertOrUpdateBlock(editor, {
