@@ -26,7 +26,7 @@ export const ARIA_DETAIL_MAPPING = [
 export function getAriaDetail(): AriaDetail {
 	const detailNumber = Number(localStorage.getItem(ARIA_DETAIL_STORAGE_KEY))
 
-	return detailNumber || AriaDetail.High
+	return detailNumber ?? AriaDetail.High
 }
 
 export function setAriaDetail(detail: AriaDetail) {

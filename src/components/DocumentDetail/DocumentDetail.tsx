@@ -45,6 +45,7 @@ import DocumentRegion from '../DocumentRegion/DocumentRegion'
 import { listen } from '@tauri-apps/api/event'
 import { RegionEvent, RegionEventPayload } from '../../services/document/event'
 import { useAriaLabel } from '../../services/aria/detail'
+import { prompt, selectSingle } from '../../services/window/window-manager'
 
 interface DocumentDetailProps {}
 
@@ -99,6 +100,7 @@ function DocumentDetail({}: DocumentDetailProps) {
 		'Delete document',
 		keyExplicitAction('backspace'),
 		async () => {
+			console.log('hi')
 			const confirmText = 'document'
 			const text = await prompt(
 				'Confirm deletion',
@@ -118,13 +120,15 @@ function DocumentDetail({}: DocumentDetailProps) {
 		},
 	)
 
+	const layoutDependancies = [selection.rowId, selection.nodeId]
+
 	useEffectAction(
 		'Move up',
 		keyNavigation('up'),
 		async () => {
 			navigator.focusRowUp()
 		},
-		[selection.rowId, selection.nodeId],
+		layoutDependancies,
 	)
 
 	useEffectAction(
@@ -133,7 +137,7 @@ function DocumentDetail({}: DocumentDetailProps) {
 		async () => {
 			navigator.focusRowDown()
 		},
-		[selection.rowId, selection.nodeId],
+		layoutDependancies,
 	)
 
 	useEffectAction(
@@ -142,7 +146,7 @@ function DocumentDetail({}: DocumentDetailProps) {
 		async () => {
 			navigator.focusColumnLeft()
 		},
-		[selection.rowId, selection.nodeId],
+		layoutDependancies,
 	)
 
 	useEffectAction(
@@ -151,7 +155,7 @@ function DocumentDetail({}: DocumentDetailProps) {
 		async () => {
 			navigator.focusColumnRight()
 		},
-		[selection.rowId, selection.nodeId],
+		layoutDependancies,
 	)
 
 	useEffectAction(
@@ -160,7 +164,7 @@ function DocumentDetail({}: DocumentDetailProps) {
 		async () => {
 			deleteNode()
 		},
-		[selection.rowId, selection.nodeId],
+		layoutDependancies,
 	)
 
 	useEffectAction(
@@ -169,7 +173,7 @@ function DocumentDetail({}: DocumentDetailProps) {
 		async () => {
 			deleteNode(true)
 		},
-		[selection.rowId, selection.nodeId],
+		layoutDependancies,
 	)
 
 	useEffectAction(
@@ -178,7 +182,7 @@ function DocumentDetail({}: DocumentDetailProps) {
 		async () => {
 			insertRow('before')
 		},
-		[selection.rowId, selection.nodeId],
+		layoutDependancies,
 	)
 
 	useEffectAction(
@@ -187,7 +191,7 @@ function DocumentDetail({}: DocumentDetailProps) {
 		async () => {
 			insertRow('after')
 		},
-		[selection.rowId, selection.nodeId],
+		layoutDependancies,
 	)
 
 	useEffectAction(
@@ -196,7 +200,7 @@ function DocumentDetail({}: DocumentDetailProps) {
 		async () => {
 			insertColumn('before')
 		},
-		[selection.rowId, selection.nodeId],
+		layoutDependancies,
 	)
 
 	useEffectAction(
@@ -205,7 +209,7 @@ function DocumentDetail({}: DocumentDetailProps) {
 		async () => {
 			insertColumn('after')
 		},
-		[selection.rowId, selection.nodeId],
+		layoutDependancies,
 	)
 
 	useScopedAction(`Set focus contrast`, keyExplicitAction('0'), async () => {

@@ -1,40 +1,40 @@
 import {
 	DocumentRegionData,
 	DocumentRegionUserLandmark,
-} from '../../types/document/document'
-import { schema } from '../../blocks/schema'
-import { shell } from '@tauri-apps/api'
-import { polyfillTiptapBreaking, toggleBlock } from '../../utils/block'
-import { useEditorAutoSaveHandle } from '../../utils/editor'
-import { IBlockEditor } from '../../types/block'
-import { useContext, useEffect, useRef, useState } from 'react'
-import { keyAction, keyExplicitAction } from '../../config/shortcut'
-import { BlockNoteView, useCreateBlockNote } from '@blocknote/react'
-import { useConditionalScopedAction } from '../../services/actions/actions-hook'
-import { insertOrUpdateBlock } from '@blocknote/core'
-import { voiceSay } from '../../bindings'
-import { toDataURL } from '../../utils/url'
-import { announceError } from '../../utils/error'
-import { openAsset } from '../../utils/filesystem'
-import { prompt } from '../../services/window/window-manager'
-import { EnvContext } from '../EnvProvider/EnvProvider'
-import clsx from 'clsx'
-import { FocusMode, getFocusMode } from '../../services/focus/focus'
-import { emitEvent, regionInEditEvent } from '../../services/document/event'
+} from '../../types/document/document';
+import { schema } from '../../blocks/schema';
+import { shell } from '@tauri-apps/api';
+import { polyfillTiptapBreaking, toggleBlock } from '../../utils/block';
+import { useEditorAutoSaveHandle } from '../../utils/editor';
+import { IBlockEditor } from '../../types/block';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { keyAction, keyExplicitAction } from '../../config/shortcut';
+import { BlockNoteView, useCreateBlockNote } from '@blocknote/react';
+import { useConditionalScopedAction } from '../../services/actions/actions-hook';
+import { insertOrUpdateBlock } from '@blocknote/core';
+import { voiceSay } from '../../bindings';
+import { toDataURL } from '../../utils/url';
+import { announceError } from '../../utils/error';
+import { openAsset } from '../../utils/filesystem';
+import { prompt } from '../../services/window/window-manager';
+import { EnvContext } from '../EnvProvider/EnvProvider';
+import clsx from 'clsx';
+import { FocusMode, getFocusMode } from '../../services/focus/focus';
+import { emitEvent, regionInEditEvent } from '../../services/document/event';
 
 interface DocumentRegionProps {
-	region: DocumentRegionData
-	onSave?: (region: DocumentRegionData, editor: IBlockEditor) => void
-	onChange?: (region: DocumentRegionData, editor: IBlockEditor) => void
-	onFocus: (region: DocumentRegionData, editor: IBlockEditor) => void
+	region: DocumentRegionData;
+	onSave?: (region: DocumentRegionData, editor: IBlockEditor) => void;
+	onChange?: (region: DocumentRegionData, editor: IBlockEditor) => void;
+	onFocus: (region: DocumentRegionData, editor: IBlockEditor) => void;
 	onAddLandmark: (
 		region: DocumentRegionData,
 		landmark: DocumentRegionUserLandmark,
-	) => void
-	onBlur: (region: DocumentRegionData, editor: IBlockEditor) => void
-	isFocused: boolean
-	isEditing: boolean
-	label?: string
+	) => void;
+	onBlur: (region: DocumentRegionData, editor: IBlockEditor) => void;
+	isFocused: boolean;
+	isEditing: boolean;
+	label?: string;
 }
 
 function DocumentRegion({
@@ -48,56 +48,56 @@ function DocumentRegion({
 	onBlur,
 	label,
 }: DocumentRegionProps) {
-	const env = useContext(EnvContext)
+	const env = useContext(EnvContext);
 
-	const ref = useRef<HTMLDivElement>(null)
-	const editButton = useRef<HTMLButtonElement>(null)
+	const ref = useRef<HTMLDivElement>(null);
+	const editButton = useRef<HTMLButtonElement>(null);
 
 	const hasFeature = (key: string) =>
-		env?.features?.value ? env?.features?.value?.includes(key) ?? false : false
+		env?.features?.value ? env?.features?.value?.includes(key) ?? false : false;
 
 	const editor = useCreateBlockNote({
 		schema,
 		initialContent: region.blocks,
-	})
+	});
 
 	const regionWithCurrentBlock = (): DocumentRegionData => ({
 		...region,
 		blocks: editor.document,
-	})
+	});
 
 	const autoSave = () => {
-		onSave(regionWithCurrentBlock(), editor)
-	}
+		onSave(regionWithCurrentBlock(), editor);
+	};
 
-	useEditorAutoSaveHandle(editor, autoSave)
+	useEditorAutoSaveHandle(editor, autoSave);
 
 	const focus = () => {
 		try {
-			editButton.current?.focus()
-			editor.focus()
+			editButton.current?.focus();
+			editor.focus();
 		} catch (error) {
-			console.info(`Unable to focus: (${region.label || region.id})`)
+			console.info(`Unable to focus: (${region.label || region.id})`);
 		}
-	}
+	};
 
 	useEffect(() => {
 		if (isFocused) {
-			focus()
+			focus();
 		}
-	}, [isFocused, isEditing])
+	}, [isFocused, isEditing]);
 
 	useEffect(() => {
 		editor._tiptapEditor.on('create', () => {
 			if (isFocused) {
-				focus()
+				focus();
 			}
-		})
-	})
+		});
+	});
 
 	editor.onEditorContentChange(() => {
-		onChange(regionWithCurrentBlock(), editor)
-	})
+		onChange(regionWithCurrentBlock(), editor);
+	});
 
 	useConditionalScopedAction(
 		'Selection to title',
@@ -105,40 +105,55 @@ function DocumentRegion({
 		isFocused,
 		() => {
 			if (!editor.isFocused()) {
-				return
+				return;
 			}
-			const selectedBlock = editor.getTextCursorPosition().block
+			const selectedBlock = editor.getTextCursorPosition().block;
 			toggleBlock(editor, selectedBlock, {
 				type: 'title',
-			})
+			});
 		},
-	)
+	);
+
+	useConditionalScopedAction(
+		'Selection to button',
+		keyAction('h'),
+		isFocused,
+		() => {
+			if (!editor.isFocused()) {
+				return;
+			}
+			const selectedBlock = editor.getTextCursorPosition().block;
+			toggleBlock(editor, selectedBlock, {
+				type: 'button',
+			});
+		},
+	);
 
 	useConditionalScopedAction(
 		'Open selected url',
 		keyAction('u'),
 		isFocused,
 		() => {
-			const url = editor.getSelectedLinkUrl()
+			const url = editor.getSelectedLinkUrl();
 			if (url === undefined) {
-				return
+				return;
 			}
-			shell.open(url)
+			shell.open(url);
 		},
-	)
+	);
 
 	useConditionalScopedAction(
 		'Open selected url',
 		keyExplicitAction('u'),
 		isFocused,
 		() => {
-			const url = editor.getSelectedLinkUrl()
+			const url = editor.getSelectedLinkUrl();
 			if (url === undefined) {
-				return
+				return;
 			}
-			shell.open(url)
+			shell.open(url);
 		},
-	)
+	);
 
 	useConditionalScopedAction(
 		'Insert image by url',
@@ -146,7 +161,7 @@ function DocumentRegion({
 		isFocused,
 		async () => {
 			if (!editor.isFocused()) {
-				return
+				return;
 			}
 
 			try {
@@ -155,22 +170,22 @@ function DocumentRegion({
 						name: 'Image',
 						extensions: ['png', 'jpg', 'jpeg', 'pdf', 'svg'],
 					},
-				])
+				]);
 
 				insertOrUpdateBlock(editor, {
 					type: 'image',
 					props: {
 						src: url,
 					},
-				})
+				});
 
-				editor.focus()
+				editor.focus();
 			} catch (error) {
-				announceError()
-				console.error(error)
+				announceError();
+				console.error(error);
 			}
 		},
-	)
+	);
 
 	useConditionalScopedAction(
 		'Insert image as embed',
@@ -178,7 +193,7 @@ function DocumentRegion({
 		isFocused,
 		async () => {
 			if (!editor.isFocused()) {
-				return
+				return;
 			}
 
 			try {
@@ -187,55 +202,23 @@ function DocumentRegion({
 						name: 'Image',
 						extensions: ['png', 'jpg', 'jpeg', 'pdf', 'svg'],
 					},
-				])
-				const dataUrl = await toDataURL(url)
+				]);
+				const dataUrl = await toDataURL(url);
 
 				insertOrUpdateBlock(editor, {
 					type: 'image',
 					props: {
 						src: dataUrl,
 					},
-				})
+				});
 
-				editor.focus()
+				editor.focus();
 			} catch (error) {
-				announceError()
-				console.error(error)
+				announceError();
+				console.error(error);
 			}
 		},
-	)
-
-	useConditionalScopedAction(
-		'Insert audio fragment',
-		keyAction('i'),
-		isFocused,
-		async () => {
-			if (!editor.isFocused()) {
-				return
-			}
-
-			try {
-				const url = await openAsset('Select a Image', [
-					{
-						name: 'Audio',
-						extensions: ['png', 'jpg', 'jpeg', 'pdf', 'svg'],
-					},
-				])
-
-				insertOrUpdateBlock(editor, {
-					type: 'image',
-					props: {
-						src: url,
-					},
-				})
-
-				editor.focus()
-			} catch (error) {
-				announceError()
-				console.error(error)
-			}
-		},
-	)
+	);
 
 	useConditionalScopedAction(
 		'Insert dummy text',
@@ -243,14 +226,14 @@ function DocumentRegion({
 		isFocused,
 		async () => {
 			if (!editor.isFocused()) {
-				return
+				return;
 			}
 
 			// Proxy of: https://loripsum.net/
-			const response = await fetch('/api/dummy-text/1/plaintext')
-			const text = await response.text()
+			const response = await fetch('/api/dummy-text/1/plaintext');
+			const text = await response.text();
 
-			const selectedBlock = editor.getTextCursorPosition().block
+			const selectedBlock = editor.getTextCursorPosition().block;
 			editor.insertBlocks(
 				[
 					{
@@ -259,56 +242,57 @@ function DocumentRegion({
 					},
 				],
 				selectedBlock,
-			)
+			);
 		},
-	)
+	);
 
 	useConditionalScopedAction(
 		`Add landmark`,
 		keyExplicitAction('l'),
 		isFocused && hasFeature('landmark'),
 		async () => {
-			const label = await prompt('label', 'Landmark label')
+			const label = await prompt('label', 'Landmark label');
 
 			if (label === null) {
-				announceError()
-				return
+				announceError();
+				return;
 			}
 
 			onAddLandmark(region, {
 				label,
-			})
+			});
 		},
-	)
+	);
 
 	const getPreviewText = (): string | undefined => {
-		const maxWords = 5
+		const maxWords = 5;
 
 		if (polyfillTiptapBreaking(editor)) {
-			return
+			return;
 		}
 
-		const innerText = editor.domElement.innerText
-		const words = innerText.match(/([^\s]+)/g) || []
+		const innerText = editor.domElement.innerText;
+		const words = innerText.match(/([^\s]+)/g) || [];
 
 		if (words.join(' ').length <= 0) {
-			return
+			return;
 		}
 
 		if (words.length > maxWords) {
-			return `${words.slice(0, maxWords).join(' ')}…`
+			return `${words.slice(0, maxWords).join(' ')}…`;
 		}
 
-		return words.join(' ')
-	}
+		return words.join(' ');
+	};
 
-	const focusMode = getFocusMode()
+	const focusMode = useMemo(getFocusMode, []);
+
 	const classes = clsx({
 		'input-hint group relative w-full p-5 data-[focused]:text-black data-[focused]:bg-white':
 			focusMode === FocusMode.High,
 		'input-hint group relative w-full p-5 data-[focused]:bg-gray-400':
 			focusMode === FocusMode.Low,
-	})
+	});
 
 	/**
 	 * Component renders a visual and a voice assisted (VA) version.
@@ -351,12 +335,12 @@ function DocumentRegion({
 					aria-hidden={!isEditing ? 'true' : undefined}
 					onKeyDown={(event) => {
 						if (event.key === 'Escape') {
-							onSave(region, editor)
+							onSave(region, editor);
 						}
 					}}
 					onBlur={() => {
 						if (!isFocused) {
-							onBlur(region, editor)
+							onBlur(region, editor);
 						}
 					}}
 				/>
@@ -366,23 +350,23 @@ function DocumentRegion({
 					ref={editButton}
 					className="absolute inset-0 text-left outline-none"
 					onClick={() => {
-						onFocus(region, editor)
-						focus()
-						emitEvent(regionInEditEvent(region))
+						onFocus(region, editor);
+						focus();
+						emitEvent(regionInEditEvent(region));
 					}}
 					onFocus={() => {
-						onFocus(region, editor)
-						focus()
+						onFocus(region, editor);
+						focus();
 					}}
 					onBlur={() => {
-						onBlur(region, editor)
+						onBlur(region, editor);
 						// stopEdit()
 					}}
 					aria-label={getPreviewText() || 'Blank'}
 				></button>
 			)}
 		</section>
-	)
+	);
 }
 
-export default DocumentRegion
+export default DocumentRegion;
