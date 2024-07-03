@@ -1,22 +1,22 @@
-import { ReactNode } from 'react'
+import { ReactNode } from 'react';
 import {
 	LayoutBranchData,
 	LayoutCommon,
 	LayoutNodeData,
 	LayoutTreeTrunk,
-} from '../../types/layout/layout'
-import { useAriaLabel } from '../../services/aria/detail'
+} from '../../types/layout/layout';
+import { useAriaLabel } from '../../services/aria/detail';
 
 interface LayoutBranchProps<T extends LayoutCommon = LayoutTreeTrunk> {
-	value: T
-	level?: 'row' | 'column' | 'unknown'
-	index?: number
-	length?: number
+	value: T;
+	level?: 'row' | 'column' | 'unknown';
+	index?: number;
+	length?: number;
 	renderNode: (
 		data: LayoutNodeData,
 		index: number,
 		siblingLength: number,
-	) => ReactNode
+	) => ReactNode;
 }
 
 const propsAreEqual = <T extends LayoutCommon = LayoutTreeTrunk>(
@@ -25,11 +25,11 @@ const propsAreEqual = <T extends LayoutCommon = LayoutTreeTrunk>(
 ) => {
 	if (prevProps.value.type === 'branch' && nextProps.value.type === 'branch') {
 		//@ts-ignore
-		return prevProps.value.children.length === nextProps.value.children.length
+		return prevProps.value.children.length === nextProps.value.children.length;
 	}
 
-	return prevProps.value.type === nextProps.value.type
-}
+	return prevProps.value.type === nextProps.value.type;
+};
 
 export function LayoutBranchOrNode({
 	value,
@@ -47,18 +47,18 @@ export function LayoutBranchOrNode({
 				value={value}
 				length={length}
 			/>
-		)
-	} else {
-		return (
-			<LayoutNode
-				index={index}
-				level={level}
-				renderNode={renderNode}
-				value={value}
-				length={length}
-			/>
-		)
+		);
 	}
+
+	return (
+		<LayoutNode
+			index={index}
+			level={level}
+			renderNode={renderNode}
+			value={value}
+			length={length}
+		/>
+	);
 }
 
 function LayoutBranch({
@@ -66,7 +66,7 @@ function LayoutBranch({
 	level,
 	renderNode,
 }: LayoutBranchProps<LayoutBranchData<LayoutTreeTrunk>>) {
-	const aria = useAriaLabel()
+	const aria = useAriaLabel();
 
 	return (
 		<ul
@@ -91,16 +91,16 @@ function LayoutBranch({
 				</li>
 			))}
 		</ul>
-	)
+	);
 }
 
-function LayoutNode({
+const LayoutNode = ({
 	value,
 	level,
 	renderNode,
 	index = 0,
 	length = 1,
-}: LayoutBranchProps<LayoutNodeData>) {
+}: LayoutBranchProps<LayoutNodeData>) => {
 	return (
 		<section
 			data-component-name="LayoutNode"
@@ -111,7 +111,7 @@ function LayoutNode({
 		>
 			{renderNode(value, index, length)}
 		</section>
-	)
-}
+	);
+};
 
-export default LayoutBranch
+export default LayoutBranch;

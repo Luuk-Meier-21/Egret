@@ -8,7 +8,7 @@ import {
 	useBlockLive,
 	useBlockSelection,
 } from '../../utils/block';
-import { keyAction } from '../../config/shortcut';
+import { keyAction, keyExplicitAction } from '../../config/shortcut';
 import { formatShortcutsForSpeech } from '../../utils/speech';
 import { useConditionalScopedAction } from '../../services/actions/actions-hook';
 
@@ -46,7 +46,7 @@ function rowComponent({
 	const src = block.props.src;
 	const text = ref.current?.textContent;
 
-	const playShortcut = keyAction('Space');
+	const playShortcut = keyExplicitAction('Space');
 
 	useEffect(() => {
 		contentRef(ref.current);

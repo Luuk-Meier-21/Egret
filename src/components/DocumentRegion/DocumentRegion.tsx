@@ -65,7 +65,7 @@ function DocumentRegion({
 	const navigate = useNavigate();
 
 	const hasFeature = (key: string) =>
-		env?.features?.value ? env?.features?.value?.includes(key) ?? false : false;
+		env?.features?.value && env?.features?.value?.includes(key);
 
 	const editor = useCreateBlockNote({
 		schema,
@@ -381,6 +381,8 @@ function DocumentRegion({
 			focusMode === FocusMode.Low,
 	});
 
+	const elementContentLabel = getPreviewText() || 'Blank';
+
 	/**
 	 * Component renders a visual and a voice assisted (VA) version.
 	 * - VA:      a button containing x words from the editors content, finetuned for VA users.
@@ -449,7 +451,7 @@ function DocumentRegion({
 						onBlur(region, editor);
 						// stopEdit()
 					}}
-					aria-label={getPreviewText() || 'Blank'}
+					aria-label={elementContentLabel}
 				></button>
 			)}
 		</section>
