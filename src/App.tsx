@@ -3,16 +3,12 @@ import { createBrowserRouter } from 'react-router-dom';
 import Actions from './components/Actions/Actions';
 import AppDocumentsOverview from './components/DocumentsOverview/AppDocumentsOverview';
 import { useHotkeyOverride } from './utils/hotkeys';
-import {
-	generateDocumentMeta,
-	parseFileToDocumentDirectory,
-} from './services/document/document-generator';
+import { generateDocumentMeta } from './services/document/document-generator';
 import { generateLayoutWithContent } from './services/layout/layout-content';
 import DialogProvider from './components/Dialog/DialogProvider';
-import { documentsPath, pathInDirectory } from './services/store/store';
+import { pathInDirectory } from './services/store/store';
 import { generateDefaultLayout } from './config/layout';
 import { useAbstractStore } from './services/store/store-hooks';
-import { validate } from 'uuid';
 import { ONBOARDING_CONTENT } from './config/onboarding';
 import { keywordsRecordOptions, keywordsRecordPath } from './config/keywords';
 import { Keyword } from './types/keywords';

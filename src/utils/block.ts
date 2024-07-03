@@ -114,6 +114,9 @@ export function useBlockSelection<
 	return isSelected;
 }
 
+/**
+ * @deprecated
+ */
 export function useBlockLive(
 	label: string,
 	isSelected: boolean,

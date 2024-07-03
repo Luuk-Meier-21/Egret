@@ -12,12 +12,6 @@ import {
 	generateDirectoryName,
 	parseFileToDocumentDirectory,
 } from '../../services/document/document-generator';
-import {
-	keywordsRecordOptions,
-	keywordsRecordPath,
-} from '../../config/keywords';
-import { Keyword } from '../../types/keywords';
-import { generateKeyword } from '../../services/keyword/keyword-generator';
 import { slugify } from '../../utils/url';
 import {
 	ActionReducerAction,
@@ -108,6 +102,7 @@ function Actions({ children }: ActionsProps) {
 		'New document',
 		keyAction('n'),
 		async () => {
+			console.log('hi');
 			try {
 				const name = await prompt('New document', 'Document name');
 				const path = pathOfDocumentsDirectory(generateDirectoryName(name));

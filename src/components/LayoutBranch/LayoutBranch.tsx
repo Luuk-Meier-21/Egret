@@ -5,7 +5,6 @@ import {
 	LayoutNodeData,
 	LayoutTreeTrunk,
 } from '../../types/layout/layout';
-import { useAriaLabel } from '../../services/aria/detail';
 
 interface LayoutBranchProps<T extends LayoutCommon = LayoutTreeTrunk> {
 	value: T;
@@ -19,17 +18,17 @@ interface LayoutBranchProps<T extends LayoutCommon = LayoutTreeTrunk> {
 	) => ReactNode;
 }
 
-const propsAreEqual = <T extends LayoutCommon = LayoutTreeTrunk>(
-	prevProps: Readonly<LayoutBranchProps<T>>,
-	nextProps: Readonly<LayoutBranchProps<T>>,
-) => {
-	if (prevProps.value.type === 'branch' && nextProps.value.type === 'branch') {
-		//@ts-ignore
-		return prevProps.value.children.length === nextProps.value.children.length;
-	}
+// const propsAreEqual = <T extends LayoutCommon = LayoutTreeTrunk>(
+// 	prevProps: Readonly<LayoutBranchProps<T>>,
+// 	nextProps: Readonly<LayoutBranchProps<T>>,
+// ) => {
+// 	if (prevProps.value.type === 'branch' && nextProps.value.type === 'branch') {
+// 		//@ts-ignore
+// 		return prevProps.value.children.length === nextProps.value.children.length;
+// 	}
 
-	return prevProps.value.type === nextProps.value.type;
-};
+// 	return prevProps.value.type === nextProps.value.type;
+// };
 
 export function LayoutBranchOrNode({
 	value,
@@ -66,11 +65,9 @@ function LayoutBranch({
 	level,
 	renderNode,
 }: LayoutBranchProps<LayoutBranchData<LayoutTreeTrunk>>) {
-	const aria = useAriaLabel();
-
 	return (
 		<ul
-			aria-label={aria.list(value.children.length)}
+			// aria-label={aria.list(value.children.length)}
 			id={value.id}
 			data-layout-level={level}
 			data-layout-type="branch"

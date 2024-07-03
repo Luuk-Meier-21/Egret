@@ -3,10 +3,9 @@ import { createReactBlockSpec } from '@blocknote/react';
 import { schema } from '../../blocks/schema';
 import { ReactNode, useEffect, useRef } from 'react';
 import { BlockComponentProps } from '../../types/block';
-import { ariaAnnounce } from '../../services/aria/aria-announce';
 import { useBlockLive, useBlockSelection } from '../../utils/block';
 import { useConditionalScopedAction } from '../../services/actions/actions-hook';
-import { keyAction, keyExplicitAction } from '../../config/shortcut';
+import { keyAction } from '../../config/shortcut';
 import { useNavigate } from 'react-router';
 import { navigateDropState } from '../../utils/navigation';
 

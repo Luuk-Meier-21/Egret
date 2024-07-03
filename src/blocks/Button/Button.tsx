@@ -3,8 +3,6 @@ import { createReactBlockSpec } from '@blocknote/react';
 import { schema } from '../../blocks/schema';
 import { ReactNode, useEffect, useRef } from 'react';
 import { BlockComponentProps } from '../../types/block';
-import { useBlockSelection } from '../../utils/block';
-import { ariaAnnounce } from '../../services/aria/aria-announce';
 
 export const insertRow = (editor: typeof schema.BlockNoteEditor) => ({
 	title: 'Button',
@@ -26,8 +24,6 @@ const buttonConfig = {
 
 function rowComponent({
 	contentRef,
-	editor,
-	block,
 }: BlockComponentProps<typeof buttonConfig, 'button'>): ReactNode {
 	const ref = useRef<HTMLElement>(null);
 

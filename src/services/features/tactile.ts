@@ -1,56 +1,41 @@
-import {
-	closeCompanionSocket,
-	openCompanionSocket,
-	setLayoutState,
-} from '../../bindings'
-import { keyExplicitNavigation } from '../../config/shortcut'
-import { Layout } from '../../types/layout/layout'
-import { useConditionalScopedAction } from '../actions/actions-hook'
-import { flattenLayoutNodesByReference } from '../layout/layout-content'
-import { clientEndpoint } from '../socket/tactile-socket'
-import { useFeature } from './features'
-import { useEffect } from 'react'
-import { useStrictEffect } from '../layout/layout-change'
-import { sanitizeLayout } from '../layout/layout-builder'
-import { deepJSONClone } from '../../utils/object'
-import { emit, listen } from '@tauri-apps/api/event'
-import { useLayoutNavigator } from '../layout/layout-navigation'
+import { closeCompanionSocket, openCompanionSocket } from '../../bindings';
+import { keyExplicitNavigation } from '../../config/shortcut';
+import { useConditionalScopedAction } from '../actions/actions-hook';
+import { clientEndpoint } from '../socket/tactile-socket';
+import { useFeature } from './features';
+import { emit } from '@tauri-apps/api/event';
 
-export default function useTactileFeatures(
-	env: Record<string, any>,
-	layout: Layout,
-	navigator: ReturnType<typeof useLayoutNavigator>,
-) {
-	const hasFeature = useFeature(env, 'tactile')
+export default function useTactileFeatures(env: Record<string, any>) {
+	const hasFeature = useFeature(env, 'tactile');
 
 	useConditionalScopedAction(
 		'Start tactile mode',
 		keyExplicitNavigation('9'),
 		hasFeature,
 		async () => {
-			await openCompanionSocket()
+			await openCompanionSocket();
 
-			console.log(clientEndpoint(window.location.hostname))
+			console.log(clientEndpoint(window.location.hostname));
 		},
-	)
+	);
 
 	useConditionalScopedAction(
 		'Stop tactile mode',
 		keyExplicitNavigation('8'),
 		hasFeature,
 		async () => {
-			await closeCompanionSocket()
+			await closeCompanionSocket();
 		},
-	)
+	);
 
 	useConditionalScopedAction(
 		'Refresh event',
 		keyExplicitNavigation('left'),
 		hasFeature,
 		async () => {
-			emit('refresh-client', 'none')
+			emit('refresh-client', 'none');
 		},
-	)
+	);
 
 	// useEffect(() => {
 	// 	const focusCallback = (e: any) => {

@@ -1,5 +1,5 @@
-import { useEffect, useReducer } from 'react'
-import { generateLayoutNode } from './layout-generator'
+import { useEffect, useReducer } from 'react';
+import { generateLayoutNode } from './layout-generator';
 import {
 	Layout,
 	LayoutBranchData,
@@ -8,49 +8,46 @@ import {
 	LayoutNodeData,
 	LayoutTreeTrunk,
 	SanitizedLayout,
-} from '../../types/layout/layout'
-import { layoutReducer } from './layout-builder-reducer'
+} from '../../types/layout/layout';
+import { layoutReducer } from './layout-builder-reducer';
 import {
 	DocumentRegionData,
 	DocumentRegionUserLandmark,
-} from '../../types/document/document'
-import { systemSound } from '../../bindings'
-import { blocksHaveContent } from '../../utils/block'
-import { announceError } from '../../utils/error'
-import { useHistoryState } from './layout-history'
-import { useObservableEffect } from './layout-change'
-import { useScopedAction } from '../actions/actions-hook'
-import { useLayoutNavigator } from './layout-navigation'
-import { useLayoutState } from './layout-state'
-import { deepJSONClone } from '../../utils/object'
-import { flattenLayoutNodesByReference } from './layout-content'
+} from '../../types/document/document';
+import { systemSound } from '../../bindings';
+import { blocksHaveContent } from '../../utils/block';
+import { announceError } from '../../utils/error';
+import { useLayoutNavigator } from './layout-navigation';
+import { useLayoutState } from './layout-state';
+import { deepJSONClone } from '../../utils/object';
+import { flattenLayoutNodesByReference } from './layout-content';
 
-export type LayoutBuilderCallback = (layout: Layout) => void
+export type LayoutBuilderCallback = (layout: Layout) => void;
 
 export function useLayoutBuilder(staticLayout: Layout) {
-	const [layout, dispatch] = useReducer(layoutReducer, staticLayout)
+	const [layout, dispatch] = useReducer(layoutReducer, staticLayout);
 
 	//@test
-	// useEffect(() => {
-	// 	handleRowChildrenChange(layout.tree)
-	// }, [layout])
+	useEffect(() => {
+		handleRowChildrenChange(layout.tree);
+	}, [layout]);
 
 	const announceCreation = () => {
-		systemSound('Frog', 1.5, 1, 0.1)
-	}
+		systemSound('Frog', 1.5, 1, 0.1);
+	};
 
 	const announceDeletion = () => {
-		systemSound('Pop', 1.5, 1.5, 0.2)
-	}
+		systemSound('Pop', 1.5, 1.5, 0.2);
+	};
 
 	const insertContent = (
 		data: DocumentRegionData,
 		node: LayoutNodeData,
 	): LayoutNodeData => {
-		dispatch({ type: 'insert-content', node, data })
+		dispatch({ type: 'insert-content', node, data });
 
-		return node
-	}
+		return node;
+	};
 
 	const handleRowChildrenChange = (rows: LayoutTreeTrunk[]) => {
 		for (let row of rows) {
@@ -60,16 +57,16 @@ export function useLayoutBuilder(staticLayout: Layout) {
 					dispatch({
 						type: 'remove-row',
 						row: row as LayoutCommon as LayoutNodeData,
-					})
+					});
 				} else {
 					dispatch({
 						type: 'convert-row-to-node',
 						row: row as LayoutBranchData,
-					})
+					});
 				}
 			}
 		}
-	}
+	};
 
 	// const addRow = (position: "before" | "after"): LayoutNodeData => {
 	//   const newRow = generateLayoutNode({});
@@ -83,12 +80,12 @@ export function useLayoutBuilder(staticLayout: Layout) {
 		row: LayoutBranchOrNodeData,
 		position: 'before' | 'after',
 	): LayoutNodeData => {
-		const newRow = generateLayoutNode({})
-		dispatch({ type: 'insert-row', position, row, newRow })
-		announceCreation()
+		const newRow = generateLayoutNode({});
+		dispatch({ type: 'insert-row', position, row, newRow });
+		announceCreation();
 
-		return newRow
-	}
+		return newRow;
+	};
 
 	// const addColumn = (
 	//   row: LayoutBranchData,
@@ -111,60 +108,60 @@ export function useLayoutBuilder(staticLayout: Layout) {
 		column: LayoutNodeData,
 		position: 'before' | 'after',
 	): LayoutNodeData => {
-		const newColumn = generateLayoutNode({})
-		dispatch({ type: 'insert-column', position, row, column, newColumn })
-		announceCreation()
+		const newColumn = generateLayoutNode({});
+		dispatch({ type: 'insert-column', position, row, column, newColumn });
+		announceCreation();
 
-		console.log(newColumn)
+		console.log(newColumn);
 
-		return newColumn
-	}
+		return newColumn;
+	};
 
 	const addColumnToNodeRow = (
 		row: LayoutNodeData,
 		position: 'before' | 'after',
 	): LayoutNodeData => {
-		const newColumn = generateLayoutNode({})
+		const newColumn = generateLayoutNode({});
 
 		dispatch({
 			type: 'add-column-to-node',
 			row: row,
 			newColumn: newColumn,
 			position: position,
-		})
-		announceCreation()
+		});
+		announceCreation();
 
-		return newColumn
-	}
+		return newColumn;
+	};
 
 	const removeRow = (
 		row: LayoutNodeData,
 		force: boolean = false,
 	): LayoutNodeData => {
 		if (!force && row.data?.blocks && blocksHaveContent(row.data.blocks)) {
-			announceError()
-			return row
+			announceError();
+			return row;
 		}
 
-		const index = layout.tree.indexOf(row)
+		const index = layout.tree.indexOf(row);
 
 		if (layout.tree.length <= 1 && layout.tree[0].type === 'node') {
-			announceError()
-			return layout.tree[0]
+			announceError();
+			return layout.tree[0];
 		}
 
-		dispatch({ type: 'remove-row', row })
-		announceDeletion()
+		dispatch({ type: 'remove-row', row });
+		announceDeletion();
 
 		const futureRow =
-			layout.tree[index + 1] || layout.tree[index - 1] || layout.tree[0]
+			layout.tree[index + 1] || layout.tree[index - 1] || layout.tree[0];
 
 		if (futureRow.type === 'branch') {
-			return futureRow.children[0]
+			return futureRow.children[0];
 		} else {
-			return futureRow
+			return futureRow;
 		}
-	}
+	};
 
 	const removeNodeFromRow = (
 		row: LayoutBranchData,
@@ -176,30 +173,30 @@ export function useLayoutBuilder(staticLayout: Layout) {
 			column.data?.blocks &&
 			blocksHaveContent(column.data.blocks)
 		) {
-			announceError()
-			return column
+			announceError();
+			return column;
 		}
 
-		const nodeIndex = row.children.indexOf(column)
+		const nodeIndex = row.children.indexOf(column);
 
-		dispatch({ type: 'remove-column-from-row', row, column })
-		announceDeletion()
+		dispatch({ type: 'remove-column-from-row', row, column });
+		announceDeletion();
 		return (
 			row.children[nodeIndex + 1] ||
 			row.children[nodeIndex - 1] ||
 			row.children[0]
-		)
-	}
+		);
+	};
 
 	const addLandmark = (
 		node: LayoutNodeData,
 		landmark: DocumentRegionUserLandmark,
 	) => {
-		dispatch({ type: 'add-landmark', node, landmark })
-		announceCreation()
+		dispatch({ type: 'add-landmark', node, landmark });
+		announceCreation();
 
-		return node
-	}
+		return node;
+	};
 
 	return {
 		// addRow,
@@ -212,10 +209,10 @@ export function useLayoutBuilder(staticLayout: Layout) {
 		insertColumn,
 		addLandmark,
 		layout,
-	} as const
+	} as const;
 }
 
-export type LayoutBuilder = ReturnType<typeof useLayoutBuilder>
+export type LayoutBuilder = ReturnType<typeof useLayoutBuilder>;
 
 export function layoutDeleteNode(
 	navigator: ReturnType<typeof useLayoutNavigator>,
@@ -223,20 +220,20 @@ export function layoutDeleteNode(
 	selection: ReturnType<typeof useLayoutState>,
 	force: boolean = false,
 ): void {
-	const currentRow = navigator.getCurrentRow()
-	const currentNode = navigator.getCurrentNode()
+	const currentRow = navigator.getCurrentRow();
+	const currentNode = navigator.getCurrentNode();
 
 	if (currentRow === null || currentNode === null) {
-		announceError()
-		return
+		announceError();
+		return;
 	}
-
+	console.log(currentRow);
 	if (currentRow.type === 'branch') {
-		const node = builder.removeNodeFromRow(currentRow, currentNode, force)
-		selection.setNodeId(node.id)
+		const node = builder.removeNodeFromRow(currentRow, currentNode, force);
+		selection.setNodeId(node.id);
 	} else {
-		const node = builder.removeRow(currentRow, force)
-		selection.setNodeId(node.id)
+		const node = builder.removeRow(currentRow, force);
+		selection.setNodeId(node.id);
 	}
 }
 
@@ -246,15 +243,15 @@ export function layoutInsertRow(
 	selection: ReturnType<typeof useLayoutState>,
 	position: 'before' | 'after',
 ): void {
-	const currentRow = navigator.getCurrentRow()
+	const currentRow = navigator.getCurrentRow();
 
 	if (currentRow === null) {
-		announceError()
-		return
+		announceError();
+		return;
 	}
 
-	const newNode = builder.insertRow(currentRow, position)
-	selection.setNodeId(newNode.id)
+	const newNode = builder.insertRow(currentRow, position);
+	selection.setNodeId(newNode.id);
 }
 
 export function layoutInsertColumn(
@@ -263,20 +260,20 @@ export function layoutInsertColumn(
 	selection: ReturnType<typeof useLayoutState>,
 	position: 'before' | 'after',
 ): void {
-	const currentRow = navigator.getCurrentRow()
-	const currentNode = navigator.getCurrentNode()
+	const currentRow = navigator.getCurrentRow();
+	const currentNode = navigator.getCurrentNode();
 
 	if (currentRow === null || currentNode === null) {
-		announceError()
-		return
+		announceError();
+		return;
 	}
 
 	if (currentRow.type === 'branch') {
-		const newNode = builder.insertColumn(currentRow, currentNode, position)
-		selection.setNodeId(newNode.id)
+		const newNode = builder.insertColumn(currentRow, currentNode, position);
+		selection.setNodeId(newNode.id);
 	} else {
-		const newNode = builder.addColumnToNodeRow(currentRow, position)
-		selection.setNodeId(newNode.id)
+		const newNode = builder.addColumnToNodeRow(currentRow, position);
+		selection.setNodeId(newNode.id);
 	}
 }
 
@@ -284,11 +281,11 @@ export function sanitizeLayout(layout: Layout): SanitizedLayout {
 	const cloneLayout: SanitizedLayout = {
 		...deepJSONClone(layout),
 		clean: true,
-	}
-	const nodes = flattenLayoutNodesByReference(cloneLayout.tree)
+	};
+	const nodes = flattenLayoutNodesByReference(cloneLayout.tree);
 	nodes.forEach((node) => {
-		node.data = undefined
-	})
+		node.data = undefined;
+	});
 
-	return cloneLayout
+	return cloneLayout;
 }

@@ -4,15 +4,18 @@ import {
 } from '../../types/document/document';
 import { schema } from '../../blocks/schema';
 import { shell } from '@tauri-apps/api';
-import { polyfillTiptapBreaking, toggleBlock } from '../../utils/block';
+import {
+	polyfillTiptapBreaking,
+	toggleBlock,
+	useBlockAnnounce,
+} from '../../utils/block';
 import { useEditorAutoSaveHandle } from '../../utils/editor';
 import { IBlockEditor } from '../../types/block';
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef } from 'react';
 import { keyAction, keyExplicitAction } from '../../config/shortcut';
 import { BlockNoteView, useCreateBlockNote } from '@blocknote/react';
 import { useConditionalScopedAction } from '../../services/actions/actions-hook';
 import { insertOrUpdateBlock } from '@blocknote/core';
-import { voiceSay } from '../../bindings';
 import { toDataURL } from '../../utils/url';
 import { announceError } from '../../utils/error';
 import { openAsset } from '../../utils/filesystem';
@@ -27,7 +30,6 @@ import { parseFileToDocumentDirectory } from '../../services/document/document-g
 import { getDocumentDirectoryOfId } from '../../services/document/document-utils';
 import { navigateDropState } from '../../utils/navigation';
 import { useNavigate } from 'react-router';
-import { lchown } from 'fs';
 
 interface DocumentRegionProps {
 	region: DocumentRegionData;
@@ -381,7 +383,16 @@ function DocumentRegion({
 			focusMode === FocusMode.Low,
 	});
 
-	const elementContentLabel = getPreviewText() || 'Blank';
+	const elementContentLabel = `${getPreviewText() || 'Blank'}, ${label}`;
+
+	useBlockAnnounce(
+		'polite',
+		`Hovering group. To edit press button`,
+		isFocused && !isEditing,
+		150,
+	);
+
+	useBlockAnnounce('polite', `In edit group.`, isFocused && isEditing, 150);
 
 	/**
 	 * Component renders a visual and a voice assisted (VA) version.
@@ -399,7 +410,7 @@ function DocumentRegion({
 			data-focused={isFocused || undefined}
 			data-editing={isEditing || undefined}
 			ref={ref}
-			aria-label={label}
+			role="region"
 			className={classes}
 		>
 			{region.landmark && (

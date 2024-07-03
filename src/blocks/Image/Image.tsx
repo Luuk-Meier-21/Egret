@@ -4,9 +4,6 @@ import { schema } from '../../blocks/schema';
 import { ReactNode, useEffect, useRef } from 'react';
 import { BlockComponentProps } from '../../types/block';
 import { useBlockLive, useBlockSelection } from '../../utils/block';
-import { voiceSay } from '../../bindings';
-import { useConditionalScopedAction } from '../../services/actions/actions-hook';
-import { ariaAnnounce } from '../../services/aria/aria-announce';
 
 export const insertRow = (editor: typeof schema.BlockNoteEditor) => ({
 	title: 'Image',

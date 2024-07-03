@@ -8,7 +8,7 @@ import {
 	useBlockLive,
 	useBlockSelection,
 } from '../../utils/block';
-import { keyAction, keyExplicitAction } from '../../config/shortcut';
+import { keyExplicitAction } from '../../config/shortcut';
 import { formatShortcutsForSpeech } from '../../utils/speech';
 import { useConditionalScopedAction } from '../../services/actions/actions-hook';
 

@@ -1,15 +1,15 @@
-import { DocumentRegionData } from '../../types/document/document'
-import { emit, listen } from '@tauri-apps/api/event'
+import { DocumentRegionData } from '../../types/document/document';
+import { emit } from '@tauri-apps/api/event';
 
-export type GlobalEvent = [string, Record<string, any>]
+export type GlobalEvent = [string, Record<string, any>];
 
 export const emitEvent = (event: [string, Record<string, any>]) =>
-	emit(...event)
+	emit(...event);
 
 export const eventFactory = <ET extends string, PT>(
 	event: ET,
 	props: PT,
-): [ET, PT] => [event, props]
+): [ET, PT] => [event, props];
 // Document
 
 export enum DocumentEvent {
@@ -18,14 +18,14 @@ export enum DocumentEvent {
 }
 
 export type DocumentEventPayload = {
-	documentId: string
-}
+	documentId: string;
+};
 
 export function emitDocumentEvent(
 	event: DocumentEvent,
 	documentId: DocumentEventPayload['documentId'],
 ): GlobalEvent {
-	return [event, { documentId }] as const
+	return [event, { documentId }] as const;
 }
 
 // Region
@@ -34,8 +34,10 @@ export enum RegionEvent {
 }
 
 export type RegionEventPayload = {
-	region: DocumentRegionData
-}
+	region: DocumentRegionData;
+};
 
 export const regionInEditEvent = (region: DocumentRegionData) =>
-	eventFactory<RegionEvent, RegionEventPayload>(RegionEvent.IN_EDIT, { region })
+	eventFactory<RegionEvent, RegionEventPayload>(RegionEvent.IN_EDIT, {
+		region,
+	});

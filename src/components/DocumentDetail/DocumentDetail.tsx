@@ -29,7 +29,7 @@ import {
 import { systemSound } from '../../bindings';
 import { removeDir } from '@tauri-apps/api/fs';
 import { announceError } from '../../utils/error';
-import { Suspense, useContext, useEffect, useMemo } from 'react';
+import { useContext, useEffect, useMemo } from 'react';
 import { EnvContext } from '../EnvProvider/EnvProvider';
 import { LayoutBranchOrNode } from '../LayoutBranch/LayoutBranch';
 import { generateDocumentRegion } from '../../services/document/document-generator';
@@ -45,7 +45,7 @@ import DocumentRegion from '../DocumentRegion/DocumentRegion';
 import { listen } from '@tauri-apps/api/event';
 import { RegionEvent, RegionEventPayload } from '../../services/document/event';
 import { useAriaLabel } from '../../services/aria/detail';
-import { prompt, selectSingle } from '../../services/window/window-manager';
+import { prompt } from '../../services/window/window-manager';
 
 interface DocumentDetailProps {}
 
@@ -100,7 +100,6 @@ function DocumentDetail({}: DocumentDetailProps) {
 		'Delete document',
 		keyExplicitAction('backspace'),
 		async () => {
-			console.log('hi');
 			const confirmText = 'document';
 			const text = await prompt(
 				'Confirm deletion',
@@ -225,7 +224,7 @@ function DocumentDetail({}: DocumentDetailProps) {
 	// Experimental features:
 	useExportFeatures(env, directory);
 	useFindLandmarkFeatures(env, builder.layout, selection);
-	useTactileFeatures(env, builder.layout, navigator);
+	useTactileFeatures(env);
 
 	useEffect(() => {
 		const inEditListener = listen<RegionEventPayload>(
@@ -253,7 +252,7 @@ function DocumentDetail({}: DocumentDetailProps) {
 		<div data-component-name="DocumentDetail">
 			<main className="bento-dark overflow-hidden font-serif text-base tracking-[0.01em] text-white prose-headings:mb-3 prose-headings:text-2xl prose-headings:font-normal prose-p:mb-3 prose-a:text-yellow-500 prose-a:underline [&_figcaption]:mt-1 [&_figcaption]:italic [&_img]:rounded-sm">
 				<div className="divide-y-[1px] divide-white/20">
-					{memoizedLayoutTree.map((branchOrNode, rowIndex) => (
+					{memoizedLayoutTree.map((branchOrNode, _rowIndex) => (
 						<LayoutBranchOrNode
 							key={branchOrNode.id}
 							value={branchOrNode}
@@ -261,7 +260,7 @@ function DocumentDetail({}: DocumentDetailProps) {
 								const isFocused = node.id === selection.nodeId;
 								const isEditing = isFocused && selection.isEditing;
 								const data = node.data || generateDocumentRegion({});
-								const label = ariaLines('test', {
+								const label = ariaLines({
 									// [`${data.landmark?.label}`]: data.landmark !== undefined,
 									[`${aria.list(columnLength)}`]: columnIndex <= 0 && isFocused,
 									[`${aria.itemOfList(columnIndex + 1, columnLength)}`]:
